@@ -11,6 +11,12 @@ interface ButtonProps {
   type?: "button" | "submit" | "reset";
 }
 
+interface StyledButtonProps {
+  $variant?: "primary" | "secondary" | "outline" | "danger";
+  $size?: "small" | "medium" | "large";
+  $fullWidth?: boolean;
+}
+
 const getButtonStyles = (variant: string, size: string) => {
   const baseStyles = `
     border: none;
@@ -114,10 +120,10 @@ const getButtonStyles = (variant: string, size: string) => {
   `;
 };
 
-const StyledButton = styled.button<ButtonProps>`
-  ${({ variant = "primary", size = "medium", fullWidth }) => `
-    ${getButtonStyles(variant, size)}
-    ${fullWidth ? "width: 100%;" : ""}
+const StyledButton = styled.button<StyledButtonProps>`
+  ${({ $variant = "primary", $size = "medium", $fullWidth }) => `
+    ${getButtonStyles($variant, $size)}
+    ${$fullWidth ? "width: 100%;" : ""}
   `}
 `;
 
@@ -134,9 +140,9 @@ const Button: React.FC<ButtonProps> = ({
     <StyledButton
       onClick={onClick}
       disabled={disabled}
-      variant={variant}
-      size={size}
-      fullWidth={fullWidth}
+      $variant={variant}
+      $size={size}
+      $fullWidth={fullWidth}
       type={type}
     >
       {children}

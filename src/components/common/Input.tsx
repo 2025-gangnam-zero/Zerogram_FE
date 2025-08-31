@@ -32,10 +32,10 @@ const Label = styled.label<{ required?: boolean }>`
   `}
 `;
 
-const StyledInput = styled.input<{ hasError?: boolean }>`
+const StyledInput = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${({ hasError }) => (hasError ? "#e74c3c" : "#e1e8ed")};
+  border: 2px solid ${({ $hasError }) => ($hasError ? "#e74c3c" : "#e1e8ed")};
   border-radius: 8px;
   font-size: 16px;
   font-family: inherit;
@@ -59,8 +59,8 @@ const StyledInput = styled.input<{ hasError?: boolean }>`
     cursor: not-allowed;
   }
 
-  ${({ hasError }) =>
-    hasError &&
+  ${({ $hasError }) =>
+    $hasError &&
     `
     &:focus {
       border-color: #e74c3c;
@@ -94,7 +94,7 @@ const Input: React.FC<InputProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        hasError={!!error}
+        $hasError={!!error}
         required={required}
       />
       {error && <ErrorMessage>{error}</ErrorMessage>}
