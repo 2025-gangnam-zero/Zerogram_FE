@@ -1,0 +1,105 @@
+import React from "react";
+import styled from "styled-components";
+
+const HeaderContainer = styled.header`
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+`;
+
+const HeaderWrapper = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+`;
+
+const Logo = styled.div`
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #3498db;
+    }
+  }
+`;
+
+const AuthSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const LoginBtn = styled.button`
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const SignupBtn = styled.button`
+  background-color: transparent;
+  color: #3498db;
+  border: 2px solid #3498db;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #3498db;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const Header: React.FC = () => {
+  return (
+    <HeaderContainer>
+      <HeaderWrapper>
+        <Logo>
+          <h1>Zerogram</h1>
+        </Logo>
+        <AuthSection>
+          <LoginBtn>로그인</LoginBtn>
+          <SignupBtn>회원가입</SignupBtn>
+        </AuthSection>
+      </HeaderWrapper>
+    </HeaderContainer>
+  );
+};
+
+export default Header;
