@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../hooks/redux";
+import { login } from "../store/authSlice";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { loginApi } from "../api/auth";
@@ -46,6 +48,7 @@ const ButtonContainer = styled.div`
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     email: "",
     pw: "",
@@ -95,14 +98,13 @@ const LoginPage: React.FC = () => {
       const sessionId =
         data.data?.sessionId ?? data.data?.session_id ?? data.data?.id;
       const userName =
-        data.data?.name ??
-        data.data?.userName ??
-        data.data?.user_name ??
-        "사용자";
+        data.data?.name ?? data.data?.userName ?? data.data?.user_name;
 
       if (sessionId) {
         localStorage.setItem("sessionId", sessionId);
         localStorage.setItem("userName", userName);
+        // Redux 상태 업데이트
+        dispatch(login({ sessionId, userName }));
       }
       alert("로그인에 성공했습니다.");
       navigate("/");

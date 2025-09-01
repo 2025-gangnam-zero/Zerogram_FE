@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { useAppSelector, useAppDispatch } from "../../hooks/redux";
+import { logout, initializeAuth } from "../../store/authSlice";
 
 const HeaderContainer = styled.header`
   background-color: #ffffff;
@@ -117,16 +119,13 @@ const UserMenu = styled.div`
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const dispatch = useAppDispatch();
+  const { isLoggedIn } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    // 세션ID가 있으면 로그인 상태로 간주
-    const sessionId = localStorage.getItem("sessionId");
-
-    if (sessionId) {
-      setIsLoggedIn(true);
-    }
-  }, []);
+    // 앱 시작 시 인증 상태 초기화
+    dispatch(initializeAuth());
+  }, [dispatch]);
 
   const handleLogoClick = () => {
     navigate("/");
@@ -141,9 +140,7 @@ const Header: React.FC = () => {
   };
 
   const handleLogoutClick = () => {
-    localStorage.removeItem("sessionId");
-    localStorage.removeItem("userName");
-    setIsLoggedIn(false);
+    dispatch(logout());
     navigate("/");
     alert("로그아웃되었습니다.");
   };

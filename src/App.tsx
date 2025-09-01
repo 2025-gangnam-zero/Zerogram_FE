@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Provider } from "react-redux";
 import styled from "styled-components";
+import { store } from "./store";
 import GlobalStyle from "./styles/GlobalStyle";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
@@ -23,21 +25,23 @@ const MainContent = styled.main`
 
 function App() {
   return (
-    <Router>
-      <GlobalStyle />
-      <AppContainer>
-        <Header />
-        <MainContent>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/mypage" element={<MyPage />} />
-          </Routes>
-        </MainContent>
-        <Footer />
-      </AppContainer>
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <GlobalStyle />
+        <AppContainer>
+          <Header />
+          <MainContent>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/mypage" element={<MyPage />} />
+            </Routes>
+          </MainContent>
+          <Footer />
+        </AppContainer>
+      </Router>
+    </Provider>
   );
 }
 
