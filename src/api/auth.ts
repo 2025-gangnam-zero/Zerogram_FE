@@ -2,7 +2,7 @@ import axios from "axios";
 
 // axios 인스턴스 생성 및 기본 설정
 const authApi = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:4000",
+  baseURL: "http://10.10.0.168:4000",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -12,10 +12,10 @@ const authApi = axios.create({
 // 요청 인터셉터 (요청 전 처리)
 authApi.interceptors.request.use(
   (config) => {
-    // 토큰이 있다면 헤더에 추가
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // 세션ID가 있다면 헤더에 추가
+    const sessionId = localStorage.getItem("sessionId");
+    if (sessionId) {
+      config.headers.Authorization = `Bearer ${sessionId}`;
     }
     return config;
   },
@@ -30,9 +30,9 @@ authApi.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 에러 처리 (예: 401 에러 시 토큰 제거)
+    // 에러 처리 (예: 401 에러 시 세션ID 제거)
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+      localStorage.removeItem("sessionId");
     }
     return Promise.reject(error);
   }
@@ -45,7 +45,7 @@ export const signupApi = async (userData: {
   name: string;
 }) => {
   try {
-    const response = await authApi.post("/api/auth/signup", userData);
+    const response = await authApi.post("/auth/signup", userData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -65,19 +65,17 @@ export const signupApi = async (userData: {
           );
         default:
           throw new Error("회원가입 중 오류가 발생했습니다.");
+          console.log(error);
       }
     }
     throw new Error("알 수 없는 오류가 발생했습니다.");
   }
 };
 
-// 로그인 API 함수 (향후 사용을 위해)
-export const loginApi = async (credentials: {
-  email: string;
-  password: string;
-}) => {
+// 로그인 API 함수
+export const loginApi = async (credentials: { email: string; pw: string }) => {
   try {
-    const response = await authApi.post("/api/auth/login", credentials);
+    const response = await authApi.post("/auth/login", credentials);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
