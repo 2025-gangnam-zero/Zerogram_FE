@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
 const HeaderContainer = styled.header`
@@ -86,16 +87,84 @@ const SignupBtn = styled.button`
   }
 `;
 
+const LogoutBtn = styled.button`
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #c0392b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const UserMenu = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
 const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // 세션ID가 있으면 로그인 상태로 간주
+    const sessionId = localStorage.getItem("sessionId");
+
+    if (sessionId) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogoClick = () => {
+    navigate("/");
+  };
+
+  const handleLoginClick = () => {
+    navigate("/login");
+  };
+
+  const handleSignupClick = () => {
+    navigate("/signup");
+  };
+
+  const handleLogoutClick = () => {
+    localStorage.removeItem("sessionId");
+    localStorage.removeItem("userName");
+    setIsLoggedIn(false);
+    navigate("/");
+    alert("로그아웃되었습니다.");
+  };
+
   return (
     <HeaderContainer>
       <HeaderWrapper>
-        <Logo>
+        <Logo onClick={handleLogoClick}>
           <h1>Zerogram</h1>
         </Logo>
         <AuthSection>
-          <LoginBtn>로그인</LoginBtn>
-          <SignupBtn>회원가입</SignupBtn>
+          {isLoggedIn ? (
+            <UserMenu>
+              <LogoutBtn onClick={handleLogoutClick}>로그아웃</LogoutBtn>
+            </UserMenu>
+          ) : (
+            <>
+              <LoginBtn onClick={handleLoginClick}>로그인</LoginBtn>
+              <SignupBtn onClick={handleSignupClick}>회원가입</SignupBtn>
+            </>
+          )}
         </AuthSection>
       </HeaderWrapper>
     </HeaderContainer>

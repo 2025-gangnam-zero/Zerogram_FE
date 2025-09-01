@@ -91,11 +91,18 @@ const LoginPage: React.FC = () => {
         email: formData.email,
         pw: formData.pw,
       });
-      // 백엔드에서 세션ID를 body로 전송
+      // 백엔드에서 세션ID와 사용자 이름을 body로 전송
       const sessionId =
         data.data?.sessionId ?? data.data?.session_id ?? data.data?.id;
+      const userName =
+        data.data?.name ??
+        data.data?.userName ??
+        data.data?.user_name ??
+        "사용자";
+
       if (sessionId) {
         localStorage.setItem("sessionId", sessionId);
+        localStorage.setItem("userName", userName);
       }
       alert("로그인에 성공했습니다.");
       navigate("/");
