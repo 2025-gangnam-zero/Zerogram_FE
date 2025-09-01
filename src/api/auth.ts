@@ -2,7 +2,7 @@ import axios from "axios";
 
 // axios 인스턴스 생성 및 기본 설정
 const authApi = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:4000",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

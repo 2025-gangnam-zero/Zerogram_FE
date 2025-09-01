@@ -127,7 +127,6 @@ const SignupPage: React.FC = () => {
       password: "",
       confirmPassword: "",
       name: "",
-      nickname: "",
     };
 
     // 이메일 검증
