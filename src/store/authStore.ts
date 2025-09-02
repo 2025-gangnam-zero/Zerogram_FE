@@ -31,6 +31,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           sessionId,
           userName,
         });
+
+        // userStore와도 동기화
+        try {
+          const { setSessionId } =
+            require("./userStore").useUserStore.getState();
+          setSessionId(sessionId);
+        } catch (error) {
+          console.warn("userStore 동기화 실패:", error);
+        }
       },
 
       logout: () => {
@@ -80,6 +89,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               sessionId,
               userName,
             });
+
+            // userStore와도 동기화
+            try {
+              const { setSessionId } =
+                require("./userStore").useUserStore.getState();
+              setSessionId(sessionId);
+              console.log("authStore에서 userStore 동기화 완료:", sessionId);
+            } catch (error) {
+              console.warn("userStore 동기화 실패:", error);
+            }
+
             return true;
           }
         } else if (!sessionId && currentState.isLoggedIn) {
@@ -89,6 +109,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             sessionId: null,
             userName: null,
           });
+
+          // userStore와도 동기화
+          try {
+            const { clearUser } =
+              require("./userStore").useUserStore.getState();
+            clearUser();
+            console.log("authStore에서 userStore 정리 완료");
+          } catch (error) {
+            console.warn("userStore 정리 실패:", error);
+          }
+
           return false;
         }
 

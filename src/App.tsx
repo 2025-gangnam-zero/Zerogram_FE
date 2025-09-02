@@ -24,27 +24,34 @@ const MainContent = styled.main`
 `;
 
 const AppContent: React.FC = () => {
-  const { fetchUserInfo } = useUserStore();
   const { initializeAuth, checkAuthStatus } = useAuthStore();
 
   useEffect(() => {
-    // 앱 시작 시 인증 상태 초기화
+    // 앱 시작 시 인증 상태 초기화만 수행
     initializeAuth();
 
-    // 인증 상태 확인 후 사용자 정보 가져오기
+    // 인증 상태 확인 및 동기화
     const isAuthenticated = checkAuthStatus();
+    console.log("앱 시작 시 인증 상태:", isAuthenticated);
+
+    // 인증된 상태라면 userStore도 동기화
     if (isAuthenticated) {
-      fetchUserInfo().catch((error: unknown) => {
-        console.error("사용자 정보 조회 실패:", error);
-        // 401 에러가 발생하면 인증 상태를 초기화
-        if (error instanceof Error && error.message.includes("인증")) {
-          localStorage.removeItem("sessionId");
-          localStorage.removeItem("userName");
-          window.location.reload(); // 페이지 새로고침으로 상태 동기화
+      try {
+        const { setSessionId } =
+          require("./store/userStore").useUserStore.getState();
+        const sessionId = localStorage.getItem("sessionId");
+        if (sessionId) {
+          setSessionId(sessionId);
+          console.log("App에서 userStore 동기화 완료:", sessionId);
         }
-      });
+      } catch (error) {
+        console.warn("App에서 userStore 동기화 실패:", error);
+      }
     }
-  }, [initializeAuth, checkAuthStatus, fetchUserInfo]);
+
+    // 사용자 정보는 로그인 후에만 가져오도록 함
+    // 여기서는 fetchUserInfo를 호출하지 않음
+  }, [initializeAuth, checkAuthStatus]);
 
   return (
     <Router>

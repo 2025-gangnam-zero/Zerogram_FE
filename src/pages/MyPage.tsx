@@ -38,19 +38,41 @@ const ErrorText = styled.p`
 
 const MyPage: React.FC = () => {
   const { nickname, isLoading, error, fetchUserInfo } = useUserStore();
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, checkAuthStatus } = useAuthStore();
 
   useEffect(() => {
+    // 인증 상태를 다시 한 번 확인하여 동기화
+    const actualIsLoggedIn = checkAuthStatus();
+    console.log("MyPage 인증 상태 확인:", {
+      hookIsLoggedIn: isLoggedIn,
+      actualIsLoggedIn,
+      hasNickname: !!nickname,
+      isLoading,
+      hasError: !!error,
+    });
+
     // 로그인 상태이고 사용자 정보가 없을 때만 API 호출
-    if (isLoggedIn) {
+    // 이미 로딩 중이거나 에러가 있으면 호출하지 않음
+    if (actualIsLoggedIn && !nickname && !isLoading && !error) {
+      console.log("MyPage에서 사용자 정보 조회 시작");
       fetchUserInfo().catch((error: unknown) => {
         console.error("사용자 정보 조회 실패:", error);
       });
+    } else {
+      console.log("MyPage 사용자 정보 조회 조건 미충족:", {
+        isLoggedIn: actualIsLoggedIn,
+        hasNickname: !!nickname,
+        isLoading,
+        hasError: !!error,
+      });
     }
-  }, [isLoggedIn, fetchUserInfo]);
+  }, [isLoggedIn, nickname, isLoading, error, fetchUserInfo, checkAuthStatus]);
+
+  // 실제 인증 상태를 사용하여 렌더링
+  const actualIsLoggedIn = checkAuthStatus();
 
   // 로그인하지 않은 경우
-  if (!isLoggedIn) {
+  if (!actualIsLoggedIn) {
     return (
       <MyPageContainer>
         <ErrorText>로그인이 필요합니다.</ErrorText>
@@ -74,7 +96,7 @@ const MyPage: React.FC = () => {
     );
   }
 
-  const userName = nickname;
+  const userName = nickname || "사용자";
 
   return (
     <MyPageContainer>

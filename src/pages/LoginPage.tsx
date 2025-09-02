@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
@@ -59,6 +59,63 @@ const LoginPage: React.FC = () => {
     pw: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState<{
+    sessionId: string;
+    userName: string;
+  } | null>(null);
+
+  // 로그인 성공 후 동기화 처리
+  useEffect(() => {
+    if (loginSuccess) {
+      const { sessionId, userName } = loginSuccess;
+
+      // 1. 먼저 localStorage에 저장 (API 인터셉터가 사용할 수 있도록)
+      localStorage.setItem("sessionId", sessionId);
+      localStorage.setItem("userName", userName);
+
+      // 2. Zustand 스토어에 저장
+      login(sessionId, userName);
+
+      // 3. userStore에도 세션 ID 설정 (동기적으로 처리)
+      const { setSessionId } = useUserStore.getState();
+      setSessionId(sessionId);
+
+      // 4. 동기화 확인
+      console.log("Zustand 스토어 동기화 완료:", {
+        authStore: useAuthStore.getState().sessionId,
+        userStore: useUserStore.getState().sessionId,
+        localStorage: localStorage.getItem("sessionId"),
+      });
+
+      // 5. 잠시 대기 후 사용자 정보를 API로 가져오기
+      const timer = setTimeout(async () => {
+        try {
+          // 세션 ID가 여전히 유효한지 재확인
+          const currentSessionId = localStorage.getItem("sessionId");
+          if (currentSessionId !== sessionId) {
+            console.warn("세션 ID가 변경됨:", {
+              original: sessionId,
+              current: currentSessionId,
+            });
+          }
+
+          console.log("사용자 정보 조회 시도 - 세션 ID:", currentSessionId);
+          await fetchUserInfo();
+          alert("로그인에 성공했습니다.");
+          navigate("/");
+        } catch (error) {
+          console.error("사용자 정보 조회 실패:", error);
+          alert("로그인은 성공했지만 사용자 정보를 가져올 수 없습니다.");
+          navigate("/");
+        }
+      }, 500);
+
+      // 6. loginSuccess 상태 초기화 (useEffect가 한 번만 실행되도록)
+      setLoginSuccess(null);
+
+      return () => clearTimeout(timer);
+    }
+  }, [loginSuccess, login, fetchUserInfo, navigate]);
 
   const handleInputChange =
     (field: keyof typeof formData) =>
@@ -108,40 +165,8 @@ const LoginPage: React.FC = () => {
           userName
         );
         console.log("전체 응답 데이터:", data);
-
-        // 1. 먼저 localStorage에 저장 (API 인터셉터가 사용할 수 있도록)
-        localStorage.setItem("sessionId", sessionId);
-        localStorage.setItem("userName", userName);
-
-        // 2. Zustand 스토어에 저장
-        login(sessionId, userName);
-
-        // 3. userStore에도 세션 ID 설정
-        const { setSessionId } = useUserStore.getState();
-        setSessionId(sessionId);
-
-        // 4. 잠시 대기 후 사용자 정보를 API로 가져오기 (세션 ID가 백엔드에 전파될 시간 확보)
-        setTimeout(async () => {
-          try {
-            // 세션 ID가 여전히 유효한지 재확인
-            const currentSessionId = localStorage.getItem("sessionId");
-            if (currentSessionId !== sessionId) {
-              console.warn("세션 ID가 변경됨:", {
-                original: sessionId,
-                current: currentSessionId,
-              });
-            }
-
-            console.log("사용자 정보 조회 시도 - 세션 ID:", currentSessionId);
-            await fetchUserInfo();
-            alert("로그인에 성공했습니다.");
-            navigate("/");
-          } catch (error) {
-            console.error("사용자 정보 조회 실패:", error);
-            alert("로그인은 성공했지만 사용자 정보를 가져올 수 없습니다.");
-            navigate("/");
-          }
-        }, 500); // 500ms로 증가
+        navigate("/");
+        setLoginSuccess({ sessionId, userName });
       } else {
         console.error("로그인 응답에 세션 ID가 없음:", data);
         alert("로그인 정보를 가져올 수 없습니다.");
