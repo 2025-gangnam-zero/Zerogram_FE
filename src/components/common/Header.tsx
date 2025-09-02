@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { useAppSelector, useAppDispatch } from "../../hooks/redux";
-import { logout, initializeAuth } from "../../store/authSlice";
+import { useAuthStore } from "../../store/authStore";
 
 const HeaderContainer = styled.header`
   background-color: #ffffff;
@@ -119,13 +118,24 @@ const UserMenu = styled.div`
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { isLoggedIn } = useAppSelector((state) => state.auth);
+  const { isLoggedIn, logout, initializeAuth, checkAuthStatus } =
+    useAuthStore();
 
   useEffect(() => {
     // 앱 시작 시 인증 상태 초기화
-    dispatch(initializeAuth());
-  }, [dispatch]);
+    initializeAuth();
+
+    // 인증 상태 변경 이벤트 리스너
+    const handleUnauthorized = () => {
+      checkAuthStatus(); // Zustand 스토어 상태 동기화
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, [initializeAuth, checkAuthStatus]);
 
   const handleLogoClick = () => {
     navigate("/");
@@ -140,7 +150,7 @@ const Header: React.FC = () => {
   };
 
   const handleLogoutClick = () => {
-    dispatch(logout());
+    logout();
     navigate("/");
     alert("로그아웃되었습니다.");
   };

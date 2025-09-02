@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../hooks/redux";
-import { login } from "../store/authSlice";
+import { useUserStore } from "../store/userStore";
+import { useAuthStore } from "../store/authStore";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { loginApi } from "../api/auth";
@@ -48,7 +48,8 @@ const ButtonContainer = styled.div`
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
+  const { fetchUserInfo } = useUserStore();
+  const { login } = useAuthStore();
   const [formData, setFormData] = useState({
     email: "",
     pw: "",
@@ -94,20 +95,57 @@ const LoginPage: React.FC = () => {
         email: formData.email,
         pw: formData.pw,
       });
-      // 백엔드에서 세션ID와 사용자 이름을 body로 전송
-      const sessionId =
-        data.data?.sessionId ?? data.data?.session_id ?? data.data?.id;
-      const userName =
-        data.data?.name ?? data.data?.userName ?? data.data?.user_name;
+
+      // 백엔드 응답에서 세션 ID와 사용자 이름 추출
+      const sessionId = data.data?.sessionId;
+      const userName = data.data?.userName || data.data?.nickname || "사용자";
 
       if (sessionId) {
+        console.log(
+          "로그인 성공 - 세션 ID:",
+          sessionId,
+          "사용자 이름:",
+          userName
+        );
+        console.log("전체 응답 데이터:", data);
+
+        // 1. 먼저 localStorage에 저장 (API 인터셉터가 사용할 수 있도록)
         localStorage.setItem("sessionId", sessionId);
         localStorage.setItem("userName", userName);
-        // Redux 상태 업데이트
-        dispatch(login({ sessionId, userName }));
+
+        // 2. Zustand 스토어에 저장
+        login(sessionId, userName);
+
+        // 3. userStore에도 세션 ID 설정
+        const { setSessionId } = useUserStore.getState();
+        setSessionId(sessionId);
+
+        // 4. 잠시 대기 후 사용자 정보를 API로 가져오기 (세션 ID가 백엔드에 전파될 시간 확보)
+        setTimeout(async () => {
+          try {
+            // 세션 ID가 여전히 유효한지 재확인
+            const currentSessionId = localStorage.getItem("sessionId");
+            if (currentSessionId !== sessionId) {
+              console.warn("세션 ID가 변경됨:", {
+                original: sessionId,
+                current: currentSessionId,
+              });
+            }
+
+            console.log("사용자 정보 조회 시도 - 세션 ID:", currentSessionId);
+            await fetchUserInfo();
+            alert("로그인에 성공했습니다.");
+            navigate("/");
+          } catch (error) {
+            console.error("사용자 정보 조회 실패:", error);
+            alert("로그인은 성공했지만 사용자 정보를 가져올 수 없습니다.");
+            navigate("/");
+          }
+        }, 500); // 500ms로 증가
+      } else {
+        console.error("로그인 응답에 세션 ID가 없음:", data);
+        alert("로그인 정보를 가져올 수 없습니다.");
       }
-      alert("로그인에 성공했습니다.");
-      navigate("/");
     } catch (error) {
       if (error instanceof Error) {
         alert(`로그인 실패: ${error.message}`);
