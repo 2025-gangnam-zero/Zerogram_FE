@@ -8,7 +8,8 @@ export const AUTH_CONSTANTS = {
 export const OAUTH_CONFIG = {
   KAKAO: {
     CLIENT_ID: process.env.REACT_APP_KAKAO_CLIENT_ID,
-    REDIRECT_URI: "http://43.201.20.75/auth/oauth",
+    REDIRECT_URI:
+      "http://ec2-43-201-20-75.ap-northeast-2.compute.amazonaws.com/auth/oauth",
     AUTH_URL: "https://kauth.kakao.com/oauth/authorize",
     RESPONSE_TYPE: "code",
     STATE: "kakao",
