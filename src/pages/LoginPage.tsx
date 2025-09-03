@@ -6,6 +6,21 @@ import { useAuthStore } from "../store/authStore";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { loginApi } from "../api/auth";
+import { OAUTH_CONFIG } from "../constants";
+import {
+  validateLoginForm,
+  hasFormErrors,
+  showErrorAlert,
+  showSuccessAlert,
+  generateGoogleOAuthURL,
+  handleGoogleOAuthError,
+} from "../utils";
+import {
+  extractUserParamsFromURL,
+  decodeURLParam,
+  setSessionId,
+} from "../utils";
+import { LoginFormData, FormErrors } from "../types";
 
 const LoginContainer = styled.div`
   padding: 40px 20px;
@@ -69,11 +84,11 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { fetchUserInfo } = useUserStore();
   const { login } = useAuthStore();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     pw: "",
   });
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<FormErrors>({
     email: "",
     pw: "",
   });
@@ -84,6 +99,28 @@ const LoginPage: React.FC = () => {
 
   const [params] = useSearchParams();
   const sessionId = params.get("sessionId");
+  const error = params.get("error");
+  const state = params.get("state");
+
+  // OAuth 에러 처리
+  useEffect(() => {
+    if (error) {
+      const errorDescription = params.get("error_description");
+
+      if (state === "google") {
+        const googleError = handleGoogleOAuthError(
+          error,
+          errorDescription || undefined
+        );
+        showErrorAlert(googleError.message);
+      } else {
+        showErrorAlert(`로그인 오류: ${error}`);
+      }
+
+      // URL에서 에러 파라미터 제거
+      navigate("/login", { replace: true });
+    }
+  }, [error, state, params, navigate]);
 
   // 로그인 성공 후 동기화 처리
   useEffect(() => {
@@ -91,14 +128,14 @@ const LoginPage: React.FC = () => {
       const { sessionId } = loginSuccess;
 
       // 1. 먼저 localStorage에 저장 (API 인터셉터가 사용할 수 있도록)
-      localStorage.setItem("sessionId", sessionId);
+      setSessionId(sessionId);
 
       // 2. Zustand 스토어에 저장
       login(sessionId);
 
       // 3. userStore에도 세션 ID 설정 (동기적으로 처리)
-      const { setSessionId } = useUserStore.getState();
-      setSessionId(sessionId);
+      const { setSessionId: setUserSessionId } = useUserStore.getState();
+      setUserSessionId(sessionId);
 
       // 4. 동기화 확인
       console.log("Zustand 스토어 동기화 완료:", {
@@ -110,22 +147,15 @@ const LoginPage: React.FC = () => {
       // 5. 잠시 대기 후 사용자 정보를 API로 가져오기
       const timer = setTimeout(async () => {
         try {
-          // 세션 ID가 여전히 유효한지 재확인
-          const currentSessionId = localStorage.getItem("sessionId");
-          if (currentSessionId !== sessionId) {
-            console.warn("세션 ID가 변경됨:", {
-              original: sessionId,
-              current: currentSessionId,
-            });
-          }
-
-          console.log("사용자 정보 조회 시도 - 세션 ID:", currentSessionId);
+          console.log("사용자 정보 조회 시도 - 세션 ID:", sessionId);
           await fetchUserInfo();
-          alert("로그인에 성공했습니다.");
+          showSuccessAlert("로그인에 성공했습니다.");
           navigate("/");
         } catch (error) {
           console.error("사용자 정보 조회 실패:", error);
-          alert("로그인은 성공했지만 사용자 정보를 가져올 수 없습니다.");
+          showErrorAlert(
+            "로그인은 성공했지만 사용자 정보를 가져올 수 없습니다."
+          );
           navigate("/");
         }
       }, 500);
@@ -144,25 +174,25 @@ const LoginPage: React.FC = () => {
     console.log("URL에서 받은 sessionId:", sessionId);
 
     // URL에서 사용자 정보 파라미터들 추출
-    const userId = params.get("_id");
-    const nickname = params.get("nickname");
-    const email = params.get("email");
-    const profileImage = params.get("profile_image");
-    const role = params.get("role");
+    const userParams = extractUserParamsFromURL(params);
+    const { userId, nickname, email, profileImage, role } = userParams;
 
     // 카카오 로그인 후 받은 데이터가 있는지 확인
     if (userId && nickname && email) {
+      const decodedNickname = decodeURLParam(nickname);
+      const decodedProfileImage = decodeURLParam(profileImage);
+
       console.log("카카오 로그인 데이터 처리 중:", {
         sessionId,
         userId,
-        nickname: decodeURIComponent(nickname),
+        nickname: decodedNickname,
         email,
-        profileImage: profileImage ? decodeURIComponent(profileImage) : null,
+        profileImage: decodedProfileImage,
         role,
       });
 
       // 1. localStorage에 sessionId 저장
-      localStorage.setItem("sessionId", sessionId);
+      setSessionId(sessionId);
 
       // 2. authStore에 로그인 상태 저장
       login(sessionId);
@@ -171,8 +201,10 @@ const LoginPage: React.FC = () => {
       const { setUser } = useUserStore.getState();
       setUser({
         id: userId,
-        nickname: decodeURIComponent(nickname), // URL 디코딩
+        nickname: decodedNickname || "",
         email,
+        password: "",
+        profile_image: decodedProfileImage || undefined,
         sessionId,
       });
 
@@ -201,20 +233,9 @@ const LoginPage: React.FC = () => {
     };
 
   const validateForm = () => {
-    const newErrors = { email: "", pw: "" };
-
-    if (!formData.email) {
-      newErrors.email = "이메일을 입력하세요";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "올바른 이메일 형식을 입력하세요";
-    }
-
-    if (!formData.pw) {
-      newErrors.pw = "비밀번호를 입력하세요";
-    }
-
+    const newErrors = validateLoginForm(formData);
     setErrors(newErrors);
-    return !Object.values(newErrors).some((e) => e);
+    return !hasFormErrors(newErrors);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -247,11 +268,13 @@ const LoginPage: React.FC = () => {
         alert("로그인 정보를 가져올 수 없습니다.");
       }
     } catch (error) {
-      if (error instanceof Error) {
-        alert(`로그인 실패: ${error.message}`);
-      } else {
-        alert("로그인 중 오류가 발생했습니다.");
-      }
+      showErrorAlert(
+        `로그인 실패: ${
+          error instanceof Error
+            ? error.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -259,17 +282,26 @@ const LoginPage: React.FC = () => {
 
   // 구글 소셜 로그인
   const handleGoogleSignup = () => {
-    // TODO: 구글 OAuth 로그인 구현
-    console.log("구글 회원가입");
+    try {
+      const googleAuthUrl = generateGoogleOAuthURL();
+      console.log("Google OAuth URL:", googleAuthUrl);
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      console.error("Google OAuth URL 생성 실패:", error);
+      showErrorAlert(
+        error instanceof Error
+          ? error.message
+          : "Google 로그인을 시작할 수 없습니다."
+      );
+    }
   };
   // 카카오 소셜 로그인
-  const CLIENT_ID = process.env.REACT_APP_KAKAO_CLIENT_ID;
-  const REDIRECT_URI = "http://43.201.20.75/auth/oauth"; // Redirect URI를 여기에 입력
-  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&state=kakao`;
-
   const handleKakaoSignup = () => {
-    window.location.href = KAKAO_AUTH_URL;
-    console.log("카카오 회원가입");
+    const { CLIENT_ID, REDIRECT_URI, AUTH_URL, RESPONSE_TYPE, STATE } =
+      OAUTH_CONFIG.KAKAO;
+    const kakaoAuthUrl = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&state=${STATE}`;
+    window.location.href = kakaoAuthUrl;
+    console.log("카카오 로그인");
   };
 
   return (

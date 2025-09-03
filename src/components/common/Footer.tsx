@@ -72,10 +72,10 @@ const Footer: React.FC = () => {
           </FooterSection>
 
           <FooterSection>
-            <h3>고객지원</h3>
-            <p>문의하기</p>
-            <p>FAQ</p>
-            <p>이용약관</p>
+            <h3>기술담당</h3>
+            <p>Zero Team</p>
+            <p>윤 찬 우</p>
+            <p>박 나 라</p>
           </FooterSection>
 
           <FooterSection>

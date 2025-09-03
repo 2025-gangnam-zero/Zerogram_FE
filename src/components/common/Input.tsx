@@ -1,9 +1,11 @@
 import React from "react";
 import styled from "styled-components";
+import { InputType } from "../../types";
+import { UI_CONSTANTS } from "../../constants";
 
 interface InputProps {
   label?: string;
-  type?: "text" | "email" | "password" | "number" | "tel";
+  type?: InputType;
   placeholder?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -17,17 +19,17 @@ const InputContainer = styled.div`
 
 const Label = styled.label<{ required?: boolean }>`
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: ${UI_CONSTANTS.SPACING.SM};
   font-size: 14px;
   font-weight: 600;
-  color: #2c3e50;
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
 
   ${({ required }) =>
     required &&
     `
     &::after {
       content: ' *';
-      color: #e74c3c;
+      color: ${UI_CONSTANTS.COLORS.DANGER};
     }
   `}
 `;
@@ -35,27 +37,29 @@ const Label = styled.label<{ required?: boolean }>`
 const StyledInput = styled.input<{ $hasError?: boolean }>`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${({ $hasError }) => ($hasError ? "#e74c3c" : "#e1e8ed")};
-  border-radius: 8px;
+  border: 2px solid
+    ${({ $hasError }) =>
+      $hasError ? UI_CONSTANTS.COLORS.DANGER : UI_CONSTANTS.COLORS.BORDER};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
   font-size: 16px;
   font-family: inherit;
-  background-color: #ffffff;
-  color: #2c3e50;
-  transition: all 0.3s ease;
+  background-color: ${UI_CONSTANTS.COLORS.BACKGROUND};
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+  transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
 
   &::placeholder {
-    color: #95a5a6;
+    color: ${UI_CONSTANTS.COLORS.MUTED};
   }
 
   &:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: ${UI_CONSTANTS.COLORS.PRIMARY};
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
   }
 
   &:disabled {
     background-color: #f8f9fa;
-    color: #95a5a6;
+    color: ${UI_CONSTANTS.COLORS.MUTED};
     cursor: not-allowed;
   }
 
@@ -63,7 +67,7 @@ const StyledInput = styled.input<{ $hasError?: boolean }>`
     $hasError &&
     `
     &:focus {
-      border-color: #e74c3c;
+      border-color: ${UI_CONSTANTS.COLORS.DANGER};
       box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
     }
   `}
@@ -73,7 +77,7 @@ const ErrorMessage = styled.span`
   display: block;
   margin-top: 6px;
   font-size: 12px;
-  color: #e74c3c;
+  color: ${UI_CONSTANTS.COLORS.DANGER};
   font-weight: 500;
 `;
 

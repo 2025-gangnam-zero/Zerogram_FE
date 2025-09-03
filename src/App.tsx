@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import MyPage from "./pages/MyPage";
+import { LAYOUT_CONSTANTS } from "./constants";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -18,8 +19,11 @@ const AppContainer = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  padding-top: 70px; /* Header 높이만큼 상단 여백 */
-  min-height: calc(100vh - 70px - 200px); /* Header + Footer 높이 제외 */
+  padding-top: ${LAYOUT_CONSTANTS.HEADER_HEIGHT}; /* Header 높이만큼 상단 여백 */
+  min-height: calc(
+    100vh - ${LAYOUT_CONSTANTS.HEADER_HEIGHT} -
+      ${LAYOUT_CONSTANTS.FOOTER_HEIGHT}
+  ); /* Header + Footer 높이 제외 */
 `;
 
 const AppContent: React.FC = () => {

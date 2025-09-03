@@ -1,23 +1,27 @@
 import axios from "axios";
+import { API_CONFIG, AUTH_CONSTANTS } from "../constants";
+import { getApiErrorMessage, logError } from "../utils";
+import {
+  LoginFormData,
+  SignupFormData,
+  UpdateUserData,
+  ApiResponse,
+  LoginResponse,
+} from "../types";
 
 // axios 인스턴스 생성 및 기본 설정
 const authApi = axios.create({
-  baseURL: "http://43.201.20.75",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  headers: API_CONFIG.HEADERS,
 });
 
 // 요청 인터셉터 (요청 전 처리)
 authApi.interceptors.request.use(
   (config) => {
     // 세션ID가 있다면 헤더에 추가
-    const sessionId = localStorage.getItem("sessionId");
+    const sessionId = localStorage.getItem(AUTH_CONSTANTS.SESSION_ID_KEY);
     console.log("API 요청 인터셉터 - 세션 ID:", sessionId, "URL:", config.url);
-    console.log("현재 localStorage 상태:", {
-      sessionId: localStorage.getItem("sessionId"),
-    });
 
     if (sessionId) {
       config.headers["x-session-id"] = sessionId;
@@ -40,8 +44,8 @@ authApi.interceptors.response.use(
   (error) => {
     // 401 에러 시 세션ID 제거 및 Zustand 스토어 동기화
     if (error.response?.status === 401) {
-      localStorage.removeItem("sessionId");
-      localStorage.removeItem("userName");
+      localStorage.removeItem(AUTH_CONSTANTS.SESSION_ID_KEY);
+      localStorage.removeItem(AUTH_CONSTANTS.USER_NAME_KEY);
 
       // 페이지가 로드된 후에만 Zustand 스토어 업데이트
       if (typeof window !== "undefined") {
@@ -54,121 +58,52 @@ authApi.interceptors.response.use(
 );
 
 // 회원가입 API 함수
-export const signupApi = async (userData: {
-  email: string;
-  password: string;
-  name: string;
-}) => {
+export const signupApi = async (
+  userData: Omit<SignupFormData, "confirmPassword">
+): Promise<ApiResponse> => {
   try {
     const response = await authApi.post("/auth/signup", userData);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // 서버에서 보낸 에러 메시지가 있다면 사용
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      // HTTP 상태 코드별 에러 메시지
-      switch (error.response?.status) {
-        case 400:
-          throw new Error("잘못된 요청입니다. 입력 정보를 확인해주세요.");
-        case 409:
-          throw new Error("이미 존재하는 이메일입니다.");
-        case 500:
-          throw new Error(
-            "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-          );
-        default:
-          throw new Error("회원가입 중 오류가 발생했습니다.");
-      }
-    }
-    throw new Error("알 수 없는 오류가 발생했습니다.");
+    logError("signupApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
 // 로그인 API 함수
-export const loginApi = async (credentials: { email: string; pw: string }) => {
+export const loginApi = async (
+  credentials: LoginFormData
+): Promise<ApiResponse<LoginResponse>> => {
   try {
     const response = await authApi.post("/auth/login", credentials);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      switch (error.response?.status) {
-        case 400:
-          throw new Error("이메일과 비밀번호를 확인해주세요.");
-        case 401:
-          throw new Error("이메일 또는 비밀번호가 일치하지 않습니다.");
-        case 500:
-          throw new Error(
-            "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-          );
-        default:
-          throw new Error("로그인 중 오류가 발생했습니다.");
-      }
-    }
-    throw new Error("알 수 없는 오류가 발생했습니다.");
+    logError("loginApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
 // 사용자 정보 조회 API 함수
-export const getUserInfoApi = async () => {
+export const getUserInfoApi = async (): Promise<ApiResponse<{ user: any }>> => {
   try {
     const response = await authApi.get("/users/me");
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      switch (error.response?.status) {
-        case 401:
-          throw new Error("인증이 필요합니다. 다시 로그인해주세요.");
-        case 404:
-          throw new Error("사용자 정보를 찾을 수 없습니다.");
-        case 500:
-          throw new Error(
-            "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-          );
-        default:
-          throw new Error("사용자 정보 조회 중 오류가 발생했습니다.");
-      }
-    }
-    throw new Error("알 수 없는 오류가 발생했습니다.");
+    logError("getUserInfoApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
 // 사용자 정보 업데이트 API 함수
-export const updateUserInfoApi = async (userData: {
-  nickname?: string;
-  email?: string;
-}) => {
+export const updateUserInfoApi = async (
+  userData: UpdateUserData
+): Promise<ApiResponse> => {
   try {
-    const response = await authApi.put("/users/me", userData);
+    const response = await authApi.patch("/users/me", userData);
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      switch (error.response?.status) {
-        case 400:
-          throw new Error("잘못된 요청입니다. 입력 정보를 확인해주세요.");
-        case 401:
-          throw new Error("인증이 필요합니다. 다시 로그인해주세요.");
-        case 409:
-          throw new Error("이미 사용 중인 이메일입니다.");
-        case 500:
-          throw new Error(
-            "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-          );
-        default:
-          throw new Error("사용자 정보 수정 중 오류가 발생했습니다.");
-      }
-    }
-    throw new Error("알 수 없는 오류가 발생했습니다.");
+    logError("updateUserInfoApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 

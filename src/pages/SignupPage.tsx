@@ -4,6 +4,14 @@ import styled from "styled-components";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { signupApi } from "../api/auth";
+import { OAUTH_CONFIG } from "../constants";
+import {
+  validateSignupForm,
+  hasFormErrors,
+  showErrorAlert,
+  showSuccessAlert,
+} from "../utils";
+import { SignupFormData, FormErrors } from "../types";
 
 const SignupContainer = styled.div`
   padding: 40px 20px;
@@ -94,14 +102,14 @@ const SocialButton = styled.button`
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormData>({
     email: "",
     password: "",
     confirmPassword: "",
     name: "",
   });
 
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<FormErrors>({
     email: "",
     password: "",
     confirmPassword: "",
@@ -111,47 +119,21 @@ const SignupPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    (field: keyof SignupFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setFormData((prev) => ({ ...prev, [field]: value }));
 
       // 에러 메시지 초기화
-      if (errors[field as keyof typeof errors]) {
+      if (errors[field]) {
         setErrors((prev) => ({ ...prev, [field]: "" }));
       }
     };
 
   const validateForm = () => {
-    const newErrors = {
-      email: "",
-      password: "",
-      confirmPassword: "",
-      name: "",
-    };
-
-    // 이메일 검증
-    if (!formData.email) {
-      newErrors.email = "이메일을 입력해주세요";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "올바른 이메일 형식을 입력해주세요";
-    }
-
-    // 비밀번호 검증
-    if (!formData.password) {
-      newErrors.password = "비밀번호를 입력해주세요";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "비밀번호는 8자 이상이어야 합니다";
-    }
-
-    // 비밀번호 확인 검증
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "비밀번호 확인을 입력해주세요";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "비밀번호가 일치하지 않습니다";
-    }
-
+    const newErrors = validateSignupForm(formData);
     setErrors(newErrors);
-    return !Object.values(newErrors).some((error) => error);
+    return !hasFormErrors(newErrors);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,15 +147,19 @@ const SignupPage: React.FC = () => {
         await signupApi(signupData);
 
         // 회원가입 성공 시 로그인 페이지로 이동
-        alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
+        showSuccessAlert(
+          "회원가입이 완료되었습니다! 로그인 페이지로 이동합니다."
+        );
         navigate("/login");
       } catch (error) {
         // 에러 처리
-        if (error instanceof Error) {
-          alert(`회원가입 실패: ${error.message}`);
-        } else {
-          alert("회원가입 중 오류가 발생했습니다.");
-        }
+        showErrorAlert(
+          `회원가입 실패: ${
+            error instanceof Error
+              ? error.message
+              : "알 수 없는 오류가 발생했습니다."
+          }`
+        );
       } finally {
         setIsLoading(false);
       }
@@ -185,12 +171,11 @@ const SignupPage: React.FC = () => {
     console.log("구글 회원가입");
   };
 
-  const CLIENT_ID = process.env.REACT_APP_KAKAO_CLIENT_ID;
-  const REDIRECT_URI = "http://43.201.20.75/auth/oauth"; // Redirect URI를 여기에 입력
-  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&state=kakao`;
-
   const handleKakaoSignup = () => {
-    window.location.href = KAKAO_AUTH_URL;
+    const { CLIENT_ID, REDIRECT_URI, AUTH_URL, RESPONSE_TYPE, STATE } =
+      OAUTH_CONFIG.KAKAO;
+    const kakaoAuthUrl = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&state=${STATE}`;
+    window.location.href = kakaoAuthUrl;
     console.log("카카오 회원가입");
   };
 

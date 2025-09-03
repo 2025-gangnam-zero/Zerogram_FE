@@ -1,10 +1,13 @@
 import { create } from "zustand";
 import { getUserInfoApi } from "../api/auth";
+import { AUTH_CONSTANTS } from "../constants";
+import { UserProfile } from "../types";
 
 interface UserState {
   id: string | null;
   nickname: string | null;
   email: string | null;
+  password: string | null;
   profile_image?: string;
   sessionId: string | null;
   isLoading: boolean;
@@ -12,13 +15,7 @@ interface UserState {
 }
 
 interface UserActions {
-  setUser: (user: {
-    id?: string;
-    nickname: string;
-    email?: string;
-    profile_image?: string;
-    sessionId: string;
-  }) => void;
+  setUser: (user: UserProfile) => void;
   clearUser: () => void;
   setSessionId: (sessionId: string) => void;
   setLoading: (loading: boolean) => void;
@@ -31,6 +28,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
   id: null,
   nickname: null,
   email: null,
+  password: null,
   profile_image: undefined,
   sessionId: null,
   isLoading: false,
@@ -43,6 +41,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       sessionId: user.sessionId,
       id: user.id || null,
       email: user.email || null,
+      password: user.password || null,
       profile_image: user.profile_image || undefined,
       error: null,
     });
@@ -53,6 +52,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       id: null,
       nickname: null,
       email: null,
+      password: null,
       profile_image: undefined,
       sessionId: null,
       error: null,
@@ -86,7 +86,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       }
 
       // 세션 ID 확인 (localStorage 우선, Zustand 스토어 차선)
-      let sessionId = localStorage.getItem("sessionId");
+      let sessionId = localStorage.getItem(AUTH_CONSTANTS.SESSION_ID_KEY);
       console.log("fetchUserInfo 시작 - localStorage 세션 ID:", sessionId);
 
       if (!sessionId) {
@@ -104,7 +104,9 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
               require("./authStore").useAuthStore.getState();
             const isAuth = checkAuthStatus();
             if (isAuth) {
-              const authSessionId = localStorage.getItem("sessionId");
+              const authSessionId = localStorage.getItem(
+                AUTH_CONSTANTS.SESSION_ID_KEY
+              );
               if (authSessionId) {
                 sessionId = authSessionId;
                 console.log("authStore에서 세션 ID 동기화:", sessionId);

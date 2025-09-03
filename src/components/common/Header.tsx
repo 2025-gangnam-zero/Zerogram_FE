@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useAuthStore } from "../../store/authStore";
+import { UI_CONSTANTS, LAYOUT_CONSTANTS } from "../../constants";
 
 const HeaderContainer = styled.header`
   background-color: #ffffff;
@@ -14,13 +15,13 @@ const HeaderContainer = styled.header`
 `;
 
 const HeaderWrapper = styled.div`
-  max-width: 1200px;
+  max-width: ${LAYOUT_CONSTANTS.MAX_WIDTH};
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 ${LAYOUT_CONSTANTS.CONTAINER_PADDING};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 70px;
+  height: ${LAYOUT_CONSTANTS.HEADER_HEIGHT};
 `;
 
 const Logo = styled.div`
@@ -28,12 +29,12 @@ const Logo = styled.div`
     margin: 0;
     font-size: 28px;
     font-weight: 700;
-    color: #2c3e50;
+    color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
     cursor: pointer;
-    transition: color 0.3s ease;
+    transition: color ${UI_CONSTANTS.TRANSITIONS.NORMAL};
 
     &:hover {
-      color: #3498db;
+      color: ${UI_CONSTANTS.COLORS.PRIMARY};
     }
   }
 `;
@@ -41,24 +42,24 @@ const Logo = styled.div`
 const AuthSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: ${UI_CONSTANTS.SPACING.MD};
 `;
 
 const LoginBtn = styled.button`
-  background-color: #3498db;
+  background-color: ${UI_CONSTANTS.COLORS.PRIMARY};
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 6px;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
 
   &:hover {
-    background-color: #2980b9;
+    background-color: ${UI_CONSTANTS.COLORS.PRIMARY_HOVER};
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+    box-shadow: ${UI_CONSTANTS.SHADOWS.XL};
   }
 
   &:active {

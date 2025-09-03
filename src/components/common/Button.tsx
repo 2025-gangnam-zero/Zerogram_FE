@@ -1,30 +1,32 @@
 import React from "react";
 import styled from "styled-components";
+import { ButtonVariant, ButtonSize } from "../../types";
+import { UI_CONSTANTS } from "../../constants";
 
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
-  variant?: "primary" | "secondary" | "outline" | "danger";
-  size?: "small" | "medium" | "large";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   fullWidth?: boolean;
   type?: "button" | "submit" | "reset";
 }
 
 interface StyledButtonProps {
-  $variant?: "primary" | "secondary" | "outline" | "danger";
-  $size?: "small" | "medium" | "large";
+  $variant?: ButtonVariant;
+  $size?: ButtonSize;
   $fullWidth?: boolean;
 }
 
-const getButtonStyles = (variant: string, size: string) => {
+const getButtonStyles = (variant: ButtonVariant, size: ButtonSize) => {
   const baseStyles = `
     border: none;
-    border-radius: 8px;
+    border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
     font-family: inherit;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -39,13 +41,13 @@ const getButtonStyles = (variant: string, size: string) => {
 
   const variantStyles = {
     primary: `
-      background-color: #3498db;
+      background-color: ${UI_CONSTANTS.COLORS.PRIMARY};
       color: white;
       
       &:hover:not(:disabled) {
-        background-color: #2980b9;
+        background-color: ${UI_CONSTANTS.COLORS.PRIMARY_HOVER};
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        box-shadow: ${UI_CONSTANTS.SHADOWS.XL};
       }
       
       &:active:not(:disabled) {
@@ -53,13 +55,13 @@ const getButtonStyles = (variant: string, size: string) => {
       }
     `,
     secondary: `
-      background-color: #95a5a6;
+      background-color: ${UI_CONSTANTS.COLORS.SECONDARY};
       color: white;
       
       &:hover:not(:disabled) {
-        background-color: #7f8c8d;
+        background-color: ${UI_CONSTANTS.COLORS.SECONDARY_HOVER};
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+        box-shadow: ${UI_CONSTANTS.SHADOWS.XL};
       }
       
       &:active:not(:disabled) {
@@ -68,14 +70,14 @@ const getButtonStyles = (variant: string, size: string) => {
     `,
     outline: `
       background-color: transparent;
-      color: #3498db;
-      border: 2px solid #3498db;
+      color: ${UI_CONSTANTS.COLORS.PRIMARY};
+      border: 2px solid ${UI_CONSTANTS.COLORS.PRIMARY};
       
       &:hover:not(:disabled) {
-        background-color: #3498db;
+        background-color: ${UI_CONSTANTS.COLORS.PRIMARY};
         color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        box-shadow: ${UI_CONSTANTS.SHADOWS.XL};
       }
       
       &:active:not(:disabled) {
@@ -83,13 +85,13 @@ const getButtonStyles = (variant: string, size: string) => {
       }
     `,
     danger: `
-      background-color: #e74c3c;
+      background-color: ${UI_CONSTANTS.COLORS.DANGER};
       color: white;
       
       &:hover:not(:disabled) {
-        background-color: #c0392b;
+        background-color: ${UI_CONSTANTS.COLORS.DANGER_HOVER};
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        box-shadow: ${UI_CONSTANTS.SHADOWS.XL};
       }
       
       &:active:not(:disabled) {
@@ -100,7 +102,7 @@ const getButtonStyles = (variant: string, size: string) => {
 
   const sizeStyles = {
     small: `
-      padding: 8px 16px;
+      padding: ${UI_CONSTANTS.SPACING.SM} ${UI_CONSTANTS.SPACING.MD};
       font-size: 14px;
     `,
     medium: `
@@ -108,15 +110,15 @@ const getButtonStyles = (variant: string, size: string) => {
       font-size: 16px;
     `,
     large: `
-      padding: 16px 32px;
+      padding: ${UI_CONSTANTS.SPACING.MD} ${UI_CONSTANTS.SPACING.XL};
       font-size: 18px;
     `,
   };
 
   return `
     ${baseStyles}
-    ${variantStyles[variant as keyof typeof variantStyles]}
-    ${sizeStyles[size as keyof typeof sizeStyles]}
+    ${variantStyles[variant]}
+    ${sizeStyles[size]}
   `;
 };
 

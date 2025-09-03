@@ -5,6 +5,7 @@ import { useAuthStore } from "../store/authStore";
 import { updateUserInfoApi } from "../api/auth";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
+import { showErrorAlert, showSuccessAlert, getInitials } from "../utils";
 
 const MyPageContainer = styled.div`
   padding: 40px 20px;
@@ -141,6 +142,7 @@ const MyPage: React.FC = () => {
     id,
     nickname,
     email,
+    password,
     profile_image,
     isLoading,
     error,
@@ -150,9 +152,14 @@ const MyPage: React.FC = () => {
   const { isLoggedIn, checkAuthStatus } = useAuthStore();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [editForm, setEditForm] = useState<{
+    nickname: string;
+    email: string;
+    password: string;
+  }>({
     nickname: "",
     email: "",
+    password: "",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -168,13 +175,14 @@ const MyPage: React.FC = () => {
 
   // 편집 모드 시작 시 현재 정보로 폼 초기화
   useEffect(() => {
-    if (isEditing && nickname && email) {
+    if (isEditing && nickname && email && password) {
       setEditForm({
         nickname: nickname,
         email: email,
+        password: password,
       });
     }
-  }, [isEditing, nickname, email]);
+  }, [isEditing, nickname, email, password]);
 
   const actualIsLoggedIn = checkAuthStatus();
 
@@ -211,11 +219,12 @@ const MyPage: React.FC = () => {
     setEditForm({
       nickname: nickname || "",
       email: email || "",
+      password: password || "",
     });
   };
 
   const handleInputChange =
-    (field: keyof typeof editForm) =>
+    (field: "nickname" | "email" | "password") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setEditForm((prev) => ({
         ...prev,
@@ -227,12 +236,17 @@ const MyPage: React.FC = () => {
     e.preventDefault();
 
     if (!editForm.nickname.trim()) {
-      alert("닉네임을 입력해주세요.");
+      showErrorAlert("닉네임을 입력해주세요.");
       return;
     }
 
     if (!editForm.email.trim()) {
-      alert("이메일을 입력해주세요.");
+      showErrorAlert("이메일을 입력해주세요.");
+      return;
+    }
+
+    if (!editForm.password.trim()) {
+      showErrorAlert("비밀번호를 입력해주세요.");
       return;
     }
 
@@ -243,6 +257,7 @@ const MyPage: React.FC = () => {
       const response = await updateUserInfoApi({
         nickname: editForm.nickname,
         email: editForm.email,
+        password: editForm.password,
       });
       console.log("response", response);
 
@@ -251,26 +266,25 @@ const MyPage: React.FC = () => {
         id: id || "",
         nickname: editForm.nickname,
         email: editForm.email,
+        password: editForm.password,
         profile_image: profile_image,
         sessionId: useUserStore.getState().sessionId || "",
       });
 
       setIsEditing(false);
-      alert("정보가 수정되었습니다.");
+      showSuccessAlert("정보가 수정되었습니다.");
     } catch (error) {
       console.error("정보 수정 실패:", error);
-      if (error instanceof Error) {
-        alert(`정보 수정에 실패했습니다: ${error.message}`);
-      } else {
-        alert("정보 수정에 실패했습니다.");
-      }
+      showErrorAlert(
+        `정보 수정에 실패했습니다: ${
+          error instanceof Error
+            ? error.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name ? name.charAt(0).toUpperCase() : "U";
   };
 
   return (
@@ -307,6 +321,10 @@ const MyPage: React.FC = () => {
                 <InfoLabel>이메일</InfoLabel>
                 <InfoValue>{email || "정보 없음"}</InfoValue>
               </InfoItem>
+              <InfoItem>
+                <InfoLabel>비밀번호</InfoLabel>
+                <InfoValue>{password || "정보 없음"}</InfoValue>
+              </InfoItem>
             </InfoGrid>
 
             <ButtonContainer>
@@ -336,6 +354,14 @@ const MyPage: React.FC = () => {
               placeholder="이메일을 입력하세요"
               value={editForm.email}
               onChange={handleInputChange("email")}
+              required
+            />
+            <Input
+              label="비밀번호"
+              type="password"
+              placeholder="비밀번호를 입력하세요"
+              value={editForm.password}
+              onChange={handleInputChange("password")}
               required
             />
 
