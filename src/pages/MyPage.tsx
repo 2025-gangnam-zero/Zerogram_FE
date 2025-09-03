@@ -1,16 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
+import { updateUserInfoApi } from "../api/auth";
+import Input from "../components/common/Input";
+import Button from "../components/common/Button";
 
 const MyPageContainer = styled.div`
   padding: 40px 20px;
-  text-align: center;
-  min-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+  min-height: 80vh;
 `;
 
 const Title = styled.h1`
@@ -18,60 +18,166 @@ const Title = styled.h1`
   color: #2c3e50;
   margin-bottom: 20px;
   font-weight: 700;
+  text-align: center;
 `;
 
-const Subtitle = styled.p`
+const ProfileSection = styled.div`
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+`;
+
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #ecf0f1;
+`;
+
+const ProfileImage = styled.div<{ $imageUrl?: string }>`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.$imageUrl
+      ? `url(${props.$imageUrl}) center/cover`
+      : "linear-gradient(135deg, #3498db, #9b59b6)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  margin-right: 20px;
+`;
+
+const ProfileInfo = styled.div`
+  flex: 1;
+`;
+
+const ProfileName = styled.h2`
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+`;
+
+const ProfileEmail = styled.p`
   font-size: 1.1rem;
   color: #7f8c8d;
+  margin: 0;
+`;
+
+const InfoSection = styled.div`
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-weight: 600;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  gap: 20px;
   margin-bottom: 30px;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+`;
+
+const InfoLabel = styled.span`
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
+`;
+
+const InfoValue = styled.span`
+  color: #34495e;
+  font-size: 1rem;
+`;
+
+const EditForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
 `;
 
 const LoadingText = styled.p`
   font-size: 1.2rem;
   color: #3498db;
+  text-align: center;
 `;
 
 const ErrorText = styled.p`
   font-size: 1.2rem;
   color: #e74c3c;
+  text-align: center;
 `;
 
 const MyPage: React.FC = () => {
-  const { nickname, isLoading, error, fetchUserInfo } = useUserStore();
+  const {
+    id,
+    nickname,
+    email,
+    profile_image,
+    isLoading,
+    error,
+    fetchUserInfo,
+    setUser,
+  } = useUserStore();
   const { isLoggedIn, checkAuthStatus } = useAuthStore();
 
-  useEffect(() => {
-    // 인증 상태를 다시 한 번 확인하여 동기화
-    const actualIsLoggedIn = checkAuthStatus();
-    console.log("MyPage 인증 상태 확인:", {
-      hookIsLoggedIn: isLoggedIn,
-      actualIsLoggedIn,
-      hasNickname: !!nickname,
-      isLoading,
-      hasError: !!error,
-    });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    nickname: "",
+    email: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
-    // 로그인 상태이고 사용자 정보가 없을 때만 API 호출
-    // 이미 로딩 중이거나 에러가 있으면 호출하지 않음
+  useEffect(() => {
+    const actualIsLoggedIn = checkAuthStatus();
+
     if (actualIsLoggedIn && !nickname && !isLoading && !error) {
-      console.log("MyPage에서 사용자 정보 조회 시작");
       fetchUserInfo().catch((error: unknown) => {
         console.error("사용자 정보 조회 실패:", error);
-      });
-    } else {
-      console.log("MyPage 사용자 정보 조회 조건 미충족:", {
-        isLoggedIn: actualIsLoggedIn,
-        hasNickname: !!nickname,
-        isLoading,
-        hasError: !!error,
       });
     }
   }, [isLoggedIn, nickname, isLoading, error, fetchUserInfo, checkAuthStatus]);
 
-  // 실제 인증 상태를 사용하여 렌더링
+  // 편집 모드 시작 시 현재 정보로 폼 초기화
+  useEffect(() => {
+    if (isEditing && nickname && email) {
+      setEditForm({
+        nickname: nickname,
+        email: email,
+      });
+    }
+  }, [isEditing, nickname, email]);
+
   const actualIsLoggedIn = checkAuthStatus();
 
-  // 로그인하지 않은 경우
   if (!actualIsLoggedIn) {
     return (
       <MyPageContainer>
@@ -96,12 +202,165 @@ const MyPage: React.FC = () => {
     );
   }
 
-  const userName = nickname || "사용자";
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({
+      nickname: nickname || "",
+      email: email || "",
+    });
+  };
+
+  const handleInputChange =
+    (field: keyof typeof editForm) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEditForm((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    };
+
+  const handleSaveClick = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editForm.nickname.trim()) {
+      alert("닉네임을 입력해주세요.");
+      return;
+    }
+
+    if (!editForm.email.trim()) {
+      alert("이메일을 입력해주세요.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // 서버에 업데이트 요청
+      const response = await updateUserInfoApi({
+        nickname: editForm.nickname,
+        email: editForm.email,
+      });
+      console.log("response", response);
+
+      // 성공 시 로컬 상태 업데이트
+      setUser({
+        id: id || "",
+        nickname: editForm.nickname,
+        email: editForm.email,
+        profile_image: profile_image,
+        sessionId: useUserStore.getState().sessionId || "",
+      });
+
+      setIsEditing(false);
+      alert("정보가 수정되었습니다.");
+    } catch (error) {
+      console.error("정보 수정 실패:", error);
+      if (error instanceof Error) {
+        alert(`정보 수정에 실패했습니다: ${error.message}`);
+      } else {
+        alert("정보 수정에 실패했습니다.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name ? name.charAt(0).toUpperCase() : "U";
+  };
 
   return (
     <MyPageContainer>
-      <Title>{userName}님 마이페이지</Title>
-      <Subtitle>내 정보와 활동 내역을 확인하세요</Subtitle>
+      <Title>마이페이지</Title>
+
+      <ProfileSection>
+        <ProfileHeader>
+          <ProfileImage $imageUrl={profile_image || undefined}>
+            {!profile_image && getInitials(nickname || "사용자")}
+          </ProfileImage>
+          <ProfileInfo>
+            <ProfileName>{nickname || "사용자"}</ProfileName>
+            <ProfileEmail>{email || "이메일 없음"}</ProfileEmail>
+          </ProfileInfo>
+        </ProfileHeader>
+      </ProfileSection>
+
+      <InfoSection>
+        <SectionTitle>내 정보</SectionTitle>
+
+        {!isEditing ? (
+          <>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>사용자 ID</InfoLabel>
+                <InfoValue>{id || "정보 없음"}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>닉네임</InfoLabel>
+                <InfoValue>{nickname || "정보 없음"}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>이메일</InfoLabel>
+                <InfoValue>{email || "정보 없음"}</InfoValue>
+              </InfoItem>
+            </InfoGrid>
+
+            <ButtonContainer>
+              <Button
+                type="button"
+                variant="primary"
+                size="medium"
+                onClick={handleEditClick}
+              >
+                정보 수정
+              </Button>
+            </ButtonContainer>
+          </>
+        ) : (
+          <EditForm onSubmit={handleSaveClick}>
+            <Input
+              label="닉네임"
+              type="text"
+              placeholder="닉네임을 입력하세요"
+              value={editForm.nickname}
+              onChange={handleInputChange("nickname")}
+              required
+            />
+            <Input
+              label="이메일"
+              type="email"
+              placeholder="이메일을 입력하세요"
+              value={editForm.email}
+              onChange={handleInputChange("email")}
+              required
+            />
+
+            <ButtonContainer>
+              <Button
+                type="button"
+                variant="secondary"
+                size="medium"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="medium"
+                disabled={isSaving}
+              >
+                {isSaving ? "저장 중..." : "저장"}
+              </Button>
+            </ButtonContainer>
+          </EditForm>
+        )}
+      </InfoSection>
     </MyPageContainer>
   );
 };

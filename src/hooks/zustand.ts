@@ -8,7 +8,6 @@ export const useAuthState = () =>
   useAuthStore((state) => ({
     isLoggedIn: state.isLoggedIn,
     sessionId: state.sessionId,
-    userName: state.userName,
   }));
 
 // User store selectors

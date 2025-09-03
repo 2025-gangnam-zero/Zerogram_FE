@@ -110,6 +110,28 @@ const LogoutBtn = styled.button`
   }
 `;
 
+const MyPageBtn = styled.button`
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #8e44ad;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(155, 89, 182, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const UserMenu = styled.div`
   display: flex;
   align-items: center;
@@ -152,7 +174,10 @@ const Header: React.FC = () => {
   const handleLogoutClick = () => {
     logout();
     navigate("/");
-    alert("로그아웃되었습니다.");
+  };
+
+  const handleMyPageClick = () => {
+    navigate("/mypage");
   };
 
   return (
@@ -164,6 +189,7 @@ const Header: React.FC = () => {
         <AuthSection>
           {isLoggedIn ? (
             <UserMenu>
+              <MyPageBtn onClick={handleMyPageClick}>마이페이지</MyPageBtn>
               <LogoutBtn onClick={handleLogoutClick}>로그아웃</LogoutBtn>
             </UserMenu>
           ) : (

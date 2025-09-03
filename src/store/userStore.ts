@@ -5,6 +5,7 @@ interface UserState {
   id: string | null;
   nickname: string | null;
   email: string | null;
+  profile_image?: string;
   sessionId: string | null;
   isLoading: boolean;
   error: string | null;
@@ -15,6 +16,7 @@ interface UserActions {
     id?: string;
     nickname: string;
     email?: string;
+    profile_image?: string;
     sessionId: string;
   }) => void;
   clearUser: () => void;
@@ -29,6 +31,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
   id: null,
   nickname: null,
   email: null,
+  profile_image: undefined,
   sessionId: null,
   isLoading: false,
   error: null,
@@ -40,6 +43,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       sessionId: user.sessionId,
       id: user.id || null,
       email: user.email || null,
+      profile_image: user.profile_image || undefined,
       error: null,
     });
   },
@@ -49,6 +53,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       id: null,
       nickname: null,
       email: null,
+      profile_image: undefined,
       sessionId: null,
       error: null,
     });
@@ -137,6 +142,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
         id: userData._id,
         nickname: userData.nickname,
         email: userData.email,
+        profile_image: userData.profile_image || null,
         error: null,
         // 세션 ID도 함께 업데이트하여 동기화 보장
         sessionId: sessionId,

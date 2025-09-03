@@ -185,8 +185,12 @@ const SignupPage: React.FC = () => {
     console.log("구글 회원가입");
   };
 
+  const CLIENT_ID = process.env.REACT_APP_KAKAO_CLIENT_ID;
+  const REDIRECT_URI = "http://43.201.20.75/auth/oauth"; // Redirect URI를 여기에 입력
+  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&state=kakao`;
+
   const handleKakaoSignup = () => {
-    // TODO: 카카오 OAuth 로그인 구현
+    window.location.href = KAKAO_AUTH_URL;
     console.log("카카오 회원가입");
   };
 

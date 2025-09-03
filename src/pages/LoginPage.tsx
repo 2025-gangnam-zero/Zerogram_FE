@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
 import Input from "../components/common/Input";
@@ -43,7 +43,26 @@ const LoginForm = styled.form`
 `;
 
 const ButtonContainer = styled.div`
-  margin-top: 8px;
+  margin-top: 12px;
+`;
+
+const SocialButton = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  background: white;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+
+  &:hover {
+    border-color: #3498db;
+    background: #f8f9fa;
+  }
 `;
 
 const LoginPage: React.FC = () => {
@@ -61,20 +80,21 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState<{
     sessionId: string;
-    userName: string;
   } | null>(null);
+
+  const [params] = useSearchParams();
+  const sessionId = params.get("sessionId");
 
   // 로그인 성공 후 동기화 처리
   useEffect(() => {
     if (loginSuccess) {
-      const { sessionId, userName } = loginSuccess;
+      const { sessionId } = loginSuccess;
 
       // 1. 먼저 localStorage에 저장 (API 인터셉터가 사용할 수 있도록)
       localStorage.setItem("sessionId", sessionId);
-      localStorage.setItem("userName", userName);
 
       // 2. Zustand 스토어에 저장
-      login(sessionId, userName);
+      login(sessionId);
 
       // 3. userStore에도 세션 ID 설정 (동기적으로 처리)
       const { setSessionId } = useUserStore.getState();
@@ -117,6 +137,61 @@ const LoginPage: React.FC = () => {
     }
   }, [loginSuccess, login, fetchUserInfo, navigate]);
 
+  // 로그인 이후 sessionId 확인
+  useEffect(() => {
+    if (!sessionId) return;
+
+    console.log("URL에서 받은 sessionId:", sessionId);
+
+    // URL에서 사용자 정보 파라미터들 추출
+    const userId = params.get("_id");
+    const nickname = params.get("nickname");
+    const email = params.get("email");
+    const profileImage = params.get("profile_image");
+    const role = params.get("role");
+
+    // 카카오 로그인 후 받은 데이터가 있는지 확인
+    if (userId && nickname && email) {
+      console.log("카카오 로그인 데이터 처리 중:", {
+        sessionId,
+        userId,
+        nickname: decodeURIComponent(nickname),
+        email,
+        profileImage: profileImage ? decodeURIComponent(profileImage) : null,
+        role,
+      });
+
+      // 1. localStorage에 sessionId 저장
+      localStorage.setItem("sessionId", sessionId);
+
+      // 2. authStore에 로그인 상태 저장
+      login(sessionId);
+
+      // 3. userStore에 사용자 정보 저장
+      const { setUser } = useUserStore.getState();
+      setUser({
+        id: userId,
+        nickname: decodeURIComponent(nickname), // URL 디코딩
+        email,
+        sessionId,
+      });
+
+      // 4. 동기화 확인
+      console.log("카카오 로그인 데이터 저장 완료:", {
+        authStore: useAuthStore.getState().sessionId,
+        userStore: useUserStore.getState(),
+        localStorage: localStorage.getItem("sessionId"),
+      });
+
+      // 5. 홈페이지로 리다이렉션
+      navigate("/");
+    } else {
+      // 일반적인 sessionId만 있는 경우 (기존 로직)
+      console.log("일반 sessionId 처리:", sessionId);
+    }
+  }, [sessionId, params, login, navigate]);
+
+  // 인풋 변경 핸들러
   const handleInputChange =
     (field: keyof typeof formData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,7 +241,7 @@ const LoginPage: React.FC = () => {
         );
         console.log("전체 응답 데이터:", data);
         navigate("/");
-        setLoginSuccess({ sessionId, userName });
+        setLoginSuccess({ sessionId });
       } else {
         console.error("로그인 응답에 세션 ID가 없음:", data);
         alert("로그인 정보를 가져올 수 없습니다.");
@@ -180,6 +255,21 @@ const LoginPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 구글 소셜 로그인
+  const handleGoogleSignup = () => {
+    // TODO: 구글 OAuth 로그인 구현
+    console.log("구글 회원가입");
+  };
+  // 카카오 소셜 로그인
+  const CLIENT_ID = process.env.REACT_APP_KAKAO_CLIENT_ID;
+  const REDIRECT_URI = "http://43.201.20.75/auth/oauth"; // Redirect URI를 여기에 입력
+  const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&state=kakao`;
+
+  const handleKakaoSignup = () => {
+    window.location.href = KAKAO_AUTH_URL;
+    console.log("카카오 회원가입");
   };
 
   return (
@@ -216,6 +306,12 @@ const LoginPage: React.FC = () => {
             {isLoading ? "처리 중..." : "로그인"}
           </Button>
         </ButtonContainer>
+        <SocialButton type="button" onClick={handleGoogleSignup}>
+          Google 로그인
+        </SocialButton>
+        <SocialButton type="button" onClick={handleKakaoSignup}>
+          카카오 로그인
+        </SocialButton>
       </LoginForm>
     </LoginContainer>
   );

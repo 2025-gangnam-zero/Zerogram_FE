@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import styled from "styled-components";
-import { useUserStore } from "./store/userStore";
 import { useAuthStore } from "./store/authStore";
 import GlobalStyle from "./styles/GlobalStyle";
 import Header from "./components/common/Header";
