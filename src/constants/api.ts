@@ -1,6 +1,6 @@
 // API 관련 상수
 export const API_CONFIG = {
-  BASE_URL: "http://10.10.0.97:4000",
+  BASE_URL: "http://43.201.20.75",
   TIMEOUT: 10000,
   HEADERS: {
     "Content-Type": "application/json",

@@ -15,7 +15,8 @@ export const OAUTH_CONFIG = {
   },
   GOOGLE: {
     CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-    REDIRECT_URI: "http://10.10.0.97.nip.io:4000/auth/oauth",
+    REDIRECT_URI:
+      "http://ec2-43-201-20-75.ap-northeast-2.compute.amazonaws.com/auth/oauth",
     AUTH_URL: "https://accounts.google.com/o/oauth2/v2/auth",
     RESPONSE_TYPE: "code",
     SCOPE: "openid email profile",
