@@ -157,16 +157,17 @@ const MyPage: React.FC = () => {
     nickname: string;
     email: string;
     password: string;
-    profile_image: string;
+    profile_image: File | null;
     login_type: string;
   }>({
-    nickname: nickname || "",
-    email: email || "",
-    password: password || "",
-    profile_image: profile_image || "",
-    login_type: login_type || "",
+    nickname: "",
+    email: "",
+    password: "",
+    profile_image: null,
+    login_type: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // 미리보기 URL 상태 추가
 
   useEffect(() => {
     const actualIsLoggedIn = checkAuthStatus();
@@ -180,16 +181,25 @@ const MyPage: React.FC = () => {
 
   // 편집 모드 시작 시 현재 정보로 폼 초기화
   useEffect(() => {
-    if (isEditing && nickname && email && password) {
+    if (isEditing) {
       setEditForm({
-        nickname: nickname,
-        email: email,
-        password: password,
-        profile_image: profile_image || "",
+        nickname: nickname || "",
+        email: email || "",
+        password: password || "",
+        profile_image: null,
         login_type: login_type || "",
       });
     }
   }, [isEditing, nickname, email, password, profile_image, login_type]);
+
+  // 편집 모드 종료 시 미리보기 URL 정리
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl);
+      }
+    };
+  }, [previewImageUrl]);
 
   const actualIsLoggedIn = checkAuthStatus();
 
@@ -227,13 +237,18 @@ const MyPage: React.FC = () => {
       nickname: nickname || "",
       email: email || "",
       password: password || "",
-      profile_image: profile_image || "",
+      profile_image: null,
       login_type: login_type || "",
     });
+    // 미리보기 URL 정리
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+      setPreviewImageUrl(null);
+    }
   };
 
   const handleInputChange =
-    (field: "nickname" | "email" | "password" | "profile_image") =>
+    (field: "nickname" | "email" | "password") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setEditForm((prev) => ({
         ...prev,
@@ -241,54 +256,71 @@ const MyPage: React.FC = () => {
       }));
     };
 
+  // 파일 변경 핸들러
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+
+    // 이전 미리보기 URL 정리
+    if (previewImageUrl) {
+      URL.revokeObjectURL(previewImageUrl);
+    }
+
+    if (file) {
+      // 새로운 미리보기 URL 생성
+      const newPreviewUrl = URL.createObjectURL(file);
+      setPreviewImageUrl(newPreviewUrl);
+    } else {
+      setPreviewImageUrl(null);
+    }
+
+    setEditForm((prev) => ({
+      ...prev,
+      profile_image: file,
+    }));
+  };
+
   const handleSaveClick = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setIsSaving(true);
 
     try {
-      // 업데이트할 데이터 준비 - 공백이 아닌 필드만 포함
-      const updateData: {
-        nickname?: string;
-        password?: string;
-        profile_image?: string;
-      } = {};
+      const formData = new FormData();
+      let hasUpdates = false;
 
-      // 닉네임이 입력되었을 때만 포함
       if (editForm.nickname.trim()) {
-        updateData.nickname = editForm.nickname.trim();
+        formData.append("nickname", editForm.nickname.trim());
+        hasUpdates = true;
       }
 
-      // 비밀번호가 입력되었을 때만 포함
       if (editForm.password.trim()) {
-        updateData.password = editForm.password.trim();
+        formData.append("password", editForm.password.trim());
+        hasUpdates = true;
       }
 
-      if (editForm.profile_image.trim()) {
-        updateData.profile_image = editForm.profile_image.trim();
+      if (editForm.profile_image) {
+        formData.append("profile_image", editForm.profile_image);
+        hasUpdates = true;
       }
 
-      // 업데이트할 필드가 하나도 없으면 경고
-      if (Object.keys(updateData).length === 0) {
+      if (!hasUpdates) {
         showErrorAlert("수정할 정보를 입력해주세요.");
         return;
       }
 
-      // 서버에 업데이트 요청
-      const response = await updateUserInfoApi(updateData);
-      console.log("response", response);
+      // 업데이트 요청
+      await updateUserInfoApi(formData);
 
-      // 성공 시 로컬 상태 업데이트 - 변경된 필드만 업데이트
-      setUser({
-        id: id || "",
-        nickname: updateData.nickname || nickname || "", // 새로운 값 또는 기존 값 유지
-        password: updateData.password || password || "", // 새로운 값 또는 기존 값 유지
-        profile_image: updateData.profile_image || profile_image || "",
-        sessionId: useUserStore.getState().sessionId || "",
-        login_type: "normal",
-      });
+      // 업데이트 성공 후 최신 사용자 정보 다시 가져오기
+      await fetchUserInfo();
 
+      // 편집 모드 종료 및 미리보기 정리
       setIsEditing(false);
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl);
+        setPreviewImageUrl(null);
+      }
+
       showSuccessAlert("정보가 수정되었습니다.");
     } catch (error) {
       console.error("정보 수정 실패:", error);
@@ -310,8 +342,18 @@ const MyPage: React.FC = () => {
 
       <ProfileSection>
         <ProfileHeader>
-          <ProfileImage $imageUrl={profile_image || undefined}>
-            {!profile_image && getInitials(nickname || "사용자")}
+          <ProfileImage
+            $imageUrl={
+              isEditing && previewImageUrl
+                ? previewImageUrl
+                : profile_image && !profile_image.startsWith("file://")
+                ? profile_image
+                : undefined
+            }
+          >
+            {!(isEditing && previewImageUrl) &&
+              (!profile_image || profile_image.startsWith("file://")) &&
+              getInitials(nickname || "사용자")}
           </ProfileImage>
           <ProfileInfo>
             <ProfileName>{nickname || "사용자"}</ProfileName>
@@ -365,9 +407,34 @@ const MyPage: React.FC = () => {
               label="프로필_이미지"
               type="file"
               placeholder="프로필 이미지를 선택하세요"
-              value={editForm.profile_image}
-              onChange={handleInputChange("profile_image")}
+              value=""
+              onChange={handleFileChange}
+              accept="image/*"
             />
+            {previewImageUrl && (
+              <div style={{ marginBottom: "20px" }}>
+                <p
+                  style={{
+                    marginBottom: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                  }}
+                >
+                  미리보기:
+                </p>
+                <img
+                  src={previewImageUrl}
+                  alt="미리보기"
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    border: "2px solid #e0e0e0",
+                  }}
+                />
+              </div>
+            )}
             <Input
               label="닉네임"
               type="text"

@@ -40,6 +40,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
   setUser: (user) => {
     set({
       nickname: user.nickname,
+      email: user.email || null,
       sessionId: user.sessionId,
       id: user.id || null,
       password: user.password || null,
@@ -147,7 +148,11 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
         id: userData._id,
         nickname: userData.nickname,
         email: userData.email,
-        profile_image: userData.profile_image || null,
+        profile_image:
+          userData.profile_image &&
+          !userData.profile_image.startsWith("file://")
+            ? userData.profile_image
+            : null,
         error: null,
         // 세션 ID도 함께 업데이트하여 동기화 보장
         sessionId: sessionId,

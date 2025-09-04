@@ -12,6 +12,7 @@ interface InputProps {
   error?: string;
   disabled?: boolean;
   required?: boolean;
+  accept?: string;
 }
 
 const InputContainer = styled.div`
@@ -91,6 +92,7 @@ const Input: React.FC<InputProps> = ({
   error,
   required = false,
   disabled = false,
+  accept,
 }) => {
   return (
     <InputContainer>
@@ -103,6 +105,7 @@ const Input: React.FC<InputProps> = ({
         $hasError={!!error}
         disabled={disabled}
         required={required}
+        accept={accept}
       />
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </InputContainer>

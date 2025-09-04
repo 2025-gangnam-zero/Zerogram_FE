@@ -18,6 +18,7 @@ export interface User {
 export interface UserProfile {
   id: string;
   nickname: string;
+  email?: string;
   password: string;
   profile_image?: string;
   sessionId: string;
@@ -28,6 +29,7 @@ export interface UserProfile {
 export interface UpdateUserData {
   nickname?: string;
   password?: string;
+  profile_image?: File;
 }
 
 // 로그인 폼 데이터 타입

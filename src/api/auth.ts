@@ -96,10 +96,15 @@ export const getUserInfoApi = async (): Promise<ApiResponse<{ user: any }>> => {
 
 // 사용자 정보 업데이트 API 함수
 export const updateUserInfoApi = async (
-  userData: UpdateUserData
+  userData: UpdateUserData | FormData
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.patch("/users/me", userData);
+    const config =
+      userData instanceof FormData
+        ? { headers: { "Content-Type": "multipart/form-data" } }
+        : {};
+
+    const response = await authApi.patch("/users/me", userData, config);
     return response.data;
   } catch (error) {
     logError("updateUserInfoApi", error);

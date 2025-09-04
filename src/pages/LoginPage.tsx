@@ -202,8 +202,9 @@ const LoginPage: React.FC = () => {
       setUser({
         id: userId,
         nickname: decodedNickname || "",
+        email: email || "",
         password: "",
-        login_type: "",
+        login_type: "SOCIAL",
         profile_image: decodedProfileImage || undefined,
         sessionId,
       });
