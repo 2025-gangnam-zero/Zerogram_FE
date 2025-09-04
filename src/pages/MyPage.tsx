@@ -160,11 +160,11 @@ const MyPage: React.FC = () => {
     profile_image: string;
     login_type: string;
   }>({
-    nickname: "",
-    email: "",
-    password: "",
-    profile_image: "",
-    login_type: "",
+    nickname: nickname || "",
+    email: email || "",
+    password: password || "",
+    profile_image: profile_image || "",
+    login_type: login_type || "",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -244,42 +244,46 @@ const MyPage: React.FC = () => {
   const handleSaveClick = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // if (!editForm.nickname.trim()) {
-    //   showErrorAlert("닉네임을 입력해주세요.");
-    //   return;
-    // }
-
-    // if (!editForm.email.trim()) {
-    //   showErrorAlert("이메일을 입력해주세요.");
-    //   return;
-    // }
-
-    // if (!editForm.password.trim()) {
-    //   showErrorAlert("비밀번호를 입력해주세요.");
-    //   return;
-    // }
-
-    // if (!editForm.profile_image.trim()) {
-    //   showErrorAlert("프로필 이미지를 선택해주세요.");
-    //   return;
-    // }
-
     setIsSaving(true);
 
     try {
+      // 업데이트할 데이터 준비 - 공백이 아닌 필드만 포함
+      const updateData: {
+        nickname?: string;
+        password?: string;
+        profile_image?: string;
+      } = {};
+
+      // 닉네임이 입력되었을 때만 포함
+      if (editForm.nickname.trim()) {
+        updateData.nickname = editForm.nickname.trim();
+      }
+
+      // 비밀번호가 입력되었을 때만 포함
+      if (editForm.password.trim()) {
+        updateData.password = editForm.password.trim();
+      }
+
+      if (editForm.profile_image.trim()) {
+        updateData.profile_image = editForm.profile_image.trim();
+      }
+
+      // 업데이트할 필드가 하나도 없으면 경고
+      if (Object.keys(updateData).length === 0) {
+        showErrorAlert("수정할 정보를 입력해주세요.");
+        return;
+      }
+
       // 서버에 업데이트 요청
-      const response = await updateUserInfoApi({
-        nickname: editForm.nickname,
-        password: editForm.password,
-      });
+      const response = await updateUserInfoApi(updateData);
       console.log("response", response);
 
-      // 성공 시 로컬 상태 업데이트
+      // 성공 시 로컬 상태 업데이트 - 변경된 필드만 업데이트
       setUser({
         id: id || "",
-        nickname: editForm.nickname,
-        password: editForm.password,
-        profile_image: profile_image,
+        nickname: updateData.nickname || nickname || "", // 새로운 값 또는 기존 값 유지
+        password: updateData.password || password || "", // 새로운 값 또는 기존 값 유지
+        profile_image: updateData.profile_image || profile_image || "",
         sessionId: useUserStore.getState().sessionId || "",
         login_type: "normal",
       });
