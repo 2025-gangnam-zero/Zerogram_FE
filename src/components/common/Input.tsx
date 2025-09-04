@@ -10,6 +10,7 @@ interface InputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
+  disabled?: boolean;
   required?: boolean;
 }
 
@@ -89,6 +90,7 @@ const Input: React.FC<InputProps> = ({
   onChange,
   error,
   required = false,
+  disabled = false,
 }) => {
   return (
     <InputContainer>
@@ -99,6 +101,7 @@ const Input: React.FC<InputProps> = ({
         value={value}
         onChange={onChange}
         $hasError={!!error}
+        disabled={disabled}
         required={required}
       />
       {error && <ErrorMessage>{error}</ErrorMessage>}

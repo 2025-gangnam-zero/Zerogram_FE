@@ -146,6 +146,7 @@ const MyPage: React.FC = () => {
     profile_image,
     isLoading,
     error,
+    login_type,
     fetchUserInfo,
     setUser,
   } = useUserStore();
@@ -156,10 +157,14 @@ const MyPage: React.FC = () => {
     nickname: string;
     email: string;
     password: string;
+    profile_image: string;
+    login_type: string;
   }>({
     nickname: "",
     email: "",
     password: "",
+    profile_image: "",
+    login_type: "",
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -180,9 +185,11 @@ const MyPage: React.FC = () => {
         nickname: nickname,
         email: email,
         password: password,
+        profile_image: profile_image || "",
+        login_type: login_type || "",
       });
     }
-  }, [isEditing, nickname, email, password]);
+  }, [isEditing, nickname, email, password, profile_image, login_type]);
 
   const actualIsLoggedIn = checkAuthStatus();
 
@@ -220,11 +227,13 @@ const MyPage: React.FC = () => {
       nickname: nickname || "",
       email: email || "",
       password: password || "",
+      profile_image: profile_image || "",
+      login_type: login_type || "",
     });
   };
 
   const handleInputChange =
-    (field: "nickname" | "email" | "password") =>
+    (field: "nickname" | "email" | "password" | "profile_image") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setEditForm((prev) => ({
         ...prev,
@@ -235,20 +244,25 @@ const MyPage: React.FC = () => {
   const handleSaveClick = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!editForm.nickname.trim()) {
-      showErrorAlert("닉네임을 입력해주세요.");
-      return;
-    }
+    // if (!editForm.nickname.trim()) {
+    //   showErrorAlert("닉네임을 입력해주세요.");
+    //   return;
+    // }
 
-    if (!editForm.email.trim()) {
-      showErrorAlert("이메일을 입력해주세요.");
-      return;
-    }
+    // if (!editForm.email.trim()) {
+    //   showErrorAlert("이메일을 입력해주세요.");
+    //   return;
+    // }
 
-    if (!editForm.password.trim()) {
-      showErrorAlert("비밀번호를 입력해주세요.");
-      return;
-    }
+    // if (!editForm.password.trim()) {
+    //   showErrorAlert("비밀번호를 입력해주세요.");
+    //   return;
+    // }
+
+    // if (!editForm.profile_image.trim()) {
+    //   showErrorAlert("프로필 이미지를 선택해주세요.");
+    //   return;
+    // }
 
     setIsSaving(true);
 
@@ -256,7 +270,6 @@ const MyPage: React.FC = () => {
       // 서버에 업데이트 요청
       const response = await updateUserInfoApi({
         nickname: editForm.nickname,
-        email: editForm.email,
         password: editForm.password,
       });
       console.log("response", response);
@@ -265,10 +278,10 @@ const MyPage: React.FC = () => {
       setUser({
         id: id || "",
         nickname: editForm.nickname,
-        email: editForm.email,
         password: editForm.password,
         profile_image: profile_image,
         sessionId: useUserStore.getState().sessionId || "",
+        login_type: "normal",
       });
 
       setIsEditing(false);
@@ -325,6 +338,10 @@ const MyPage: React.FC = () => {
                 <InfoLabel>비밀번호</InfoLabel>
                 <InfoValue>{password || "정보 없음"}</InfoValue>
               </InfoItem>
+              <InfoItem>
+                <InfoLabel>로그인 방식</InfoLabel>
+                <InfoValue>{login_type || "정보 없음"}</InfoValue>
+              </InfoItem>
             </InfoGrid>
 
             <ButtonContainer>
@@ -341,12 +358,18 @@ const MyPage: React.FC = () => {
         ) : (
           <EditForm onSubmit={handleSaveClick}>
             <Input
+              label="프로필_이미지"
+              type="file"
+              placeholder="프로필 이미지를 선택하세요"
+              value={editForm.profile_image}
+              onChange={handleInputChange("profile_image")}
+            />
+            <Input
               label="닉네임"
               type="text"
               placeholder="닉네임을 입력하세요"
               value={editForm.nickname}
               onChange={handleInputChange("nickname")}
-              required
             />
             <Input
               label="이메일"
@@ -354,7 +377,7 @@ const MyPage: React.FC = () => {
               placeholder="이메일을 입력하세요"
               value={editForm.email}
               onChange={handleInputChange("email")}
-              required
+              disabled
             />
             <Input
               label="비밀번호"
@@ -362,7 +385,6 @@ const MyPage: React.FC = () => {
               placeholder="비밀번호를 입력하세요"
               value={editForm.password}
               onChange={handleInputChange("password")}
-              required
             />
 
             <ButtonContainer>

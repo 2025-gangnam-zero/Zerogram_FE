@@ -202,8 +202,8 @@ const LoginPage: React.FC = () => {
       setUser({
         id: userId,
         nickname: decodedNickname || "",
-        email,
         password: "",
+        login_type: "",
         profile_image: decodedProfileImage || undefined,
         sessionId,
       });
@@ -299,7 +299,7 @@ const LoginPage: React.FC = () => {
   const handleKakaoSignup = () => {
     const { CLIENT_ID, REDIRECT_URI, AUTH_URL, RESPONSE_TYPE, STATE } =
       OAUTH_CONFIG.KAKAO;
-    const kakaoAuthUrl = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&state=${STATE}`;
+    const kakaoAuthUrl = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&state=${STATE}&prompt=login`;
     window.location.href = kakaoAuthUrl;
     console.log("카카오 로그인");
   };

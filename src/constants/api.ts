@@ -1,6 +1,7 @@
 // API 관련 상수
 export const API_CONFIG = {
-  BASE_URL: "http://43.201.20.75",
+  BASE_URL: "http://10.10.0.88:4000",
+  //"ec2-15-164-151-28.ap-northeast-2.compute.amazonaws.com",
   TIMEOUT: 10000,
   HEADERS: {
     "Content-Type": "application/json",

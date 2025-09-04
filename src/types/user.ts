@@ -18,16 +18,15 @@ export interface User {
 export interface UserProfile {
   id: string;
   nickname: string;
-  email: string;
   password: string;
   profile_image?: string;
   sessionId: string;
+  login_type: string;
 }
 
 // 사용자 정보 업데이트용 타입
 export interface UpdateUserData {
   nickname?: string;
-  email?: string;
   password?: string;
 }
 

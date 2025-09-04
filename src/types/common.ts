@@ -5,7 +5,13 @@ export type ButtonVariant = "primary" | "secondary" | "outline" | "danger";
 export type ButtonSize = "small" | "medium" | "large";
 
 // 입력 필드 관련 타입
-export type InputType = "text" | "email" | "password" | "number" | "tel";
+export type InputType =
+  | "text"
+  | "email"
+  | "password"
+  | "number"
+  | "tel"
+  | "file";
 
 // 폼 에러 타입
 export interface FormErrors {
