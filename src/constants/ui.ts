@@ -1,7 +1,7 @@
 // UI 관련 상수
 export const UI_CONSTANTS = {
   COLORS: {
-    PRIMARY: "#3498db",
+    PRIMARY: "rgb(27, 219, 49)",
     PRIMARY_HOVER: "#2980b9",
     SECONDARY: "#95a5a6",
     SECONDARY_HOVER: "#7f8c8d",

@@ -7,7 +7,7 @@ import { UI_CONSTANTS } from "../constants";
 // 스타일 컴포넌트
 const LandingContainer = styled.div`
   min-height: calc(100vh - 140px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, rgb(27, 219, 49) 100%);
 `;
 
 const HeroSection = styled.section`
