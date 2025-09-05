@@ -6,6 +6,7 @@ import { updateUserInfoApi } from "../api/auth";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { showErrorAlert, showSuccessAlert, getInitials } from "../utils";
+import { AUTH_CONSTANTS } from "../constants";
 
 const MyPageContainer = styled.div`
   padding: 40px 20px;
@@ -311,6 +312,17 @@ const MyPage: React.FC = () => {
       // 업데이트 요청
       await updateUserInfoApi(formData);
 
+      // 상태를 임시로 초기화하여 fetchUserInfo가 새로운 정보를 가져오도록 함
+      setUser({
+        nickname: "",
+        email: "",
+        sessionId: localStorage.getItem(AUTH_CONSTANTS.SESSION_ID_KEY) || "",
+        id: "",
+        password: "",
+        profile_image: "",
+        login_type: "",
+      });
+
       // 업데이트 성공 후 최신 사용자 정보 다시 가져오기
       await fetchUserInfo();
 
@@ -382,7 +394,7 @@ const MyPage: React.FC = () => {
               </InfoItem>
               <InfoItem>
                 <InfoLabel>비밀번호</InfoLabel>
-                <InfoValue>{password || "정보 없음"}</InfoValue>
+                <InfoValue>{password || "관리자 문의"}</InfoValue>
               </InfoItem>
               <InfoItem>
                 <InfoLabel>로그인 방식</InfoLabel>
@@ -404,10 +416,9 @@ const MyPage: React.FC = () => {
         ) : (
           <EditForm onSubmit={handleSaveClick}>
             <Input
-              label="프로필_이미지"
+              label="프로필 이미지"
               type="file"
               placeholder="프로필 이미지를 선택하세요"
-              value=""
               onChange={handleFileChange}
               accept="image/*"
             />

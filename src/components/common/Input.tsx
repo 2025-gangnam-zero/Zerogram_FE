@@ -7,7 +7,7 @@ interface InputProps {
   label?: string;
   type?: InputType;
   placeholder?: string;
-  value: string;
+  value?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   disabled?: boolean;
@@ -100,7 +100,7 @@ const Input: React.FC<InputProps> = ({
       <StyledInput
         type={type}
         placeholder={placeholder}
-        value={value}
+        {...(type === "file" ? {} : { value })}
         onChange={onChange}
         $hasError={!!error}
         disabled={disabled}
