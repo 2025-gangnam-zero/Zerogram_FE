@@ -69,8 +69,8 @@ const LoginBtn = styled.button`
 
 const SignupBtn = styled.button`
   background-color: transparent;
-  color: #3498db;
-  border: 2px solid #3498db;
+  color: rgb(27, 219, 49);
+  border: 2px solid rgb(27, 219, 49);
   padding: 10px 22px;
   border-radius: 6px;
   font-size: 16px;
@@ -79,7 +79,7 @@ const SignupBtn = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: #3498db;
+    background-color: rgb(27, 219, 49);
     color: white;
     transform: translateY(-1px);
   }

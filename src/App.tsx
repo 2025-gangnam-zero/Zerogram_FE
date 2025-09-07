@@ -6,6 +6,7 @@ import GlobalStyle from "./styles/GlobalStyle";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import HomePage from "./pages/HomePage";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import MyPage from "./pages/MyPage";
@@ -27,7 +28,7 @@ const MainContent = styled.main`
 `;
 
 const AppContent: React.FC = () => {
-  const { initializeAuth, checkAuthStatus } = useAuthStore();
+  const { initializeAuth, checkAuthStatus, isLoggedIn } = useAuthStore();
 
   useEffect(() => {
     // 앱 시작 시 인증 상태 초기화만 수행
@@ -63,6 +64,10 @@ const AppContent: React.FC = () => {
         <Header />
         <MainContent>
           <Routes>
+            <Route
+              path="/"
+              element={isLoggedIn ? <HomePage /> : <LandingPage />}
+            />
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
