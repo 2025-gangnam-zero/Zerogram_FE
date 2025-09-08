@@ -83,6 +83,27 @@ export const loginApi = async (
   }
 };
 
+// 로그아웃 API 함수
+export const logoutApi = async (): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.post("/auth/logout");
+    return response.data;
+  } catch (error) {
+    logError("logoutApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+export const unsubscribeApi = async (): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete("/users/me");
+    return response.data;
+  } catch (error) {
+    logError("unsubscribeApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 // 사용자 정보 조회 API 함수
 export const getUserInfoApi = async (): Promise<ApiResponse<{ user: any }>> => {
   try {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
 import { updateUserInfoApi } from "../api/auth";
@@ -151,7 +152,8 @@ const MyPage: React.FC = () => {
     fetchUserInfo,
     setUser,
   } = useUserStore();
-  const { isLoggedIn, checkAuthStatus } = useAuthStore();
+  const { isLoggedIn, checkAuthStatus, unsubscribe } = useAuthStore();
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<{
@@ -230,6 +232,29 @@ const MyPage: React.FC = () => {
 
   const handleEditClick = () => {
     setIsEditing(true);
+  };
+
+  const handleUnsubscribeClick = async () => {
+    const isConfirmed = window.confirm(
+      "정말로 회원 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다."
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      await unsubscribe();
+      showSuccessAlert("회원 탈퇴가 완료되었습니다.");
+      navigate("/");
+    } catch (error) {
+      console.error("회원 탈퇴 실패:", error);
+      showErrorAlert(
+        `회원 탈퇴에 실패했습니다: ${
+          error instanceof Error
+            ? error.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
+    }
   };
 
   const handleCancelEdit = () => {
@@ -410,6 +435,14 @@ const MyPage: React.FC = () => {
                 onClick={handleEditClick}
               >
                 정보 수정
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="medium"
+                onClick={handleUnsubscribeClick}
+              >
+                회원 탈퇴
               </Button>
             </ButtonContainer>
           </>

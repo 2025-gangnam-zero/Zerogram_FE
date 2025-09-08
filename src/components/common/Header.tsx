@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { useAuthStore } from "../../store/authStore";
 import { UI_CONSTANTS, LAYOUT_CONSTANTS } from "../../constants";
@@ -24,6 +24,12 @@ const HeaderWrapper = styled.div`
   height: ${LAYOUT_CONSTANTS.HEADER_HEIGHT};
 `;
 
+const LeftSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${UI_CONSTANTS.SPACING.XL};
+`;
+
 const Logo = styled.div`
   h1 {
     margin: 0;
@@ -36,6 +42,55 @@ const Logo = styled.div`
     &:hover {
       color: ${UI_CONSTANTS.COLORS.PRIMARY};
     }
+  }
+`;
+
+const Navigation = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: ${UI_CONSTANTS.SPACING.LG};
+
+  @media (max-width: 768px) {
+    gap: ${UI_CONSTANTS.SPACING.MD};
+  }
+`;
+
+const NavLink = styled.button<{ $isActive: boolean }>`
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: ${({ $isActive }) =>
+    $isActive ? UI_CONSTANTS.COLORS.PRIMARY : UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
+  transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+  position: relative;
+
+  &:hover {
+    color: ${UI_CONSTANTS.COLORS.PRIMARY};
+    background-color: ${UI_CONSTANTS.COLORS.LIGHT};
+  }
+
+  ${({ $isActive }) =>
+    $isActive &&
+    `
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 2px;
+      background-color: ${UI_CONSTANTS.COLORS.PRIMARY};
+    }
+  `}
+
+  @media (max-width: 768px) {
+    padding: 6px 12px;
+    font-size: 14px;
   }
 `;
 
@@ -141,6 +196,7 @@ const UserMenu = styled.div`
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, logout, initializeAuth, checkAuthStatus } =
     useAuthStore();
 
@@ -172,8 +228,8 @@ const Header: React.FC = () => {
     navigate("/signup");
   };
 
-  const handleLogoutClick = () => {
-    logout();
+  const handleLogoutClick = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -181,12 +237,38 @@ const Header: React.FC = () => {
     navigate("/mypage");
   };
 
+  const handleWorkoutClick = () => {
+    navigate("/workout");
+  };
+
+  // 추후 확장될 네비게이션 메뉴들
+  const navigationItems = [
+    { path: "/workout", label: "운동일지", onClick: handleWorkoutClick },
+    // { path: "/diet", label: "식단일지", onClick: () => navigate("/diet") },
+    // { path: "/board", label: "모집게시판", onClick: () => navigate("/board") },
+  ];
+
   return (
     <HeaderContainer>
       <HeaderWrapper>
-        <Logo onClick={handleLogoClick}>
-          <h1>Zerogram</h1>
-        </Logo>
+        <LeftSection>
+          <Logo onClick={handleLogoClick}>
+            <h1>Zerogram</h1>
+          </Logo>
+          {isLoggedIn && (
+            <Navigation>
+              {navigationItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  $isActive={location.pathname === item.path}
+                  onClick={item.onClick}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </Navigation>
+          )}
+        </LeftSection>
         <AuthSection>
           {isLoggedIn ? (
             <UserMenu>
