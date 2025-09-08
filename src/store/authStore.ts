@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AUTH_CONSTANTS } from "../constants";
 import { clearAuthData } from "../utils";
+import { logoutApi } from "../api/auth";
+import { unsubscribeApi } from "../api/auth";
 
 interface AuthState {
   isLoggedIn: boolean;
@@ -10,7 +12,8 @@ interface AuthState {
 
 interface AuthActions {
   login: (sessionId: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  unsubscribe: () => Promise<void>;
   initializeAuth: () => void;
   checkAuthStatus: () => boolean;
 }
@@ -41,7 +44,16 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        try {
+          // 백엔드에 로그아웃 요청
+          await logoutApi();
+          console.log("백엔드 로그아웃 요청 성공");
+        } catch (error) {
+          console.error("백엔드 로그아웃 요청 실패:", error);
+          // 백엔드 요청이 실패해도 로컬 상태는 정리
+        }
+
         // localStorage에서 제거
         clearAuthData();
 
@@ -50,6 +62,46 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           isLoggedIn: false,
           sessionId: null,
         });
+
+        // userStore도 초기화
+        try {
+          const { clearUser } = require("./userStore").useUserStore.getState();
+          clearUser();
+          console.log("로그아웃: userStore 초기화 완료");
+        } catch (error) {
+          console.warn("userStore 초기화 실패:", error);
+        }
+      },
+
+      // 회원 탈퇴
+      unsubscribe: async () => {
+        try {
+          // 백엔드에 회원 탈퇴 요청
+          await unsubscribeApi();
+          console.log("회원 탈퇴 성공");
+
+          // localStorage에서 제거
+          clearAuthData();
+
+          // Zustand 스토어에서 제거
+          set({
+            isLoggedIn: false,
+            sessionId: null,
+          });
+
+          // userStore도 초기화
+          try {
+            const { clearUser } =
+              require("./userStore").useUserStore.getState();
+            clearUser();
+            console.log("회원 탈퇴: userStore 초기화 완료");
+          } catch (error) {
+            console.warn("userStore 초기화 실패:", error);
+          }
+        } catch (error) {
+          console.error("회원 탈퇴 실패:", error);
+          throw error;
+        }
       },
 
       initializeAuth: () => {

@@ -13,6 +13,8 @@ interface InputProps {
   disabled?: boolean;
   required?: boolean;
   accept?: string;
+  min?: string;
+  step?: string;
 }
 
 const InputContainer = styled.div`
@@ -93,6 +95,8 @@ const Input: React.FC<InputProps> = ({
   required = false,
   disabled = false,
   accept,
+  min,
+  step,
 }) => {
   return (
     <InputContainer>
@@ -106,6 +110,8 @@ const Input: React.FC<InputProps> = ({
         disabled={disabled}
         required={required}
         accept={accept}
+        min={min}
+        step={step}
       />
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </InputContainer>

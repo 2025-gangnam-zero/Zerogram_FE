@@ -10,6 +10,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import MyPage from "./pages/MyPage";
+import WorkoutLogPage from "./pages/WorkoutLogPage";
 import { LAYOUT_CONSTANTS } from "./constants";
 
 const AppContainer = styled.div`
@@ -72,6 +73,7 @@ const AppContent: React.FC = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/mypage" element={<MyPage />} />
+            <Route path="/workout" element={<WorkoutLogPage />} />
           </Routes>
         </MainContent>
         <Footer />
