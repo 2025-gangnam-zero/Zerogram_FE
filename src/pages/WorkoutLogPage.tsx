@@ -9,7 +9,7 @@ import Modal from "../components/common/Modal";
 import WorkoutForm from "../components/workout/WorkoutForm";
 import WorkoutList from "../components/workout/WorkoutList";
 import { getWorkoutsByDateApi } from "../api/workout";
-import { workouts } from "../types";
+import { WorkoutState } from "../types";
 import "react-calendar/dist/Calendar.css";
 
 const PageContainer = styled.div`
@@ -97,12 +97,20 @@ const SelectedDate = styled.div`
   }
 `;
 
+// 로컬 시간대 기준으로 날짜 문자열을 반환하는 함수
+const getLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const WorkoutLogPage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
   const { id, fetchUserInfo } = useUserStore();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [workouts, setWorkouts] = useState<workouts[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutState[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
 
@@ -129,7 +137,9 @@ const WorkoutLogPage: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const dateString = date.toISOString().split("T")[0];
+        const dateString = getLocalDateString(date);
+        console.log(`선택된 날짜: ${date}, 변환된 날짜 문자열: ${dateString}`); // 디버깅용
+
         const response = await getWorkoutsByDateApi(dateString);
         setWorkouts(response.data);
       } catch (error) {
