@@ -12,6 +12,31 @@ interface WorkoutFormProps {
   onCancel: () => void;
 }
 
+// 루틴 인터페이스 (헬스용)
+interface FitnessRoutine {
+  body_part: string;
+  fitness_type: string;
+  sets: number;
+  reps: number;
+  weight: number;
+}
+
+// 운동 세션 인터페이스
+interface WorkoutSession {
+  id: string;
+  workout_name: "running" | "fitness";
+  duration: number;
+  calories: number;
+  feedback: string;
+
+  // 러닝 데이터
+  distance?: number;
+  avg_pace?: string;
+
+  // 헬스 루틴들
+  routines?: FitnessRoutine[];
+}
+
 const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -41,18 +66,33 @@ const TypeButton = styled.button<{ $selected: boolean }>`
   }
 `;
 
-const ExerciseFormSection = styled.div`
+const SessionFormSection = styled.div`
   border: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
   border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
   padding: ${UI_CONSTANTS.SPACING.LG};
   margin-bottom: ${UI_CONSTANTS.SPACING.MD};
 `;
 
-const ExerciseHeader = styled.div`
+const SessionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${UI_CONSTANTS.SPACING.MD};
+`;
+
+const RoutineSection = styled.div`
+  background-color: ${UI_CONSTANTS.COLORS.LIGHT};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  margin-bottom: ${UI_CONSTANTS.SPACING.SM};
+  border: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
+`;
+
+const RoutineHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${UI_CONSTANTS.SPACING.SM};
 `;
 
 const ExerciseGrid = styled.div`
@@ -68,7 +108,7 @@ const ButtonGroup = styled.div`
   justify-content: flex-end;
 `;
 
-const AddExerciseButton = styled(Button)`
+const AddButton = styled(Button)`
   margin-top: ${UI_CONSTANTS.SPACING.MD};
 `;
 
@@ -101,25 +141,26 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const [workoutDetails, setWorkoutDetails] = useState<
-    Omit<WorkoutDetailType, "_id" | "workoutId" | "createdAt" | "updatedAt">[]
-  >([
+  const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([
     {
+      id: Date.now().toString(),
       workout_name: "running",
       duration: 0,
       calories: 0,
       feedback: "",
       distance: 0,
-      avg_pace: 0,
+      avg_pace: "",
     },
   ]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const addWorkoutDetail = () => {
-    setWorkoutDetails([
-      ...workoutDetails,
+  // 새 운동 세션 추가
+  const addWorkoutSession = () => {
+    setWorkoutSessions([
+      ...workoutSessions,
       {
+        id: Date.now().toString(),
         workout_name: "running",
         duration: 0,
         calories: 0,
@@ -128,55 +169,196 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
     ]);
   };
 
-  const removeWorkoutDetail = (index: number) => {
-    setWorkoutDetails(workoutDetails.filter((_, i) => i !== index));
+  // 운동 세션 삭제
+  const removeWorkoutSession = (sessionId: string) => {
+    setWorkoutSessions(
+      workoutSessions.filter((session) => session.id !== sessionId)
+    );
   };
 
-  const updateWorkoutDetail = (index: number, field: string, value: any) => {
-    const updated = [...workoutDetails];
-    updated[index] = { ...updated[index], [field]: value };
-    setWorkoutDetails(updated);
+  // 운동 세션 업데이트
+  const updateWorkoutSession = (
+    sessionId: string,
+    field: string,
+    value: any
+  ) => {
+    setWorkoutSessions(
+      workoutSessions.map((session) =>
+        session.id === sessionId ? { ...session, [field]: value } : session
+      )
+    );
+  };
+
+  // 헬스 루틴 추가
+  const addFitnessRoutine = (sessionId: string) => {
+    setWorkoutSessions(
+      workoutSessions.map((session) => {
+        if (session.id === sessionId) {
+          const newRoutine: FitnessRoutine = {
+            body_part: "",
+            fitness_type: "",
+            sets: 0,
+            reps: 0,
+            weight: 0,
+          };
+          return {
+            ...session,
+            routines: [...(session.routines || []), newRoutine],
+          };
+        }
+        return session;
+      })
+    );
+  };
+
+  // 헬스 루틴 삭제
+  const removeFitnessRoutine = (sessionId: string, routineIndex: number) => {
+    setWorkoutSessions(
+      workoutSessions.map((session) => {
+        if (session.id === sessionId && session.routines) {
+          return {
+            ...session,
+            routines: session.routines.filter(
+              (_, index) => index !== routineIndex
+            ),
+          };
+        }
+        return session;
+      })
+    );
+  };
+
+  // 헬스 루틴 업데이트
+  const updateFitnessRoutine = (
+    sessionId: string,
+    routineIndex: number,
+    field: keyof FitnessRoutine,
+    value: any
+  ) => {
+    setWorkoutSessions(
+      workoutSessions.map((session) => {
+        if (session.id === sessionId && session.routines) {
+          const updatedRoutines = [...session.routines];
+          updatedRoutines[routineIndex] = {
+            ...updatedRoutines[routineIndex],
+            [field]: value,
+          };
+          return { ...session, routines: updatedRoutines };
+        }
+        return session;
+      })
+    );
+  };
+
+  // 운동 타입 변경 시 초기화
+  const handleWorkoutTypeChange = (
+    sessionId: string,
+    type: "running" | "fitness"
+  ) => {
+    setWorkoutSessions(
+      workoutSessions.map((session) => {
+        if (session.id === sessionId) {
+          if (type === "fitness") {
+            return {
+              ...session,
+              workout_name: type,
+              distance: undefined,
+              avg_pace: undefined,
+              routines: [
+                {
+                  body_part: "",
+                  fitness_type: "",
+                  sets: 0,
+                  reps: 0,
+                  weight: 0,
+                },
+              ],
+            };
+          } else {
+            return {
+              ...session,
+              workout_name: type,
+              distance: 0,
+              avg_pace: "",
+              routines: undefined,
+            };
+          }
+        }
+        return session;
+      })
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 유효성 검사
-    const validDetails = workoutDetails.filter((detail) => {
-      if (!detail.duration || !detail.calories) return false;
+    // 유효성 검사 및 데이터 변환
+    const workoutDetails: Omit<
+      WorkoutDetailType,
+      "_id" | "workoutId" | "createdAt" | "updatedAt"
+    >[] = [];
 
-      if (detail.workout_name === "fitness") {
-        return (
-          detail.body_part &&
-          detail.fitness_type &&
-          detail.sets &&
-          detail.reps &&
-          detail.weight
-        );
-      } else if (detail.workout_name === "running") {
-        return detail.distance && detail.avg_pace;
+    for (const session of workoutSessions) {
+      if (!session.duration || !session.calories) {
+        alert("운동 시간과 칼로리는 필수 입력사항입니다.");
+        return;
       }
 
-      return true;
-    });
+      if (session.workout_name === "running") {
+        if (!session.distance || !session.avg_pace) {
+          alert("러닝의 경우 거리와 평균 페이스를 입력해주세요.");
+          return;
+        }
 
-    if (validDetails.length === 0) {
-      alert("최소 하나의 운동을 완전히 입력해주세요.");
+        workoutDetails.push({
+          workout_name: "running",
+          duration: session.duration,
+          calories: session.calories,
+          feedback: session.feedback,
+          distance: session.distance,
+          avg_pace: paceToSeconds(session.avg_pace),
+        });
+      } else if (session.workout_name === "fitness") {
+        if (!session.routines || session.routines.length === 0) {
+          alert("헬스의 경우 최소 하나의 루틴을 입력해주세요.");
+          return;
+        }
+
+        // 각 루틴을 별도의 WorkoutDetailType으로 생성
+        for (const routine of session.routines) {
+          if (
+            !routine.body_part ||
+            !routine.fitness_type ||
+            !routine.sets ||
+            !routine.reps
+          ) {
+            alert("모든 루틴 정보를 완전히 입력해주세요.");
+            return;
+          }
+
+          workoutDetails.push({
+            workout_name: "fitness",
+            duration: session.duration,
+            calories: session.calories,
+            feedback: session.feedback,
+            body_part: routine.body_part,
+            fitness_type: routine.fitness_type,
+            sets: routine.sets,
+            reps: routine.reps,
+            weight: routine.weight,
+          });
+        }
+      }
+    }
+
+    if (workoutDetails.length === 0) {
+      alert("최소 하나의 운동을 입력해주세요.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // 페이스 문자열을 초로 변환
-      const processedDetails = validDetails.map((detail) => ({
-        ...detail,
-        avg_pace:
-          detail.avg_pace && typeof detail.avg_pace === "string"
-            ? paceToSeconds(detail.avg_pace as string)
-            : detail.avg_pace,
-      }));
-
-      await createWorkoutApi({ details: processedDetails });
+      await createWorkoutApi({ details: workoutDetails });
       onSuccess();
     } catch (error) {
       console.error("운동일지 생성 실패:", error);
@@ -189,23 +371,23 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
   return (
     <FormContainer>
       <form onSubmit={handleSubmit}>
-        <h3 style={{ margin: "0 0 16px 0" }}>운동 세부사항</h3>
+        <h3 style={{ margin: "0 0 16px 0" }}>운동 세션</h3>
 
-        {workoutDetails.map((detail, index) => (
-          <ExerciseFormSection key={index}>
-            <ExerciseHeader>
-              <h4 style={{ margin: 0 }}>운동 {index + 1}</h4>
-              {workoutDetails.length > 1 && (
+        {workoutSessions.map((session, sessionIndex) => (
+          <SessionFormSection key={session.id}>
+            <SessionHeader>
+              <h4 style={{ margin: 0 }}>세션 {sessionIndex + 1}</h4>
+              {workoutSessions.length > 1 && (
                 <Button
                   type="button"
                   variant="danger"
                   size="small"
-                  onClick={() => removeWorkoutDetail(index)}
+                  onClick={() => removeWorkoutSession(session.id)}
                 >
                   삭제
                 </Button>
               )}
-            </ExerciseHeader>
+            </SessionHeader>
 
             <div>
               <label
@@ -220,19 +402,15 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
               <WorkoutTypeSelector>
                 <TypeButton
                   type="button"
-                  $selected={detail.workout_name === "running"}
-                  onClick={() =>
-                    updateWorkoutDetail(index, "workout_name", "running")
-                  }
+                  $selected={session.workout_name === "running"}
+                  onClick={() => handleWorkoutTypeChange(session.id, "running")}
                 >
                   러닝
                 </TypeButton>
                 <TypeButton
                   type="button"
-                  $selected={detail.workout_name === "fitness"}
-                  onClick={() =>
-                    updateWorkoutDetail(index, "workout_name", "fitness")
-                  }
+                  $selected={session.workout_name === "fitness"}
+                  onClick={() => handleWorkoutTypeChange(session.id, "fitness")}
                 >
                   헬스
                 </TypeButton>
@@ -243,9 +421,13 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
               <Input
                 label="운동 시간 (분)"
                 type="number"
-                value={detail.duration.toString()}
+                value={session.duration.toString()}
                 onChange={(e) =>
-                  updateWorkoutDetail(index, "duration", Number(e.target.value))
+                  updateWorkoutSession(
+                    session.id,
+                    "duration",
+                    Number(e.target.value)
+                  )
                 }
                 min="0"
                 required
@@ -253,24 +435,28 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
               <Input
                 label="소모 칼로리"
                 type="number"
-                value={detail.calories.toString()}
+                value={session.calories.toString()}
                 onChange={(e) =>
-                  updateWorkoutDetail(index, "calories", Number(e.target.value))
+                  updateWorkoutSession(
+                    session.id,
+                    "calories",
+                    Number(e.target.value)
+                  )
                 }
                 min="0"
                 required
               />
             </ExerciseGrid>
 
-            {detail.workout_name === "running" && (
+            {session.workout_name === "running" && (
               <ExerciseGrid>
                 <Input
                   label="거리 (km)"
                   type="number"
-                  value={detail.distance?.toString() || ""}
+                  value={session.distance?.toString() || ""}
                   onChange={(e) =>
-                    updateWorkoutDetail(
-                      index,
+                    updateWorkoutSession(
+                      session.id,
                       "distance",
                       Number(e.target.value)
                     )
@@ -281,72 +467,123 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
                 <Input
                   label="평균 페이스 (분:초/km)"
                   type="text"
-                  value={detail.avg_pace?.toString() || ""}
+                  value={session.avg_pace || ""}
                   onChange={(e) =>
-                    updateWorkoutDetail(index, "avg_pace", e.target.value)
+                    updateWorkoutSession(session.id, "avg_pace", e.target.value)
                   }
                   placeholder="예: 5:30"
                 />
               </ExerciseGrid>
             )}
 
-            {detail.workout_name === "fitness" && (
-              <>
-                <ExerciseGrid>
-                  <Input
-                    label="운동 부위"
-                    type="text"
-                    value={detail.body_part || ""}
-                    onChange={(e) =>
-                      updateWorkoutDetail(index, "body_part", e.target.value)
-                    }
-                    placeholder="예: 가슴, 등, 다리"
-                  />
-                  <Input
-                    label="운동 종목"
-                    type="text"
-                    value={detail.fitness_type || ""}
-                    onChange={(e) =>
-                      updateWorkoutDetail(index, "fitness_type", e.target.value)
-                    }
-                    placeholder="예: 벤치프레스, 스쿼트"
-                  />
-                </ExerciseGrid>
-                <ExerciseGrid>
-                  <Input
-                    label="세트 수"
-                    type="number"
-                    value={detail.sets?.toString() || ""}
-                    onChange={(e) =>
-                      updateWorkoutDetail(index, "sets", Number(e.target.value))
-                    }
-                    min="0"
-                  />
-                  <Input
-                    label="횟수"
-                    type="number"
-                    value={detail.reps?.toString() || ""}
-                    onChange={(e) =>
-                      updateWorkoutDetail(index, "reps", Number(e.target.value))
-                    }
-                    min="0"
-                  />
-                  <Input
-                    label="무게 (kg)"
-                    type="number"
-                    value={detail.weight?.toString() || ""}
-                    onChange={(e) =>
-                      updateWorkoutDetail(
-                        index,
-                        "weight",
-                        Number(e.target.value)
-                      )
-                    }
-                    min="0"
-                    step="0.1"
-                  />
-                </ExerciseGrid>
-              </>
+            {session.workout_name === "fitness" && (
+              <div>
+                <h5 style={{ margin: "16px 0 12px 0" }}>운동 루틴</h5>
+
+                {session.routines?.map((routine, routineIndex) => (
+                  <RoutineSection key={routineIndex}>
+                    <RoutineHeader>
+                      <strong>루틴 {routineIndex + 1}</strong>
+                      {session.routines && session.routines.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="small"
+                          onClick={() =>
+                            removeFitnessRoutine(session.id, routineIndex)
+                          }
+                        >
+                          삭제
+                        </Button>
+                      )}
+                    </RoutineHeader>
+
+                    <ExerciseGrid>
+                      <Input
+                        label="운동 부위"
+                        type="text"
+                        value={routine.body_part}
+                        onChange={(e) =>
+                          updateFitnessRoutine(
+                            session.id,
+                            routineIndex,
+                            "body_part",
+                            e.target.value
+                          )
+                        }
+                        placeholder="예: 가슴, 등, 다리"
+                      />
+                      <Input
+                        label="운동 종목"
+                        type="text"
+                        value={routine.fitness_type}
+                        onChange={(e) =>
+                          updateFitnessRoutine(
+                            session.id,
+                            routineIndex,
+                            "fitness_type",
+                            e.target.value
+                          )
+                        }
+                        placeholder="예: 벤치프레스, 스쿼트"
+                      />
+                    </ExerciseGrid>
+                    <ExerciseGrid>
+                      <Input
+                        label="세트 수"
+                        type="number"
+                        value={routine.sets.toString()}
+                        onChange={(e) =>
+                          updateFitnessRoutine(
+                            session.id,
+                            routineIndex,
+                            "sets",
+                            Number(e.target.value)
+                          )
+                        }
+                        min="0"
+                      />
+                      <Input
+                        label="횟수"
+                        type="number"
+                        value={routine.reps.toString()}
+                        onChange={(e) =>
+                          updateFitnessRoutine(
+                            session.id,
+                            routineIndex,
+                            "reps",
+                            Number(e.target.value)
+                          )
+                        }
+                        min="0"
+                      />
+                      <Input
+                        label="무게 (kg)"
+                        type="number"
+                        value={routine.weight.toString()}
+                        onChange={(e) =>
+                          updateFitnessRoutine(
+                            session.id,
+                            routineIndex,
+                            "weight",
+                            Number(e.target.value)
+                          )
+                        }
+                        min="0"
+                        step="0.1"
+                      />
+                    </ExerciseGrid>
+                  </RoutineSection>
+                ))}
+
+                <AddButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => addFitnessRoutine(session.id)}
+                >
+                  루틴 추가
+                </AddButton>
+              </div>
             )}
 
             <div>
@@ -360,24 +597,20 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
                 운동 소감
               </label>
               <TextArea
-                value={detail.feedback || ""}
+                value={session.feedback}
                 onChange={(e) =>
-                  updateWorkoutDetail(index, "feedback", e.target.value)
+                  updateWorkoutSession(session.id, "feedback", e.target.value)
                 }
                 placeholder="이 운동에 대한 소감을 적어보세요..."
                 rows={3}
               />
             </div>
-          </ExerciseFormSection>
+          </SessionFormSection>
         ))}
 
-        <AddExerciseButton
-          type="button"
-          variant="outline"
-          onClick={addWorkoutDetail}
-        >
-          운동 추가
-        </AddExerciseButton>
+        <AddButton type="button" variant="outline" onClick={addWorkoutSession}>
+          운동 세션 추가
+        </AddButton>
 
         <ButtonGroup>
           <Button type="button" variant="outline" onClick={onCancel}>
