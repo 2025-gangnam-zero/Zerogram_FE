@@ -173,12 +173,12 @@ export const getWorkoutDetailApi = async (
 export const updateWorkoutDetailApi = async (
   workoutId: string,
   detailId: string,
-  detailData: Partial<WorkoutDetailType>
+  detailData: Partial<CreateWorkoutDetailRequest>
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
-    const response = await authApi.patch(
+    const response = await authApi.post(
       `/users/me/workouts/${workoutId}/details/${detailId}`,
-      detailData
+      { fitnessDetails: detailData.fitnessDetails }
     );
     return response.data;
   } catch (error) {

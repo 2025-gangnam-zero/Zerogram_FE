@@ -193,6 +193,7 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
     id: string;
   } | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newFitnessDetails, setNewFitnessDetails] = useState<any[]>([]);
 
   // 편집 폼 상태
   const [editForm, setEditForm] = useState({
@@ -206,6 +207,9 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
       { body_part: "", fitness_type: "", sets: 0, reps: 0, weight: 0 },
     ],
   });
+
+  // 편집 모드에서 기존 루틴 개수를 추적
+  const [originalFitnessCount, setOriginalFitnessCount] = useState(0);
 
   useEffect(() => {
     if (editingDetailId && workout) {
@@ -236,6 +240,9 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                 },
               ],
         });
+        // 편집 모드 진입 시 기존 루틴 개수 저장 및 새로 추가될 항목들을 빈 배열로 초기화
+        setOriginalFitnessCount(detail.fitnessDetails?.length || 0);
+        setNewFitnessDetails([]);
       }
     } else if (isAddingNew) {
       setEditForm({
@@ -249,17 +256,27 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
           { body_part: "", fitness_type: "", sets: 0, reps: 0, weight: 0 },
         ],
       });
+      // 새로 추가 모드 진입 시 editForm.fitnessDetails와 동기화
+      setOriginalFitnessCount(0);
+      setNewFitnessDetails([
+        { body_part: "", fitness_type: "", sets: 0, reps: 0, weight: 0 },
+      ]);
     }
   }, [editingDetailId, isAddingNew, workout]);
 
   const handleSaveEdit = async () => {
+    console.log("handleSaveEdit 호출됨!");
+    console.log("editingDetailId:", editingDetailId);
+    console.log("isAddingNew:", isAddingNew);
+    console.log("workout:", workout);
+
     if (!workout) return;
 
     setIsLoading(true);
     try {
       if (editingDetailId) {
-        // 수정의 경우: WorkoutDetailType 형태로 변환
-        const updateData: Partial<WorkoutDetailType> = {
+        // 수정의 경우: CreateWorkoutDetailRequest와 동일한 구조 사용
+        const updateData: Partial<CreateWorkoutDetailRequest> = {
           workout_name: editForm.workout_name,
           duration: editForm.duration,
           calories: editForm.calories,
@@ -269,8 +286,16 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
         if (editForm.workout_name === "running") {
           updateData.distance = editForm.distance;
           updateData.avg_pace = paceToSeconds(editForm.avg_pace);
+        } else if (editForm.workout_name === "fitness") {
+          // 헬스의 경우 새로 추가된 fitnessDetails만 전송
+          const validNewDetails = newFitnessDetails.filter(
+            (f) => f.body_part && f.fitness_type && f.sets >= 0 && f.reps >= 0
+          );
+          updateData.fitnessDetails = validNewDetails;
         }
-        // 헬스의 경우 fitnessDetails는 API에서 별도 처리되므로 제외
+
+        console.log("updateData:", updateData);
+        console.log("newFitnessDetails:", newFitnessDetails);
 
         await updateWorkoutDetailApi(workout._id, editingDetailId, updateData);
       } else if (isAddingNew) {
@@ -286,8 +311,9 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
           createData.distance = editForm.distance;
           createData.avg_pace = paceToSeconds(editForm.avg_pace);
         } else {
+          // 새로 추가 모드에서는 editForm.fitnessDetails 사용
           createData.fitnessDetails = editForm.fitnessDetails.filter(
-            (f) => f.body_part && f.fitness_type && f.sets > 0 && f.reps > 0
+            (f) => f.body_part && f.fitness_type && f.sets >= 0 && f.reps >= 0
           );
         }
 
@@ -296,6 +322,7 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
       setEditingDetailId(null);
       setIsAddingNew(false);
+      setNewFitnessDetails([]); // 새로 추가된 항목 초기화
       onWorkoutUpdated();
     } catch (error) {
       console.error("저장 실패:", error);
@@ -332,6 +359,21 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
   const updateEditForm = (field: string, value: any) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
+
+    // 운동 타입을 헬스로 변경할 때 newFitnessDetails 초기화
+    if (field === "workout_name" && value === "fitness") {
+      if (isAddingNew) {
+        setNewFitnessDetails([
+          { body_part: "", fitness_type: "", sets: 0, reps: 0, weight: 0 },
+        ]);
+      } else if (editingDetailId) {
+        setNewFitnessDetails([]);
+      }
+    }
+    // 러닝으로 변경할 때는 빈 배열로 초기화
+    else if (field === "workout_name" && value === "running") {
+      setNewFitnessDetails([]);
+    }
   };
 
   const updateFitnessDetail = (index: number, field: string, value: any) => {
@@ -341,16 +383,49 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
         i === index ? { ...detail, [field]: value } : detail
       ),
     }));
+
+    // 새로 추가 모드인 경우 newFitnessDetails도 동기화
+    if (isAddingNew) {
+      setNewFitnessDetails((prev) =>
+        prev.map((detail, i) =>
+          i === index ? { ...detail, [field]: value } : detail
+        )
+      );
+    }
+    // 편집 모드에서 새로 추가된 루틴만 newFitnessDetails에서 업데이트
+    else if (editingDetailId && index >= originalFitnessCount) {
+      const newIndex = index - originalFitnessCount;
+      setNewFitnessDetails((prev) => {
+        const newDetails = [...prev];
+        if (newIndex < newDetails.length) {
+          newDetails[newIndex] = { ...newDetails[newIndex], [field]: value };
+        }
+        return newDetails;
+      });
+    }
   };
 
   const addFitnessDetail = () => {
+    const newDetail = {
+      body_part: "",
+      fitness_type: "",
+      sets: 0,
+      reps: 0,
+      weight: 0,
+    };
     setEditForm((prev) => ({
       ...prev,
-      fitnessDetails: [
-        ...prev.fitnessDetails,
-        { body_part: "", fitness_type: "", sets: 0, reps: 0, weight: 0 },
-      ],
+      fitnessDetails: [...prev.fitnessDetails, newDetail],
     }));
+
+    // 새로 추가 모드인 경우 전체 리스트에 추가
+    if (isAddingNew) {
+      setNewFitnessDetails((prev) => [...prev, newDetail]);
+    }
+    // 편집 모드인 경우 새로 추가되는 루틴으로 추가
+    else if (editingDetailId) {
+      setNewFitnessDetails((prev) => [...prev, newDetail]);
+    }
   };
 
   const removeFitnessDetail = (index: number) => {
@@ -358,6 +433,16 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
       ...prev,
       fitnessDetails: prev.fitnessDetails.filter((_, i) => i !== index),
     }));
+
+    // 새로 추가 모드인 경우
+    if (isAddingNew) {
+      setNewFitnessDetails((prev) => prev.filter((_, i) => i !== index));
+    }
+    // 편집 모드에서 새로 추가된 루틴만 제거
+    else if (editingDetailId && index >= originalFitnessCount) {
+      const newIndex = index - originalFitnessCount;
+      setNewFitnessDetails((prev) => prev.filter((_, i) => i !== newIndex));
+    }
   };
 
   if (!workout) return null;
@@ -402,7 +487,10 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                   <Button
                     variant="outline"
                     size="small"
-                    onClick={() => setEditingDetailId(detail._id)}
+                    onClick={() => {
+                      console.log("편집 모드 활성화:", detail._id);
+                      setEditingDetailId(detail._id);
+                    }}
                   >
                     수정
                   </Button>
@@ -941,7 +1029,10 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
           <Button
             variant="outline"
-            onClick={() => setIsAddingNew(true)}
+            onClick={() => {
+              console.log("새로 추가 모드 활성화");
+              setIsAddingNew(true);
+            }}
             disabled={isAddingNew || editingDetailId !== null}
           >
             새 운동 추가
