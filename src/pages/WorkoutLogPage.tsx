@@ -9,6 +9,7 @@ import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
 import WorkoutForm from "../components/workout/WorkoutForm";
 import WorkoutList from "../components/workout/WorkoutList";
+import WorkoutDetailModal from "../components/workout/WorkoutDetailModal";
 import "react-calendar/dist/Calendar.css";
 import { useWorkoutStore } from "../store/workoutStore";
 
@@ -114,14 +115,23 @@ const WorkoutLogPage: React.FC = () => {
     setCurrentMonth,
     getWorkoutsByDate,
     refreshWorkouts,
+    getWorkoutById,
   } = useWorkoutStore();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(
+    null
+  );
 
   // 선택된 날짜의 운동일지만 필터링
   const selectedDateWorkouts = getWorkoutsByDate(selectedDate);
+
+  // 선택된 운동일지 찾기
+  const selectedWorkout = selectedWorkoutId
+    ? getWorkoutById(selectedWorkoutId)
+    : null;
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -217,6 +227,18 @@ const WorkoutLogPage: React.FC = () => {
     refreshWorkouts(); // 새로운 운동일지 생성 후 목록 새로고침
   };
 
+  const handleViewDetail = (workoutId: string) => {
+    setSelectedWorkoutId(workoutId);
+  };
+
+  const handleDetailModalClose = () => {
+    setSelectedWorkoutId(null);
+  };
+
+  const handleWorkoutUpdated = () => {
+    refreshWorkouts(); // 운동일지 수정/삭제 후 목록 새로고침
+  };
+
   const formatSelectedDate = (date: Date) => {
     return date.toLocaleDateString("ko-KR", {
       year: "numeric",
@@ -280,6 +302,7 @@ const WorkoutLogPage: React.FC = () => {
             workouts={selectedDateWorkouts} // 필터링된 데이터 사용
             isLoading={isLoading}
             onWorkoutUpdated={refreshWorkouts}
+            onViewDetail={handleViewDetail}
           />
         </WorkoutSection>
       </ContentWrapper>
@@ -295,6 +318,13 @@ const WorkoutLogPage: React.FC = () => {
           onCancel={handleModalClose}
         />
       </Modal>
+
+      <WorkoutDetailModal
+        isOpen={selectedWorkoutId !== null}
+        onClose={handleDetailModalClose}
+        workout={selectedWorkout}
+        onWorkoutUpdated={handleWorkoutUpdated}
+      />
     </PageContainer>
   );
 };

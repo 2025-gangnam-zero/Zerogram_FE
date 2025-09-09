@@ -143,10 +143,9 @@ export const addWorkoutDetailApi = async (
   detailData: CreateWorkoutDetailRequest
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
-    const response = await authApi.post(
-      `/users/me/workouts/${workoutId}`,
-      detailData
-    );
+    const response = await authApi.post(`/users/me/workouts/${workoutId}`, {
+      details: [detailData],
+    });
     return response.data;
   } catch (error) {
     logError("addWorkoutDetailApi", error);
@@ -178,7 +177,7 @@ export const updateWorkoutDetailApi = async (
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
     const response = await authApi.patch(
-      `/users/me/workouts/${workoutId}/detail/${detailId}`,
+      `/users/me/workouts/${workoutId}/details/${detailId}`,
       detailData
     );
     return response.data;
@@ -194,12 +193,25 @@ export const deleteWorkoutDetailApi = async (
   detailId: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete(
-      `/users/me/workouts/${workoutId}/detail/${detailId}`
-    );
+    const response = await authApi.delete(`/users/me/details/${detailId}`);
     return response.data;
   } catch (error) {
     logError("deleteWorkoutDetailApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 헬스 세부사항 삭제
+export const deleteFitnessDetailApi = async (
+  fitnessDetailId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/fitnessdetails/${fitnessDetailId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteFitnessDetailApi", error);
     throw new Error(getApiErrorMessage(error));
   }
 };

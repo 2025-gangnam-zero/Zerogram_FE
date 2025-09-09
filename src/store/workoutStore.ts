@@ -50,11 +50,20 @@ interface WorkoutStoreActions {
   // 특정 날짜의 운동일지만 필터링해서 반환
   getWorkoutsByDate: (date: Date) => WorkoutStatePopulated[];
 
+  // ID로 개별 운동일지 찾기
+  getWorkoutById: (workoutId: string) => WorkoutStatePopulated | null;
+
   // 수동으로 데이터 새로고침
   refreshWorkouts: () => Promise<void>;
 
   // 운동일지 추가 후 store 업데이트
   addWorkoutToStore: (workout: WorkoutStatePopulated) => void;
+
+  // 운동일지 수정 후 store 업데이트
+  updateWorkoutInStore: (
+    workoutId: string,
+    updatedWorkout: WorkoutStatePopulated
+  ) => void;
 
   // 운동일지 삭제 후 store 업데이트
   removeWorkoutFromStore: (workoutId: string) => void;
@@ -168,6 +177,12 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
       });
     },
 
+    // ID로 개별 운동일지 찾기
+    getWorkoutById: (workoutId: string) => {
+      const { workouts } = get();
+      return workouts.find((w) => w._id === workoutId) || null;
+    },
+
     // 데이터 새로고침
     refreshWorkouts: async () => {
       const { currentYear, currentMonth } = get();
@@ -181,6 +196,19 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
     addWorkoutToStore: (workout: WorkoutStatePopulated) => {
       const { workouts } = get();
       set({ workouts: [...workouts, workout] });
+    },
+
+    // 운동일지 수정
+    updateWorkoutInStore: (
+      workoutId: string,
+      updatedWorkout: WorkoutStatePopulated
+    ) => {
+      const { workouts } = get();
+      set({
+        workouts: workouts.map((w) =>
+          w._id === workoutId ? updatedWorkout : w
+        ),
+      });
     },
 
     // 운동일지 삭제
