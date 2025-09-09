@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
+import type { Value } from "react-calendar/dist/shared/types.js";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
 import { UI_CONSTANTS, LAYOUT_CONSTANTS } from "../constants";
@@ -8,9 +9,8 @@ import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
 import WorkoutForm from "../components/workout/WorkoutForm";
 import WorkoutList from "../components/workout/WorkoutList";
-import { getWorkoutsByDateApi } from "../api/workout";
-import { WorkoutState } from "../types";
 import "react-calendar/dist/Calendar.css";
+import { useWorkoutStore } from "../store/workoutStore";
 
 const PageContainer = styled.div`
   max-width: ${LAYOUT_CONSTANTS.MAX_WIDTH};
@@ -98,21 +98,30 @@ const SelectedDate = styled.div`
 `;
 
 // 로컬 시간대 기준으로 날짜 문자열을 반환하는 함수
-const getLocalDateString = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+// const getLocalDateString = (date: Date): string => {
+//   const year = date.getFullYear();
+//   const month = String(date.getMonth() + 1).padStart(2, "0");
+//   const day = String(date.getDate()).padStart(2, "0");
+//   return `${year}-${month}-${day}`;
+// };
 
 const WorkoutLogPage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
   const { id, fetchUserInfo } = useUserStore();
+  const {
+    isLoading,
+    error,
+    setCurrentMonth,
+    getWorkoutsByDate,
+    refreshWorkouts,
+  } = useWorkoutStore();
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [workouts, setWorkouts] = useState<WorkoutState[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
+
+  // 선택된 날짜의 운동일지만 필터링
+  const selectedDateWorkouts = getWorkoutsByDate(selectedDate);
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -130,38 +139,70 @@ const WorkoutLogPage: React.FC = () => {
     loadUserInfo();
   }, [isLoggedIn, id, fetchUserInfo]);
 
-  // 선택된 날짜의 운동일지 가져오기
-  const fetchWorkoutsByDate = useCallback(
-    async (date: Date) => {
-      if (!isLoggedIn || !id) return;
-
-      setIsLoading(true);
-      try {
-        const dateString = getLocalDateString(date);
-        console.log(`선택된 날짜: ${date}, 변환된 날짜 문자열: ${dateString}`); // 디버깅용
-
-        const response = await getWorkoutsByDateApi(dateString);
-        setWorkouts(response.data);
-      } catch (error) {
-        console.error("운동일지 조회 실패:", error);
-        setWorkouts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isLoggedIn, id]
-  );
-
-  // 컴포넌트 마운트 시 오늘 날짜 운동일지 조회
+  // 초기 운동일지 로드
   useEffect(() => {
-    if (!isUserLoading && isLoggedIn && id) {
-      fetchWorkoutsByDate(selectedDate);
+    if (isLoggedIn && id) {
+      const now = new Date();
+      setCurrentMonth(now.getFullYear(), now.getMonth() + 1);
     }
-  }, [selectedDate, id, isLoggedIn, isUserLoading, fetchWorkoutsByDate]);
+  }, [isLoggedIn, id, setCurrentMonth]);
 
-  const handleDateChange = (value: any) => {
-    setSelectedDate(value as Date);
+  // 달력에서 월 변경 시 새로운 데이터 로드
+  const handleActiveStartDateChange = ({
+    activeStartDate,
+  }: {
+    activeStartDate: Date | null;
+  }) => {
+    if (activeStartDate && isLoggedIn && id) {
+      const year = activeStartDate.getFullYear();
+      const month = activeStartDate.getMonth() + 1;
+      setCurrentMonth(year, month);
+    }
   };
+
+  // 날짜 선택 시 - Value 타입으로 수정
+  const handleDateChange = (value: Value) => {
+    // Value는 Date | null | [Date | null, Date | null] 타입
+    let selectedDate: Date | null = null;
+
+    if (value) {
+      if (Array.isArray(value)) {
+        // Range 선택의 경우 첫 번째 날짜 사용
+        selectedDate = value[0];
+      } else {
+        // 단일 날짜 선택
+        selectedDate = value;
+      }
+    }
+
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+
+      // 선택된 날짜가 현재 로드된 월과 다르면 새로운 데이터 로드
+      const selectedYear = selectedDate.getFullYear();
+      const selectedMonth = selectedDate.getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
+        setCurrentMonth(selectedYear, selectedMonth);
+      }
+    }
+  };
+
+  // 운동일지 추가 성공 시
+  // const handleWorkoutSuccess = () => {
+  //   setIsModalOpen(false);
+  //   refreshWorkouts(); // 데이터 새로고침
+  // };
+
+  // 에러 처리
+  useEffect(() => {
+    if (error) {
+      console.error("운동일지 로드 에러:", error);
+      // 필요시 사용자에게 에러 표시
+    }
+  }, [error]);
 
   const handleCreateWorkout = () => {
     setIsModalOpen(true);
@@ -173,7 +214,7 @@ const WorkoutLogPage: React.FC = () => {
 
   const handleWorkoutCreated = () => {
     setIsModalOpen(false);
-    fetchWorkoutsByDate(selectedDate); // 새로운 운동일지 생성 후 목록 새로고침
+    refreshWorkouts(); // 새로운 운동일지 생성 후 목록 새로고침
   };
 
   const formatSelectedDate = (date: Date) => {
@@ -220,6 +261,7 @@ const WorkoutLogPage: React.FC = () => {
               onChange={handleDateChange}
               value={selectedDate}
               locale="ko-KR"
+              onActiveStartDateChange={handleActiveStartDateChange}
             />
           </CalendarWrapper>
         </CalendarSection>
@@ -235,9 +277,9 @@ const WorkoutLogPage: React.FC = () => {
           </CreateButton>
 
           <WorkoutList
-            workouts={workouts}
+            workouts={selectedDateWorkouts} // 필터링된 데이터 사용
             isLoading={isLoading}
-            onWorkoutUpdated={() => fetchWorkoutsByDate(selectedDate)}
+            onWorkoutUpdated={refreshWorkouts}
           />
         </WorkoutSection>
       </ContentWrapper>

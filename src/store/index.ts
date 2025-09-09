@@ -1,6 +1,7 @@
-// Zustand stores
-export { useAuthStore } from "./authStore";
-export { useUserStore } from "./userStore";
+// 모든 스토어들을 한 곳에서 export
+export * from "./authStore";
+export * from "./userStore";
+export * from "./workoutStore";
 
 // Store types for backward compatibility
 export type RootState = {

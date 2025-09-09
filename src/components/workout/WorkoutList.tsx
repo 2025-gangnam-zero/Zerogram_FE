@@ -1,10 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 import { UI_CONSTANTS } from "../../constants";
-import { WorkoutState } from "../../types";
+import { WorkoutStatePopulated } from "../../types";
 
 interface WorkoutListProps {
-  workouts: WorkoutState[];
+  workouts: WorkoutStatePopulated[];
   isLoading: boolean;
   onWorkoutUpdated: () => void;
 }
@@ -166,11 +166,11 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
 
               <DetailInfo>
                 <InfoItem>
-                  <label>운동 시간</label>
+                  <label>총 운동 시간</label>
                   <span>{detail.duration}분</span>
                 </InfoItem>
                 <InfoItem>
-                  <label>소모 칼로리</label>
+                  <label>총 소모 칼로리</label>
                   <span>{detail.calories}kcal</span>
                 </InfoItem>
 
@@ -189,22 +189,29 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
                   </>
                 )}
 
-                {detail.workout_name === "fitness" && (
+                {detail.workout_name === "fitness" && detail.fitnessDetails && (
                   <>
-                    <InfoItem>
-                      <label>운동 부위</label>
-                      <span>{detail.body_part}</span>
-                    </InfoItem>
-                    <InfoItem>
-                      <label>운동 종목</label>
-                      <span>{detail.fitness_type}</span>
-                    </InfoItem>
-                    <InfoItem>
-                      <label>세트 × 횟수 × 무게</label>
-                      <span>
-                        {detail.sets} × {detail.reps} × {detail.weight}kg
-                      </span>
-                    </InfoItem>
+                    {detail.fitnessDetails.map(
+                      (fitnessDetail, fitnessIndex) => (
+                        <React.Fragment key={fitnessDetail._id || fitnessIndex}>
+                          <InfoItem>
+                            <label>운동 부위</label>
+                            <span>{fitnessDetail.body_part}</span>
+                          </InfoItem>
+                          <InfoItem>
+                            <label>운동 종목</label>
+                            <span>{fitnessDetail.fitness_type}</span>
+                          </InfoItem>
+                          <InfoItem>
+                            <label>세트 × 횟수 × 무게</label>
+                            <span>
+                              {fitnessDetail.sets} × {fitnessDetail.reps} ×{" "}
+                              {fitnessDetail.weight}kg
+                            </span>
+                          </InfoItem>
+                        </React.Fragment>
+                      )
+                    )}
                   </>
                 )}
               </DetailInfo>
