@@ -1,6 +1,6 @@
 // API 관련 상수
 export const API_CONFIG = {
-  BASE_URL: "http://10.10.0.86:4000",
+  BASE_URL: process.env.REACT_APP_API_BASE_URL || "http://10.10.0.85:4000",
   // "http://ec2-15-164-151-28.ap-northeast-2.compute.amazonaws.com",
   TIMEOUT: 10000,
   HEADERS: {
