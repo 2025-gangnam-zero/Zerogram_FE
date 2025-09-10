@@ -1,12 +1,14 @@
 import React from "react";
 import styled from "styled-components";
 import { UI_CONSTANTS } from "../../constants";
-import { WorkoutState } from "../../types";
+import { WorkoutStatePopulated } from "../../types";
+import Button from "../common/Button";
 
 interface WorkoutListProps {
-  workouts: WorkoutState[];
+  workouts: WorkoutStatePopulated[];
   isLoading: boolean;
   onWorkoutUpdated: () => void;
+  onViewDetail?: (workoutId: string) => void;
 }
 
 const ListContainer = styled.div`
@@ -24,7 +26,7 @@ const WorkoutCard = styled.div`
 
 const WorkoutHeader = styled.div`
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: ${UI_CONSTANTS.SPACING.MD};
 
@@ -37,6 +39,18 @@ const WorkoutHeader = styled.div`
     color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
     font-size: 14px;
   }
+`;
+
+const HeaderInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${UI_CONSTANTS.SPACING.XS};
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: ${UI_CONSTANTS.SPACING.SM};
+  align-items: center;
 `;
 
 const DetailCard = styled.div`
@@ -125,6 +139,7 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
   workouts,
   isLoading,
   onWorkoutUpdated,
+  onViewDetail,
 }) => {
   if (isLoading) {
     return <LoadingState>운동일지를 불러오는 중...</LoadingState>;
@@ -139,15 +154,28 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
       {workouts.map((workout) => (
         <WorkoutCard key={workout._id}>
           <WorkoutHeader>
-            <h3>운동일지</h3>
-            <span>
-              {new Date(workout.createdAt).toLocaleString("ko-KR", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+            <HeaderInfo>
+              <h3>운동일지</h3>
+              <span>
+                {new Date(workout.createdAt).toLocaleString("ko-KR", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </HeaderInfo>
+            <HeaderActions>
+              {onViewDetail && (
+                <Button
+                  variant="outline"
+                  size="small"
+                  onClick={() => onViewDetail(workout._id)}
+                >
+                  자세히 보기
+                </Button>
+              )}
+            </HeaderActions>
           </WorkoutHeader>
 
           {workout.details.map((detail, index) => (
@@ -166,11 +194,11 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
 
               <DetailInfo>
                 <InfoItem>
-                  <label>운동 시간</label>
+                  <label>총 운동 시간</label>
                   <span>{detail.duration}분</span>
                 </InfoItem>
                 <InfoItem>
-                  <label>소모 칼로리</label>
+                  <label>총 소모 칼로리</label>
                   <span>{detail.calories}kcal</span>
                 </InfoItem>
 
@@ -189,22 +217,29 @@ const WorkoutList: React.FC<WorkoutListProps> = ({
                   </>
                 )}
 
-                {detail.workout_name === "fitness" && (
+                {detail.workout_name === "fitness" && detail.fitnessDetails && (
                   <>
-                    <InfoItem>
-                      <label>운동 부위</label>
-                      <span>{detail.body_part}</span>
-                    </InfoItem>
-                    <InfoItem>
-                      <label>운동 종목</label>
-                      <span>{detail.fitness_type}</span>
-                    </InfoItem>
-                    <InfoItem>
-                      <label>세트 × 횟수 × 무게</label>
-                      <span>
-                        {detail.sets} × {detail.reps} × {detail.weight}kg
-                      </span>
-                    </InfoItem>
+                    {detail.fitnessDetails.map(
+                      (fitnessDetail, fitnessIndex) => (
+                        <React.Fragment key={fitnessDetail._id || fitnessIndex}>
+                          <InfoItem>
+                            <label>운동 부위</label>
+                            <span>{fitnessDetail.body_part}</span>
+                          </InfoItem>
+                          <InfoItem>
+                            <label>운동 종목</label>
+                            <span>{fitnessDetail.fitness_type}</span>
+                          </InfoItem>
+                          <InfoItem>
+                            <label>세트 × 횟수 × 무게</label>
+                            <span>
+                              {fitnessDetail.sets} × {fitnessDetail.reps} ×{" "}
+                              {fitnessDetail.weight}kg
+                            </span>
+                          </InfoItem>
+                        </React.Fragment>
+                      )
+                    )}
                   </>
                 )}
               </DetailInfo>

@@ -3,16 +3,40 @@ import { getApiErrorMessage, logError } from "../utils";
 import {
   ApiResponse,
   WorkoutState,
+  WorkoutStatePopulated,
   CreateWorkoutRequest,
+  CreateWorkoutDetailRequest,
   WorkoutDetailType,
+  UpdateWorkoutRequest,
+  UpdateWorkoutDetailRequest,
+  UpdateFitnessDetailRequest,
+  FitnessDetailState,
 } from "../types";
 
-// 운동일지 생성
+// 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+const formatDateForAPI = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// 운동일지 생성 (개선된 버전)
 export const createWorkoutApi = async (
-  workoutData: CreateWorkoutRequest
+  workoutData: CreateWorkoutRequest,
+  selectedDate?: Date
 ): Promise<ApiResponse<WorkoutState>> => {
   try {
-    const response = await authApi.post("/users/me/workouts", workoutData);
+    let url = "/users/me/workouts";
+
+    // 선택된 날짜가 있으면 쿼리 파라미터로 추가
+    if (selectedDate) {
+      const dateString = formatDateForAPI(selectedDate);
+      url += `?date=${dateString}`;
+      console.log(`운동일지 생성 요청 - 선택된 날짜: ${dateString}`);
+    }
+
+    const response = await authApi.post(url, workoutData);
     return response.data;
   } catch (error) {
     logError("createWorkoutApi", error);
@@ -22,7 +46,7 @@ export const createWorkoutApi = async (
 
 // 사용자의 모든 운동일지 조회
 export const getUserWorkoutsApi = async (): Promise<
-  ApiResponse<WorkoutState[]>
+  ApiResponse<WorkoutStatePopulated[]>
 > => {
   try {
     const response = await authApi.get("/users/me/workouts");
@@ -37,14 +61,14 @@ export const getUserWorkoutsApi = async (): Promise<
 // 특정 날짜의 운동일지 조회
 export const getWorkoutsByDateApi = async (
   date: string
-): Promise<ApiResponse<WorkoutState[]>> => {
+): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
   try {
     console.log("요청된 날짜:", date); // 디버깅용
 
     const response = await getUserWorkoutsApi();
 
     // 응답 데이터가 배열인지 확인
-    let workoutsArray: WorkoutState[] = [];
+    let workoutsArray: WorkoutStatePopulated[] = [];
 
     if (Array.isArray(response.data)) {
       workoutsArray = response.data;
@@ -94,7 +118,7 @@ export const getWorkoutsByDateApi = async (
 // 특정 운동일지 조회
 export const getWorkoutByIdApi = async (
   workoutId: string
-): Promise<ApiResponse<WorkoutState>> => {
+): Promise<ApiResponse<WorkoutStatePopulated>> => {
   try {
     const response = await authApi.get(`/users/me/workouts/${workoutId}`);
     return response.data;
@@ -120,16 +144,12 @@ export const deleteWorkoutApi = async (
 // 운동 세부사항 추가
 export const addWorkoutDetailApi = async (
   workoutId: string,
-  detailData: Omit<
-    WorkoutDetailType,
-    "_id" | "workoutId" | "createdAt" | "updatedAt"
-  >
+  detailData: CreateWorkoutDetailRequest
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
-    const response = await authApi.post(
-      `/users/me/workouts/${workoutId}`,
-      detailData
-    );
+    const response = await authApi.post(`/users/me/workouts/${workoutId}`, {
+      details: [detailData],
+    });
     return response.data;
   } catch (error) {
     logError("addWorkoutDetailApi", error);
@@ -153,20 +173,20 @@ export const getWorkoutDetailApi = async (
   }
 };
 
-// 운동 세부사항 수정
-export const updateWorkoutDetailApi = async (
+// 헬스 세부사항 추가
+export const addFitnessDetailApi = async (
   workoutId: string,
   detailId: string,
-  detailData: Partial<WorkoutDetailType>
+  detailData: Partial<CreateWorkoutDetailRequest>
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
-    const response = await authApi.patch(
-      `/users/me/workouts/${workoutId}/detail/${detailId}`,
-      detailData
+    const response = await authApi.post(
+      `/users/me/workouts/${workoutId}/details/${detailId}`,
+      { fitnessDetails: detailData.fitnessDetails }
     );
     return response.data;
   } catch (error) {
-    logError("updateWorkoutDetailApi", error);
+    logError("addFitnessDetailApi", error);
     throw new Error(getApiErrorMessage(error));
   }
 };
@@ -177,9 +197,7 @@ export const deleteWorkoutDetailApi = async (
   detailId: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete(
-      `/users/me/workouts/${workoutId}/detail/${detailId}`
-    );
+    const response = await authApi.delete(`/users/me/details/${detailId}`);
     return response.data;
   } catch (error) {
     logError("deleteWorkoutDetailApi", error);
@@ -187,14 +205,89 @@ export const deleteWorkoutDetailApi = async (
   }
 };
 
+// 헬스 세부사항 삭제
+export const deleteFitnessDetailApi = async (
+  fitnessDetailId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/fitnessdetails/${fitnessDetailId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteFitnessDetailApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 // 레거시 호환성을 위한 함수들 (기존 컴포넌트에서 사용)
+// 운동일지 수정 (백엔드 API 지원)
 export const updateWorkoutApi = async (
   workoutId: string,
-  workoutData: Partial<CreateWorkoutRequest>
+  workoutData: UpdateWorkoutRequest
 ): Promise<ApiResponse<WorkoutState>> => {
-  // 백엔드에 전체 운동일지 수정 API가 없으므로,
-  // 필요시 개별 세부사항을 수정하는 방식으로 구현해야 함
-  throw new Error(
-    "운동일지 전체 수정은 지원되지 않습니다. 개별 세부사항을 수정해주세요."
-  );
+  try {
+    const response = await authApi.patch(`/users/me/workouts/${workoutId}`, {
+      workout: workoutData,
+    });
+    return response.data;
+  } catch (error) {
+    logError("updateWorkoutApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 운동일지 상세 수정
+export const updateWorkoutDetailApi = async (
+  workoutId: string,
+  workoutDetailId: string,
+  detailData: UpdateWorkoutDetailRequest
+): Promise<ApiResponse<WorkoutDetailType>> => {
+  try {
+    const response = await authApi.patch(
+      `/users/me/workouts/${workoutId}/details/${workoutDetailId}`,
+      { detail: detailData }
+    );
+    return response.data;
+  } catch (error) {
+    logError("updateWorkoutDetailApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 피트니스 상세 수정
+export const updateFitnessDetailApi = async (
+  workoutId: string,
+  workoutDetailId: string,
+  fitnessDetailId: string,
+  fitnessData: UpdateFitnessDetailRequest
+): Promise<ApiResponse<FitnessDetailState>> => {
+  try {
+    const response = await authApi.patch(
+      `/users/me/workouts/${workoutId}/details/${workoutDetailId}/fitnessdetails/${fitnessDetailId}`,
+      { fitnessDetail: fitnessData }
+    );
+    return response.data;
+  } catch (error) {
+    logError("updateFitnessDetailApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 특정 월의 운동일지 조회 (새로운 API)
+export const getWorkoutsByMonthApi = async (
+  year: number,
+  month: number
+): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
+  try {
+    console.log(`월별 운동일지 요청: ${year}년 ${month}월`);
+    const response = await authApi.get(
+      `/users/me/workouts?year=${year}&month=${month}`
+    );
+    console.log("월별 백엔드 응답 데이터:", response.data);
+    return response.data;
+  } catch (error) {
+    logError("getWorkoutsByMonthApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
 };

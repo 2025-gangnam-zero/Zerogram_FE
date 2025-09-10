@@ -4,7 +4,10 @@ import { UI_CONSTANTS } from "../../constants";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import { createWorkoutApi } from "../../api/workout";
-import { WorkoutDetailType } from "../../types";
+import {
+  CreateWorkoutDetailRequest,
+  CreateFitnessDetailRequest,
+} from "../../types";
 
 interface WorkoutFormProps {
   selectedDate: Date;
@@ -293,10 +296,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
     e.preventDefault();
 
     // 유효성 검사 및 데이터 변환
-    const workoutDetails: Omit<
-      WorkoutDetailType,
-      "_id" | "workoutId" | "createdAt" | "updatedAt"
-    >[] = [];
+    const workoutDetails: CreateWorkoutDetailRequest[] = [];
 
     for (const session of workoutSessions) {
       if (!session.duration || !session.calories) {
@@ -324,7 +324,9 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
           return;
         }
 
-        // 각 루틴을 별도의 WorkoutDetailType으로 생성
+        // 피트니스 루틴들을 fitnessDetails 배열로 변환
+        const fitnessDetails: CreateFitnessDetailRequest[] = [];
+
         for (const routine of session.routines) {
           if (
             !routine.body_part ||
@@ -336,11 +338,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
             return;
           }
 
-          workoutDetails.push({
-            workout_name: "fitness",
-            duration: session.duration,
-            calories: session.calories,
-            feedback: session.feedback,
+          fitnessDetails.push({
             body_part: routine.body_part,
             fitness_type: routine.fitness_type,
             sets: routine.sets,
@@ -348,6 +346,14 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
             weight: routine.weight,
           });
         }
+
+        workoutDetails.push({
+          workout_name: "fitness",
+          duration: session.duration,
+          calories: session.calories,
+          feedback: session.feedback,
+          fitnessDetails: fitnessDetails,
+        });
       }
     }
 
@@ -358,7 +364,11 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      await createWorkoutApi({ details: workoutDetails });
+      // 선택된 날짜와 함께 API 호출
+      await createWorkoutApi({ details: workoutDetails }, selectedDate);
+      console.log(
+        `운동일지 생성 완료 - 날짜: ${selectedDate.toLocaleDateString()}`
+      );
       onSuccess();
     } catch (error) {
       console.error("운동일지 생성 실패:", error);
@@ -594,7 +604,7 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
                   fontWeight: "600",
                 }}
               >
-                운동 소감
+                피드백
               </label>
               <TextArea
                 value={session.feedback}

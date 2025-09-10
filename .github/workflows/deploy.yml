@@ -3,7 +3,7 @@ name: Deploy to S3
 on:
   push:
     branches:
-      - main # main 브랜치에 push될 때 실행
+      - main
 
 jobs:
   deploy:
@@ -22,6 +22,12 @@ jobs:
         run: npm install
 
       - name: Build Project
+        env:
+          REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL }}
+          REACT_APP_OAUTH_REDIRECT_URI: ${{ secrets.REACT_APP_OAUTH_REDIRECT_URI }}
+          REACT_APP_GOOGLE_REDIRECT_URI: ${{ secrets.REACT_APP_GOOGLE_REDIRECT_URI }}
+          REACT_APP_KAKAO_CLIENT_ID: ${{ secrets.REACT_APP_KAKAO_CLIENT_ID }}
+          REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
         run: npm run build
 
       - name: Configure AWS credentials
