@@ -5,16 +5,20 @@ import {
   WorkoutStatePopulated,
   CreateWorkoutDetailRequest,
   WorkoutDetailType,
+  UpdateWorkoutDetailRequest,
+  UpdateFitnessDetailRequest,
 } from "../../types";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Input from "../common/Input";
 import {
   addWorkoutDetailApi,
-  updateWorkoutDetailApi,
+  addFitnessDetailApi,
   deleteWorkoutDetailApi,
   deleteWorkoutApi,
   deleteFitnessDetailApi,
+  updateWorkoutDetailApi,
+  updateFitnessDetailApi,
 } from "../../api/workout";
 
 interface WorkoutDetailModalProps {
@@ -187,6 +191,7 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
   onWorkoutUpdated,
 }) => {
   const [editingDetailId, setEditingDetailId] = useState<string | null>(null);
+  const [editingFitnessId, setEditingFitnessId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
     type: "detail" | "workout" | "fitness";
@@ -210,6 +215,15 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
   // 편집 모드에서 기존 루틴 개수를 추적
   const [originalFitnessCount, setOriginalFitnessCount] = useState(0);
+
+  // 피트니스 세부사항 수정용 폼 상태 추가
+  const [editFitnessForm, setEditFitnessForm] = useState({
+    body_part: "",
+    fitness_type: "",
+    sets: 0,
+    reps: 0,
+    weight: 0,
+  });
 
   useEffect(() => {
     if (editingDetailId && workout) {
@@ -264,20 +278,39 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
     }
   }, [editingDetailId, isAddingNew, workout]);
 
-  const handleSaveEdit = async () => {
-    console.log("handleSaveEdit 호출됨!");
-    console.log("editingDetailId:", editingDetailId);
-    console.log("isAddingNew:", isAddingNew);
-    console.log("workout:", workout);
+  // 피트니스 세부사항 편집 모드 진입
+  useEffect(() => {
+    if (editingFitnessId && workout) {
+      let fitnessDetail = null;
+      for (const detail of workout.details) {
+        if (detail.fitnessDetails) {
+          fitnessDetail = detail.fitnessDetails.find(
+            (f) => f._id === editingFitnessId
+          );
+          if (fitnessDetail) break;
+        }
+      }
 
+      if (fitnessDetail) {
+        setEditFitnessForm({
+          body_part: fitnessDetail.body_part || "",
+          fitness_type: fitnessDetail.fitness_type || "",
+          sets: fitnessDetail.sets || 0,
+          reps: fitnessDetail.reps || 0,
+          weight: fitnessDetail.weight || 0,
+        });
+      }
+    }
+  }, [editingFitnessId, workout]);
+
+  const handleSaveEdit = async () => {
     if (!workout) return;
 
     setIsLoading(true);
     try {
       if (editingDetailId) {
-        // 수정의 경우: CreateWorkoutDetailRequest와 동일한 구조 사용
-        const updateData: Partial<CreateWorkoutDetailRequest> = {
-          workout_name: editForm.workout_name,
+        // 운동 세부사항 수정
+        const updateData: UpdateWorkoutDetailRequest = {
           duration: editForm.duration,
           calories: editForm.calories,
           feedback: editForm.feedback,
@@ -286,20 +319,27 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
         if (editForm.workout_name === "running") {
           updateData.distance = editForm.distance;
           updateData.avg_pace = paceToSeconds(editForm.avg_pace);
-        } else if (editForm.workout_name === "fitness") {
-          // 헬스의 경우 새로 추가된 fitnessDetails만 전송
+        }
+
+        await updateWorkoutDetailApi(workout._id, editingDetailId, updateData);
+
+        // 헬스인 경우 새로 추가된 피트니스 세부사항들 추가
+        if (
+          editForm.workout_name === "fitness" &&
+          newFitnessDetails.length > 0
+        ) {
           const validNewDetails = newFitnessDetails.filter(
             (f) => f.body_part && f.fitness_type && f.sets >= 0 && f.reps >= 0
           );
-          updateData.fitnessDetails = validNewDetails;
+
+          if (validNewDetails.length > 0) {
+            await addFitnessDetailApi(workout._id, editingDetailId, {
+              fitnessDetails: validNewDetails,
+            });
+          }
         }
-
-        console.log("updateData:", updateData);
-        console.log("newFitnessDetails:", newFitnessDetails);
-
-        await updateWorkoutDetailApi(workout._id, editingDetailId, updateData);
       } else if (isAddingNew) {
-        // 추가의 경우: CreateWorkoutDetailRequest 형태 사용
+        // 새 운동 세부사항 추가 (기존 로직 유지)
         const createData: CreateWorkoutDetailRequest = {
           workout_name: editForm.workout_name,
           duration: editForm.duration,
@@ -311,7 +351,6 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
           createData.distance = editForm.distance;
           createData.avg_pace = paceToSeconds(editForm.avg_pace);
         } else {
-          // 새로 추가 모드에서는 editForm.fitnessDetails 사용
           createData.fitnessDetails = editForm.fitnessDetails.filter(
             (f) => f.body_part && f.fitness_type && f.sets >= 0 && f.reps >= 0
           );
@@ -322,11 +361,48 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
 
       setEditingDetailId(null);
       setIsAddingNew(false);
-      setNewFitnessDetails([]); // 새로 추가된 항목 초기화
+      setNewFitnessDetails([]);
       onWorkoutUpdated();
     } catch (error) {
       console.error("저장 실패:", error);
       alert("저장에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 피트니스 세부사항 수정 저장
+  const handleSaveFitnessEdit = async () => {
+    if (!workout || !editingFitnessId) return;
+
+    // 해당 피트니스 세부사항이 속한 운동 세부사항 찾기
+    let parentDetailId = null;
+    for (const detail of workout.details) {
+      if (detail.fitnessDetails?.some((f) => f._id === editingFitnessId)) {
+        parentDetailId = detail._id;
+        break;
+      }
+    }
+
+    if (!parentDetailId) {
+      alert("운동 세부사항을 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await updateFitnessDetailApi(
+        workout._id,
+        parentDetailId,
+        editingFitnessId,
+        editFitnessForm
+      );
+
+      setEditingFitnessId(null);
+      onWorkoutUpdated();
+    } catch (error) {
+      console.error("피트니스 세부사항 수정 실패:", error);
+      alert("수정에 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -743,43 +819,137 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                           >
                             <FitnessDetailHeader>
                               <strong>루틴 {index + 1}</strong>
-                              <Button
-                                variant="danger"
-                                size="small"
-                                onClick={() =>
-                                  setShowDeleteConfirm({
-                                    type: "fitness",
-                                    id:
-                                      fitnessDetail._id ||
-                                      `${detail._id}-${index}`,
-                                  })
-                                }
-                              >
-                                삭제
-                              </Button>
+                              <ButtonGroup>
+                                <Button
+                                  variant="outline"
+                                  size="small"
+                                  onClick={() =>
+                                    setEditingFitnessId(fitnessDetail._id)
+                                  }
+                                >
+                                  수정
+                                </Button>
+                                <Button
+                                  variant="danger"
+                                  size="small"
+                                  onClick={() =>
+                                    setShowDeleteConfirm({
+                                      type: "fitness",
+                                      id:
+                                        fitnessDetail._id ||
+                                        `${detail._id}-${index}`,
+                                    })
+                                  }
+                                >
+                                  삭제
+                                </Button>
+                              </ButtonGroup>
                             </FitnessDetailHeader>
-                            <FitnessDetailGrid>
-                              <InfoItem>
-                                <label>운동 부위</label>
-                                <span>{fitnessDetail.body_part}</span>
-                              </InfoItem>
-                              <InfoItem>
-                                <label>운동 종목</label>
-                                <span>{fitnessDetail.fitness_type}</span>
-                              </InfoItem>
-                              <InfoItem>
-                                <label>세트 수</label>
-                                <span>{fitnessDetail.sets}</span>
-                              </InfoItem>
-                              <InfoItem>
-                                <label>횟수</label>
-                                <span>{fitnessDetail.reps}</span>
-                              </InfoItem>
-                              <InfoItem>
-                                <label>무게</label>
-                                <span>{fitnessDetail.weight}kg</span>
-                              </InfoItem>
-                            </FitnessDetailGrid>
+
+                            {editingFitnessId === fitnessDetail._id ? (
+                              <EditForm>
+                                <FormGrid>
+                                  <Input
+                                    label="운동 부위"
+                                    type="text"
+                                    value={editFitnessForm.body_part}
+                                    onChange={(e) =>
+                                      setEditFitnessForm((prev) => ({
+                                        ...prev,
+                                        body_part: e.target.value,
+                                      }))
+                                    }
+                                    placeholder="예: 가슴, 등, 다리"
+                                  />
+                                  <Input
+                                    label="운동 종목"
+                                    type="text"
+                                    value={editFitnessForm.fitness_type}
+                                    onChange={(e) =>
+                                      setEditFitnessForm((prev) => ({
+                                        ...prev,
+                                        fitness_type: e.target.value,
+                                      }))
+                                    }
+                                    placeholder="예: 벤치프레스, 스쿼트"
+                                  />
+                                  <Input
+                                    label="세트 수"
+                                    type="number"
+                                    value={editFitnessForm.sets.toString()}
+                                    onChange={(e) =>
+                                      setEditFitnessForm((prev) => ({
+                                        ...prev,
+                                        sets: Number(e.target.value),
+                                      }))
+                                    }
+                                    min="0"
+                                  />
+                                  <Input
+                                    label="횟수"
+                                    type="number"
+                                    value={editFitnessForm.reps.toString()}
+                                    onChange={(e) =>
+                                      setEditFitnessForm((prev) => ({
+                                        ...prev,
+                                        reps: Number(e.target.value),
+                                      }))
+                                    }
+                                    min="0"
+                                  />
+                                  <Input
+                                    label="무게 (kg)"
+                                    type="number"
+                                    value={editFitnessForm.weight.toString()}
+                                    onChange={(e) =>
+                                      setEditFitnessForm((prev) => ({
+                                        ...prev,
+                                        weight: Number(e.target.value),
+                                      }))
+                                    }
+                                    min="0"
+                                    step="0.1"
+                                  />
+                                </FormGrid>
+                                <ButtonGroup>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => setEditingFitnessId(null)}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    onClick={handleSaveFitnessEdit}
+                                    disabled={isLoading}
+                                  >
+                                    {isLoading ? "저장 중..." : "저장"}
+                                  </Button>
+                                </ButtonGroup>
+                              </EditForm>
+                            ) : (
+                              <FitnessDetailGrid>
+                                <InfoItem>
+                                  <label>운동 부위</label>
+                                  <span>{fitnessDetail.body_part}</span>
+                                </InfoItem>
+                                <InfoItem>
+                                  <label>운동 종목</label>
+                                  <span>{fitnessDetail.fitness_type}</span>
+                                </InfoItem>
+                                <InfoItem>
+                                  <label>세트 수</label>
+                                  <span>{fitnessDetail.sets}</span>
+                                </InfoItem>
+                                <InfoItem>
+                                  <label>횟수</label>
+                                  <span>{fitnessDetail.reps}</span>
+                                </InfoItem>
+                                <InfoItem>
+                                  <label>무게</label>
+                                  <span>{fitnessDetail.weight}kg</span>
+                                </InfoItem>
+                              </FitnessDetailGrid>
+                            )}
                           </FitnessDetailContainer>
                         ))}
                       </div>

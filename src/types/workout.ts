@@ -99,3 +99,28 @@ export interface RunningType {
   avg_pace: string; // 사용자 입력용 (5:30 형식)
   distance: number;
 }
+
+// 수정 요청 타입들 추가
+export interface UpdateWorkoutRequest {
+  date?: string; // 운동일지 날짜 수정
+  // 추가적인 운동일지 레벨 필드들이 있다면 여기에 추가
+}
+
+export interface UpdateWorkoutDetailRequest {
+  workout_name?: WorkoutType;
+  duration?: number; // 운동 시간
+  calories?: number; // 소모 칼로리
+  feedback?: string; // 소감, 감상
+
+  // 러닝 관련 필드
+  avg_pace?: number; // 평균 페이스
+  distance?: number; // 거리
+}
+
+export interface UpdateFitnessDetailRequest {
+  body_part?: string; // 부위
+  fitness_type?: string; // 종목
+  sets?: number; // 세트 수
+  reps?: number; // 횟수
+  weight?: number; // 무게
+}
