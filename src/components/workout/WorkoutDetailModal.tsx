@@ -4,9 +4,7 @@ import { UI_CONSTANTS } from "../../constants";
 import {
   WorkoutStatePopulated,
   CreateWorkoutDetailRequest,
-  WorkoutDetailType,
   UpdateWorkoutDetailRequest,
-  UpdateFitnessDetailRequest,
 } from "../../types";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
