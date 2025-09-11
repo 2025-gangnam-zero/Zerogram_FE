@@ -2,7 +2,7 @@
 export interface DietState {
   _id: string;
   userId: string;
-  meals: MealState[];
+  meals: MealState[]; // 아침, 점심, 저녁, 간식
   total_calories: number;
   feedback?: string;
   createdAt: Date;
@@ -18,23 +18,4 @@ export interface MealState {
   food_amount?: number;
   createdAt: Date;
   updatedAt: Date;
-}
-
-// 음식 검색 결과 아이템 (백엔드 API 응답)
-export interface FoodSearchResultItem {
-  foodId: number;
-  foodName: string;
-  calories: number;
-  carbohydrates?: number;
-  protein?: number;
-  fat?: number;
-  sugar?: number;
-  sodium?: number;
-  cholesterol?: number;
-  saturatedFat?: number;
-  transFat?: number;
-  servingSize?: string;
-  servingUnit?: string;
-  groupName?: string;
-  makerName?: string;
 }
