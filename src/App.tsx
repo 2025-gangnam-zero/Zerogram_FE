@@ -11,10 +11,8 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import MyPage from "./pages/MyPage";
 import WorkoutLogPage from "./pages/WorkoutLogPage";
-import DietLogPage from "./pages/DietLogPage";
 import { LAYOUT_CONSTANTS } from "./constants";
-
-import TestFoodAPI from "./test-food-api";
+import DietPage from "./pages/DietPage";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -77,8 +75,7 @@ const AppContent: React.FC = () => {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/workout" element={<WorkoutLogPage />} />
-            <Route path="/diet" element={<DietLogPage />} />
-            <Route path="/test-food-api" element={<TestFoodAPI />} />
+            <Route path="/diet" element={<DietPage />} />
           </Routes>
         </MainContent>
         <Footer />
