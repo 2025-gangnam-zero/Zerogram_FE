@@ -14,6 +14,8 @@ import DietPage from "../pages/DietPage";
 import DietLogPage from "../pages/DietLogPage";
 
 import { useAuthStore } from "../store/authStore";
+import ChatPage from "../pages/ChatPage/ChatPage";
+import { Communication } from "../components/chat";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -51,6 +53,9 @@ export default function Router() {
             <Route path="/workout" element={<WorkoutLogPage />} />
             <Route path="/diet" element={<DietPage />} />
             <Route path="/diet-log" element={<DietLogPage />} />
+            <Route path="/chat" element={<ChatPage />}>
+              <Route path=":chtroomid" element={<Communication />} />
+            </Route>
           </Routes>
         </MainContent>
         <Footer />

@@ -1,0 +1,37 @@
+.sidebar {
+  width: 250px;
+  background-color: grey;
+  padding: 0.8rem 0;
+  min-height: inherit;
+  overflow: auto;
+}
+
+.title {
+  width: 100%;
+  padding: 0 0.8rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.item {
+  width: 100%;
+  padding: 0 0.8rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.name {
+  flex: 1;
+}
+
+.body {
+  display: flex;
+  justify-content: space-between;
+}
