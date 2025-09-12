@@ -9,6 +9,7 @@ import { DietLogData } from "../../api/diet";
 
 // 선택된 음식 타입
 interface SelectedFood {
+  uniqueId: number; // 고유 식별자 추가
   foodId: string;
   foodName: string;
   calories: number; // 100g 기준 칼로리
@@ -237,6 +238,7 @@ const DietLogModal: React.FC = () => {
     calories: number;
   }) => {
     const newFood: SelectedFood = {
+      uniqueId: Date.now() + Math.random(), // 고유 ID 생성
       ...food,
       amount: 100, // 기본 섭취량 100g
       totalCalories: calculateTotalCalories(food.calories, 100),
@@ -256,32 +258,36 @@ const DietLogModal: React.FC = () => {
     }
   };
 
-  // 음식 제거 핸들러
-  const handleRemoveFood = (foodId: string, mealType: MealType) => {
+  // 음식 제거 핸들러 - uniqueId 기준으로 변경
+  const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
     switch (mealType) {
       case "breakfast":
         setBreakfastFoods((prev) =>
-          prev.filter((food) => food.foodId !== foodId)
+          prev.filter((food) => food.uniqueId !== uniqueId)
         );
         break;
       case "lunch":
-        setLunchFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+        setLunchFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
         break;
       case "dinner":
-        setDinnerFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+        setDinnerFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
         break;
     }
   };
 
-  // 섭취량 변경 핸들러
+  // 섭취량 변경 핸들러 - uniqueId 기준으로 변경
   const handleAmountChange = (
-    foodId: string,
+    uniqueId: number,
     mealType: MealType,
     newAmount: number
   ) => {
     const updateFood = (foods: SelectedFood[]) =>
       foods.map((food) =>
-        food.foodId === foodId
+        food.uniqueId === uniqueId
           ? {
               ...food,
               amount: newAmount,
@@ -381,17 +387,21 @@ const DietLogModal: React.FC = () => {
     foods: SelectedFood[],
     mealName: string
   ) => {
-    const totalCalories = getMealTotalCalories(foods);
+    const totalCalories = foods.reduce(
+      (sum, food) => sum + food.totalCalories,
+      0
+    );
 
     return (
       <MealSection key={mealType}>
-        <MealTitle>
-          {mealName} ({totalCalories} kcal)
-        </MealTitle>
+        <MealTypeLabel>{mealName}</MealTypeLabel>
+
         <MealFoodsList>
           {foods.length > 0 ? (
             foods.map((food) => (
-              <MealFoodItem key={food.foodId}>
+              <MealFoodItem key={food.uniqueId}>
+                {" "}
+                {/* uniqueId로 변경 */}
                 <MealFoodInfo>
                   <MealFoodName>{food.foodName}</MealFoodName>
                   <MealFoodCalories>
@@ -407,7 +417,7 @@ const DietLogModal: React.FC = () => {
                     value={food.amount}
                     onChange={(e) =>
                       handleAmountChange(
-                        food.foodId,
+                        food.uniqueId, // uniqueId로 변경
                         mealType,
                         Number(e.target.value)
                       )
@@ -417,7 +427,9 @@ const DietLogModal: React.FC = () => {
                   />
                   <AmountLabel>g</AmountLabel>
                   <RemoveButton
-                    onClick={() => handleRemoveFood(food.foodId, mealType)}
+                    onClick={() =>
+                      handleRemoveFood(food.uniqueId, mealType)
+                    } /* uniqueId로 변경 */
                   >
                     제거
                   </RemoveButton>
