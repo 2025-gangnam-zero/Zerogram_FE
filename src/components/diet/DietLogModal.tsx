@@ -5,6 +5,7 @@ import { UI_CONSTANTS } from "../../constants";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import FoodSearch from "./FoodSearch";
+import { DietLogData } from "../../api/diet";
 
 // 선택된 음식 타입
 interface SelectedFood {
@@ -205,7 +206,7 @@ const ButtonGroup = styled.div`
 `;
 
 const DietLogModal: React.FC = () => {
-  const { isModalOpen, closeModal, selectedDate } = useDietStore();
+  const { isModalOpen, closeModal, selectedDate, addDietLog } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
   const [breakfastFoods, setBreakfastFoods] = useState<SelectedFood[]>([]);
@@ -303,18 +304,51 @@ const DietLogModal: React.FC = () => {
   };
 
   // 저장 핸들러
-  const handleSave = () => {
-    // TODO: API 호출로 저장 로직 구현
-    console.log("저장할 데이터:", {
-      date: selectedDate,
-      breakfast: breakfastFoods,
-      lunch: lunchFoods,
-      dinner: dinnerFoods,
-      totalCalories: getTotalCalories(),
-    });
+  const handleSave = async () => {
+    try {
+      // 날짜를 YYYY-MM-DD 형식으로 변환
+      const dateString = selectedDate.toISOString().split("T")[0];
 
-    // 저장 후 모달 닫기
-    closeModal();
+      // API에 전달할 데이터 형식으로 변환
+      const logData: DietLogData = {
+        date: dateString,
+        breakfast: breakfastFoods.map((food) => ({
+          foodId: food.foodId,
+          foodName: food.foodName,
+          calories: food.calories,
+          amount: food.amount,
+          totalCalories: food.totalCalories,
+        })),
+        lunch: lunchFoods.map((food) => ({
+          foodId: food.foodId,
+          foodName: food.foodName,
+          calories: food.calories,
+          amount: food.amount,
+          totalCalories: food.totalCalories,
+        })),
+        dinner: dinnerFoods.map((food) => ({
+          foodId: food.foodId,
+          foodName: food.foodName,
+          calories: food.calories,
+          amount: food.amount,
+          totalCalories: food.totalCalories,
+        })),
+        totalCalories: getTotalCalories(),
+      };
+
+      console.log("저장할 데이터:", logData);
+
+      // 스토어의 addDietLog 액션 호출
+      await addDietLog(logData);
+
+      // 저장 성공 후 모달 닫기
+      closeModal();
+    } catch (error) {
+      console.error("식단 일지 저장 실패:", error);
+      // 에러 처리는 스토어에서 이미 처리되므로 여기서는 로그만 출력
+      // 필요시 사용자에게 알림을 표시할 수 있음
+      alert("식단 일지 저장에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   // 모달 닫기 핸들러

@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import { useDietStore } from "../store";
 import { UI_CONSTANTS, LAYOUT_CONSTANTS } from "../constants";
 import Button from "../components/common/Button";
 import DietLogModal from "../components/diet/DietLogModal";
+import CalorieChart from "../components/diet/CalorieChart";
+import BmiCalculator from "../components/body/BmiCalculator";
 import { Value } from "react-calendar/dist/shared/types";
 
 const PageContainer = styled.div`
@@ -116,8 +118,67 @@ const ActionSection = styled.div`
   margin-top: ${UI_CONSTANTS.SPACING.XL};
 `;
 
+const ContentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${UI_CONSTANTS.SPACING.XL};
+  margin-top: ${UI_CONSTANTS.SPACING.XL};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: ${UI_CONSTANTS.SPACING.LG};
+  }
+`;
+
+const ChartSection = styled.div`
+  grid-column: 1 / -1;
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  font-style: italic;
+  margin: ${UI_CONSTANTS.SPACING.XL} 0;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  color: ${UI_CONSTANTS.COLORS.DANGER};
+  background: ${UI_CONSTANTS.COLORS.LIGHT};
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  margin: ${UI_CONSTANTS.SPACING.XL} 0;
+`;
+
 const DietLogPage: React.FC = () => {
-  const { selectedDate, setSelectedDate, openModal } = useDietStore();
+  const {
+    selectedDate,
+    setSelectedDate,
+    openModal,
+    getMonthlyLogs,
+    currentYear,
+    currentMonth,
+    isLoading,
+    error,
+  } = useDietStore();
+
+  // 컴포넌트 마운트 시 현재 월의 데이터 로드
+  useEffect(() => {
+    const today = new Date();
+    getMonthlyLogs(today.getFullYear(), today.getMonth() + 1);
+  }, [getMonthlyLogs]);
+
+  // 선택된 날짜가 변경될 때 해당 월의 데이터 로드
+  useEffect(() => {
+    const selectedYear = selectedDate.getFullYear();
+    const selectedMonth = selectedDate.getMonth() + 1;
+
+    // 현재 로드된 월과 다르면 새로 로드
+    if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
+      getMonthlyLogs(selectedYear, selectedMonth);
+    }
+  }, [selectedDate, currentYear, currentMonth, getMonthlyLogs]);
 
   const handleDateChange = (
     value: Value,
@@ -163,6 +224,23 @@ const DietLogPage: React.FC = () => {
           선택한 날짜의 일지 작성
         </Button>
       </ActionSection>
+
+      {/* 로딩 상태 */}
+      {isLoading && <LoadingMessage>데이터를 불러오는 중...</LoadingMessage>}
+
+      {/* 에러 상태 */}
+      {error && <ErrorMessage>오류가 발생했습니다: {error}</ErrorMessage>}
+
+      {/* 차트 섹션 */}
+      <ChartSection>
+        <CalorieChart />
+      </ChartSection>
+
+      {/* BMI 계산기와 기타 도구들 */}
+      <ContentGrid>
+        <BmiCalculator />
+        <div>{/* 향후 추가 도구들을 위한 공간 */}</div>
+      </ContentGrid>
 
       <DietLogModal />
     </PageContainer>
