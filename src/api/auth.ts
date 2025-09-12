@@ -133,4 +133,14 @@ export const updateUserInfoApi = async (
   }
 };
 
+// 프로필 사진 초기화 API 함수
+export const resetProfileImageApi = async (): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete("/users/me/profile-image");
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 export default authApi;

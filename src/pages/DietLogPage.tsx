@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import { useDietStore } from "../store";
@@ -8,6 +8,8 @@ import DietLogModal from "../components/diet/DietLogModal";
 import CalorieChart from "../components/diet/CalorieChart";
 import BmiCalculator from "../components/body/BmiCalculator";
 import { Value } from "react-calendar/dist/shared/types";
+import { fetchDietLogByDate } from "../api/diet";
+import { DietLogResponse } from "../api/diet";
 
 const PageContainer = styled.div`
   max-width: ${LAYOUT_CONSTANTS.MAX_WIDTH};
@@ -135,19 +137,99 @@ const ChartSection = styled.div`
   margin-bottom: ${UI_CONSTANTS.SPACING.LG};
 `;
 
+const DietLogSection = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
+  padding: ${UI_CONSTANTS.SPACING.XL};
+  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+  text-align: center;
+`;
+
+const MealSection = styled.div`
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+`;
+
+const MealTitle = styled.h3`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  margin-bottom: ${UI_CONSTANTS.SPACING.MD};
+  padding-bottom: ${UI_CONSTANTS.SPACING.SM};
+  border-bottom: 2px solid ${UI_CONSTANTS.COLORS.BORDER};
+`;
+
+const FoodList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${UI_CONSTANTS.SPACING.SM};
+`;
+
+const FoodItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  background: ${UI_CONSTANTS.COLORS.BACKGROUND_LIGHT};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  border: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
+`;
+
+const FoodName = styled.span`
+  font-weight: 500;
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+`;
+
+const FoodAmount = styled.span`
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  font-size: 0.9rem;
+`;
+
+const TotalCalories = styled.div`
+  text-align: center;
+  padding: ${UI_CONSTANTS.SPACING.LG};
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  margin-top: ${UI_CONSTANTS.SPACING.LG};
+`;
+
+const TotalCaloriesTitle = styled.h3`
+  font-size: 1.1rem;
+  margin-bottom: ${UI_CONSTANTS.SPACING.SM};
+`;
+
+const TotalCaloriesValue = styled.div`
+  font-size: 2rem;
+  font-weight: bold;
+`;
+
+const NoDataMessage = styled.div`
+  text-align: center;
+  padding: ${UI_CONSTANTS.SPACING.XL};
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  font-size: 1.1rem;
+`;
+
 const LoadingMessage = styled.div`
   text-align: center;
+  padding: ${UI_CONSTANTS.SPACING.XL};
   color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
-  font-style: italic;
-  margin: ${UI_CONSTANTS.SPACING.XL} 0;
+  font-size: 1.1rem;
 `;
 
 const ErrorMessage = styled.div`
   text-align: center;
-  color: ${UI_CONSTANTS.COLORS.DANGER};
-  background: ${UI_CONSTANTS.COLORS.LIGHT};
-  padding: ${UI_CONSTANTS.SPACING.MD};
-  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  padding: ${UI_CONSTANTS.SPACING.XL};
+  color: ${UI_CONSTANTS.COLORS.ERROR};
+  font-size: 1.1rem;
   margin: ${UI_CONSTANTS.SPACING.XL} 0;
 `;
 
@@ -159,9 +241,14 @@ const DietLogPage: React.FC = () => {
     getMonthlyLogs,
     currentYear,
     currentMonth,
+    monthlyLogs, // monthlyLogs 추가
     isLoading,
     error,
   } = useDietStore();
+
+  const [dietLog, setDietLog] = useState<DietLogResponse | null>(null);
+  const [isLoadingDietLog, setIsLoadingDietLog] = useState(false);
+  const [dietLogError, setDietLogError] = useState<string | null>(null);
 
   // 컴포넌트 마운트 시 현재 월의 데이터 로드
   useEffect(() => {
@@ -179,6 +266,19 @@ const DietLogPage: React.FC = () => {
       getMonthlyLogs(selectedYear, selectedMonth);
     }
   }, [selectedDate, currentYear, currentMonth, getMonthlyLogs]);
+
+  // 선택된 날짜의 식단일지 로드 (월별 데이터에서 찾기)
+  useEffect(() => {
+    if (monthlyLogs && monthlyLogs.length > 0) {
+      const targetDate = selectedDate.toISOString().split("T")[0];
+      const dietLogForDate = monthlyLogs.find(
+        (log: any) => log.date === targetDate
+      );
+      setDietLog(dietLogForDate || null);
+    } else {
+      setDietLog(null);
+    }
+  }, [selectedDate, monthlyLogs]);
 
   const handleDateChange = (
     value: Value,
@@ -200,6 +300,36 @@ const DietLogPage: React.FC = () => {
       day: "numeric",
       weekday: "long",
     });
+  };
+
+  const formatMealType = (mealType: string) => {
+    const mealTypes: { [key: string]: string } = {
+      breakfast: "아침",
+      lunch: "점심",
+      dinner: "저녁",
+      snack: "간식",
+    };
+    return mealTypes[mealType] || mealType;
+  };
+
+  const renderMealSection = (mealType: string, foods: any[]) => {
+    if (!foods || foods.length === 0) return null;
+
+    return (
+      <MealSection key={mealType}>
+        <MealTitle>{formatMealType(mealType)}</MealTitle>
+        <FoodList>
+          {foods.map((food, index) => (
+            <FoodItem key={index}>
+              <FoodName>{food.food_name}</FoodName>
+              <FoodAmount>
+                {food.food_amount ? `${food.food_amount}g` : "-"}
+              </FoodAmount>
+            </FoodItem>
+          ))}
+        </FoodList>
+      </MealSection>
+    );
   };
 
   return (
@@ -224,6 +354,42 @@ const DietLogPage: React.FC = () => {
           선택한 날짜의 일지 작성
         </Button>
       </ActionSection>
+
+      {/* 식단일지 내용 섹션 */}
+      <DietLogSection>
+        <SectionTitle>{formatSelectedDate(selectedDate)} 식단일지</SectionTitle>
+
+        {isLoadingDietLog && (
+          <LoadingMessage>식단일지를 불러오는 중...</LoadingMessage>
+        )}
+
+        {dietLogError && (
+          <ErrorMessage>오류가 발생했습니다: {dietLogError}</ErrorMessage>
+        )}
+
+        {!isLoadingDietLog && !dietLogError && !dietLog && (
+          <NoDataMessage>
+            선택한 날짜에 작성된 식단일지가 없습니다.
+            <br />
+            위의 '일지 작성' 버튼을 클릭하여 식단일지를 작성해보세요.
+          </NoDataMessage>
+        )}
+
+        {!isLoadingDietLog && !dietLogError && dietLog && (
+          <>
+            {renderMealSection("breakfast", dietLog.breakfast)}
+            {renderMealSection("lunch", dietLog.lunch)}
+            {renderMealSection("dinner", dietLog.dinner)}
+
+            <TotalCalories>
+              <TotalCaloriesTitle>총 칼로리</TotalCaloriesTitle>
+              <TotalCaloriesValue>
+                {dietLog.totalCalories} kcal
+              </TotalCaloriesValue>
+            </TotalCalories>
+          </>
+        )}
+      </DietLogSection>
 
       {/* 로딩 상태 */}
       {isLoading && <LoadingMessage>데이터를 불러오는 중...</LoadingMessage>}

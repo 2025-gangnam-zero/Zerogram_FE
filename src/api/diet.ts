@@ -10,6 +10,14 @@ const dietApi = axios.create({
   headers: API_CONFIG.HEADERS,
 });
 
+// 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+const formatDateForAPI = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // 요청 인터셉터 (요청 전 처리)
 dietApi.interceptors.request.use(
   (config) => {
@@ -292,10 +300,13 @@ export const deleteDietLog = async (
 
 // 특정 날짜의 식단 일지 조회 API
 export const fetchDietLogByDate = async (
-  date: string
+  year: number,
+  month: number
 ): Promise<ApiResponse<DietLogResponse | null>> => {
   try {
-    const response = await dietApi.get(`/users/me/diets/date/${date}`);
+    const response = await dietApi.get(
+      `/users/me/diets?year=${year}&month=${month}`
+    );
     return response.data;
   } catch (error) {
     logError("fetchDietLogByDate", error);

@@ -8,6 +8,7 @@ import {
   LineElement,
   Title,
   Tooltip,
+  Filler, // Filler 플러그인 추가
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useDietStore } from "../../store";
@@ -20,7 +21,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   Title,
-  Tooltip
+  Tooltip,
+  Filler // Filler 플러그인 등록
 );
 
 const ChartContainer = styled.div`

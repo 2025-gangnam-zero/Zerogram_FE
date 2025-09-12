@@ -15,8 +15,10 @@ export const UI_CONSTANTS = {
     MUTED: "#7f8c8d",
     BORDER: "#e1e8ed",
     BACKGROUND: "#ffffff",
+    BACKGROUND_LIGHT: "#f8f9fa", // 추가
     TEXT_PRIMARY: "#2c3e50",
     TEXT_SECONDARY: "#7f8c8d",
+    ERROR: "#e74c3c", // 추가
   },
   SPACING: {
     XS: "4px",

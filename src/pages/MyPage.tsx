@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
-import { updateUserInfoApi } from "../api/auth";
+import { updateUserInfoApi, resetProfileImageApi } from "../api/auth";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { showErrorAlert, showSuccessAlert, getInitials } from "../utils";
@@ -137,6 +137,31 @@ const ErrorText = styled.p`
   font-size: 1.2rem;
   color: #e74c3c;
   text-align: center;
+`;
+
+const ProfileImageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+`;
+
+const ProfileImageActions = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const ResetButton = styled(Button)`
+  background: #e74c3c;
+  color: white;
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  min-width: auto;
+
+  &:hover {
+    background: #c0392b;
+  }
 `;
 
 const MyPage: React.FC = () => {
@@ -373,25 +398,77 @@ const MyPage: React.FC = () => {
     }
   };
 
+  // 프로필 사진 초기화 함수
+  const handleResetProfileImage = async () => {
+    if (!profile_image) {
+      showErrorAlert("초기화할 프로필 사진이 없습니다.");
+      return;
+    }
+
+    if (!window.confirm("프로필 사진을 초기화하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await resetProfileImageApi();
+
+      // 강제로 상태 업데이트 (새로고침 없이 즉시 반영)
+      setUser({
+        profile_image: undefined,
+        id: "",
+        nickname: "",
+        password: "",
+        sessionId: "",
+        login_type: "",
+      });
+
+      // 백그라운드에서 사용자 정보 다시 불러오기 (데이터 동기화)
+      fetchUserInfo().catch(console.error);
+
+      showSuccessAlert("프로필 사진이 초기화되었습니다.");
+    } catch (error) {
+      console.error("프로필 사진 초기화 실패:", error);
+      showErrorAlert(
+        `프로필 사진 초기화에 실패했습니다: ${
+          error instanceof Error
+            ? error.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
+    }
+  };
+
   return (
     <MyPageContainer>
       <Title>마이페이지</Title>
 
       <ProfileSection>
         <ProfileHeader>
-          <ProfileImage
-            $imageUrl={
-              isEditing && previewImageUrl
-                ? previewImageUrl
-                : profile_image && !profile_image.startsWith("file://")
-                ? profile_image
-                : undefined
-            }
-          >
-            {!(isEditing && previewImageUrl) &&
-              (!profile_image || profile_image.startsWith("file://")) &&
-              getInitials(nickname || "사용자")}
-          </ProfileImage>
+          <ProfileImageContainer>
+            <ProfileImage
+              $imageUrl={
+                isEditing && previewImageUrl
+                  ? previewImageUrl
+                  : profile_image && !profile_image.startsWith("file://")
+                  ? profile_image
+                  : undefined
+              }
+            >
+              {!(isEditing && previewImageUrl) &&
+                (!profile_image || profile_image.startsWith("file://")) &&
+                getInitials(nickname || "사용자")}
+            </ProfileImage>
+            {/* 편집 모드에서만 프로필 사진 초기화 버튼 표시 */}
+            {isEditing &&
+              profile_image &&
+              !profile_image.startsWith("file://") && (
+                <ProfileImageActions>
+                  <ResetButton onClick={handleResetProfileImage}>
+                    프로필 사진 초기화
+                  </ResetButton>
+                </ProfileImageActions>
+              )}
+          </ProfileImageContainer>
           <ProfileInfo>
             <ProfileName>{nickname || "사용자"}</ProfileName>
             <ProfileEmail>{email || "이메일 없음"}</ProfileEmail>
