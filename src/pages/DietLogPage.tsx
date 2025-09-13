@@ -52,6 +52,7 @@ const CalendarWrapper = styled.div`
   .react-calendar__tile {
     border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
     transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+    position: relative;
 
     &:hover {
       background-color: ${UI_CONSTANTS.COLORS.LIGHT};
@@ -62,6 +63,43 @@ const CalendarWrapper = styled.div`
     background-color: ${UI_CONSTANTS.COLORS.PRIMARY} !important;
     color: white;
   }
+`;
+
+const DietIndicator = styled.div<{ $hasDiet: boolean }>`
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: ${({ $hasDiet }) =>
+    $hasDiet ? UI_CONSTANTS.COLORS.SUCCESS : "transparent"};
+  transition: all ${UI_CONSTANTS.TRANSITIONS.FAST};
+`;
+
+const CalendarLegend = styled.div`
+  display: flex;
+  gap: ${UI_CONSTANTS.SPACING.LG};
+  margin-top: ${UI_CONSTANTS.SPACING.MD};
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  background-color: ${UI_CONSTANTS.COLORS.LIGHT};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  font-size: 14px;
+`;
+
+const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${UI_CONSTANTS.SPACING.SM};
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+`;
+
+const LegendDot = styled.div<{ $color: string }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color};
 `;
 
 const DietSection = styled.div`
@@ -275,6 +313,24 @@ const DietLogPage: React.FC = () => {
     });
   };
 
+  // 특정 날짜에 식단일지가 있는지 확인하는 함수
+  const hasDietOnDate = (date: Date): boolean => {
+    if (!monthlyLogs || monthlyLogs.length === 0) return false;
+
+    const targetDate = date.toISOString().split("T")[0];
+    return monthlyLogs.some((log: any) => log.date === targetDate);
+  };
+
+  // 달력 타일 내용을 렌더링하는 함수
+  const renderTileContent = ({ date, view }: { date: Date; view: string }) => {
+    // 월 보기에서만 표시
+    if (view !== "month") return null;
+
+    const hasDiet = hasDietOnDate(date);
+
+    return <div>{hasDiet && <DietIndicator $hasDiet={hasDiet} />}</div>;
+  };
+
   const formatMealType = (mealType: string) => {
     const mealTypes: { [key: string]: string } = {
       breakfast: "아침",
@@ -317,8 +373,16 @@ const DietLogPage: React.FC = () => {
               onChange={handleDateChange}
               value={selectedDate}
               locale="ko-KR"
+              tileContent={renderTileContent}
             />
           </CalendarWrapper>
+
+          <CalendarLegend>
+            <LegendItem>
+              <LegendDot $color={UI_CONSTANTS.COLORS.SUCCESS} />
+              <span>식단일지 있음</span>
+            </LegendItem>
+          </CalendarLegend>
         </CalendarSection>
 
         <DietSection>

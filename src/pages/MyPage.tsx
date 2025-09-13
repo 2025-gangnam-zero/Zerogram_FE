@@ -139,6 +139,28 @@ const ErrorText = styled.p`
   text-align: center;
 `;
 
+const PasswordSection = styled.div`
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+`;
+
+const PasswordSectionTitle = styled.h4`
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin: 0 0 15px 0;
+  font-weight: 600;
+`;
+
+const PasswordHelpText = styled.p`
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+`;
+
 const ProfileImageContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -184,13 +206,17 @@ const MyPage: React.FC = () => {
   const [editForm, setEditForm] = useState<{
     nickname: string;
     email: string;
-    password: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
     profile_image: File | null;
     login_type: string;
   }>({
     nickname: "",
     email: "",
-    password: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
     profile_image: null,
     login_type: "",
   });
@@ -213,12 +239,14 @@ const MyPage: React.FC = () => {
       setEditForm({
         nickname: nickname || "",
         email: email || "",
-        password: password || "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
         profile_image: null,
         login_type: login_type || "",
       });
     }
-  }, [isEditing, nickname, email, password, profile_image, login_type]);
+  }, [isEditing, nickname, email, profile_image, login_type]);
 
   // 편집 모드 종료 시 미리보기 URL 정리
   useEffect(() => {
@@ -287,7 +315,9 @@ const MyPage: React.FC = () => {
     setEditForm({
       nickname: nickname || "",
       email: email || "",
-      password: password || "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
       profile_image: null,
       login_type: login_type || "",
     });
@@ -299,7 +329,14 @@ const MyPage: React.FC = () => {
   };
 
   const handleInputChange =
-    (field: "nickname" | "email" | "password") =>
+    (
+      field:
+        | "nickname"
+        | "email"
+        | "currentPassword"
+        | "newPassword"
+        | "confirmPassword"
+    ) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setEditForm((prev) => ({
         ...prev,
@@ -330,8 +367,61 @@ const MyPage: React.FC = () => {
     }));
   };
 
+  // 비밀번호 검증 함수
+  const validatePassword = () => {
+    // 비밀번호 변경을 시도하는 경우에만 검증
+    if (
+      editForm.newPassword ||
+      editForm.confirmPassword ||
+      editForm.currentPassword
+    ) {
+      // 기존 비밀번호 입력 확인
+      if (!editForm.currentPassword.trim()) {
+        showErrorAlert("기존 비밀번호를 입력해주세요.");
+        return false;
+      }
+
+      // 새 비밀번호 입력 확인
+      if (!editForm.newPassword.trim()) {
+        showErrorAlert("새 비밀번호를 입력해주세요.");
+        return false;
+      }
+
+      // 비밀번호 확인 입력 확인
+      if (!editForm.confirmPassword.trim()) {
+        showErrorAlert("비밀번호 확인을 입력해주세요.");
+        return false;
+      }
+
+      // 새 비밀번호와 비밀번호 확인 일치 확인
+      if (editForm.newPassword !== editForm.confirmPassword) {
+        showErrorAlert("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return false;
+      }
+
+      // 비밀번호 길이 확인 (최소 6자)
+      if (editForm.newPassword.length < 6) {
+        showErrorAlert("새 비밀번호는 최소 6자 이상이어야 합니다.");
+        return false;
+      }
+
+      // 기존 비밀번호와 새 비밀번호가 같은지 확인
+      if (editForm.currentPassword === editForm.newPassword) {
+        showErrorAlert("새 비밀번호는 기존 비밀번호와 달라야 합니다.");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSaveClick = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 비밀번호 검증
+    if (!validatePassword()) {
+      return;
+    }
 
     setIsSaving(true);
 
@@ -344,8 +434,9 @@ const MyPage: React.FC = () => {
         hasUpdates = true;
       }
 
-      if (editForm.password.trim()) {
-        formData.append("password", editForm.password.trim());
+      // 새 비밀번호가 입력된 경우에만 추가
+      if (editForm.newPassword.trim()) {
+        formData.append("password", editForm.newPassword.trim());
         hasUpdates = true;
       }
 
@@ -571,13 +662,35 @@ const MyPage: React.FC = () => {
               onChange={handleInputChange("email")}
               disabled
             />
-            <Input
-              label="비밀번호"
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              value={editForm.password}
-              onChange={handleInputChange("password")}
-            />
+            <PasswordSection>
+              <PasswordSectionTitle>비밀번호 변경</PasswordSectionTitle>
+              <PasswordHelpText>
+                비밀번호를 변경하려면 기존 비밀번호를 입력하고, 새 비밀번호를
+                설정해주세요. 비밀번호는 최소 6자 이상이어야 하며, 기존
+                비밀번호와 달라야 합니다.
+              </PasswordHelpText>
+              <Input
+                label="기존 비밀번호"
+                type="password"
+                placeholder="기존 비밀번호를 입력하세요"
+                value={editForm.currentPassword}
+                onChange={handleInputChange("currentPassword")}
+              />
+              <Input
+                label="새 비밀번호"
+                type="password"
+                placeholder="새 비밀번호를 입력하세요 (최소 6자)"
+                value={editForm.newPassword}
+                onChange={handleInputChange("newPassword")}
+              />
+              <Input
+                label="비밀번호 확인"
+                type="password"
+                placeholder="새 비밀번호를 다시 입력하세요"
+                value={editForm.confirmPassword}
+                onChange={handleInputChange("confirmPassword")}
+              />
+            </PasswordSection>
 
             <ButtonContainer>
               <Button
