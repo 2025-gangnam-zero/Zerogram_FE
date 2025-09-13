@@ -1,4 +1,9 @@
-import Sidebar from "./Sidebar/Sidebar";
-import Communication from "./Communication/Communication";
-
-export { Sidebar, Communication };
+export * from "./ChatHeader";
+export * from "./MessageInput";
+export * from "./MessageItem";
+export * from "./MessageList";
+export * from "./CRItem";
+export * from "./Sidebar";
+export * from "./ChatSection";
+export * from "./UploadModal";
+export * from "./DNDWrapper";

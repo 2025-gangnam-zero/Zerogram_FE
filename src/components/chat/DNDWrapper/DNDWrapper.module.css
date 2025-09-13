@@ -1,0 +1,25 @@
+/* DNDWrapper.module.css */
+.wrapper {
+  position: relative;
+  display: flex; /* 🔑 */
+  flex-direction: column;
+  flex: 1; /* 상위에서 남는 공간 채우기 */
+  min-height: 0; /* 🔑 자식이 스크롤되도록 */
+}
+
+/* 오버레이는 래퍼 영역만 덮습니다 (내용 < 화면이면 그만큼만) */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.1);
+  border: 2px dashed #3b82f6;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 18px;
+  z-index: 10;
+  pointer-events: none; /* 깜빡임 방지 */
+}

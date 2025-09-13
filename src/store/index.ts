@@ -3,6 +3,7 @@ export * from "./authStore";
 export * from "./userStore";
 export * from "./workoutStore";
 export * from "./dietStore";
+export * from "./chatStore";
 
 // Store types for backward compatibility
 export type RootState = {

@@ -1,10 +1,6 @@
-.chatpage {
-  width: 100%;
+.wrap {
   display: flex;
-  min-height: inherit;
-}
-
-.main {
   flex: 1;
-  background: yellow;
+  width: 100%;
+  min-height: inherit;
 }

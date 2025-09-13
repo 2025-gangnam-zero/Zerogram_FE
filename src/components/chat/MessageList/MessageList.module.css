@@ -1,0 +1,39 @@
+.wrap {
+  flex: 1; /* 🔑 남는 높이를 모두 차지 */
+  min-height: 0; /* 🔑 overflow 스크롤이 가능하도록 */
+  overflow: auto;
+
+  /* 기존 스타일 유지 */
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff; /* 라이트 테마라면 */
+}
+
+/* 구분선 */
+.unreadDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  color: #6b7280; /* gray-500 */
+}
+
+.unreadDivider::before,
+.unreadDivider::after {
+  content: "";
+  height: 1px;
+  background: #e5e7eb; /* gray-200 */
+  flex: 1;
+}
+
+.unreadChip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2f7; /* 밝은 배경 */
+  border: 1px solid #e5e7eb;
+  color: #374151; /* gray-700 */
+  font-size: 12px;
+  line-height: 18px;
+}
