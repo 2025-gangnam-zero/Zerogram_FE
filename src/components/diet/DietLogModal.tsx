@@ -125,13 +125,6 @@ const MealSection = styled.div`
   background: ${UI_CONSTANTS.COLORS.LIGHT};
 `;
 
-const MealTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
-  margin-bottom: ${UI_CONSTANTS.SPACING.MD};
-`;
-
 const MealFoodsList = styled.div`
   max-height: 150px;
   overflow-y: auto;
