@@ -419,7 +419,10 @@ const MyPage: React.FC = () => {
       // 서버에서 기존 비밀번호 확인
       try {
         setIsVerifyingPassword(true);
-        await verifyCurrentPasswordApi(editForm.currentPassword);
+        await verifyCurrentPasswordApi(
+          editForm.currentPassword,
+          editForm.newPassword
+        );
         setIsVerifyingPassword(false);
         return true;
       } catch (error) {
