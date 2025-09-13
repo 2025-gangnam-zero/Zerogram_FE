@@ -8,7 +8,7 @@ import DietLogModal from "../components/diet/DietLogModal";
 import CalorieChart from "../components/diet/CalorieChart";
 import BmiCalculator from "../components/body/BmiCalculator";
 import { Value } from "react-calendar/dist/shared/types";
-import { fetchDietLogByDate } from "../api/diet";
+// import { fetchDietLogByDate } from "../api/diet";
 import { DietLogResponse } from "../api/diet";
 
 const PageContainer = styled.div`
@@ -29,11 +29,26 @@ const PageTitle = styled.h1`
   text-align: center;
 `;
 
-const CalendarSection = styled.div`
+const Card = styled.div`
+  background: ${UI_CONSTANTS.COLORS.BACKGROUND};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
+  padding: ${UI_CONSTANTS.SPACING.XL};
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
+`;
+
+const ContentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${UI_CONSTANTS.SPACING.XL};
+  margin-top: ${UI_CONSTANTS.SPACING.XL};
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: ${UI_CONSTANTS.SPACING.LG};
+  }
 `;
 
 const StyledCalendar = styled(Calendar)`
@@ -120,30 +135,9 @@ const ActionSection = styled.div`
   margin-top: ${UI_CONSTANTS.SPACING.XL};
 `;
 
-const ContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${UI_CONSTANTS.SPACING.XL};
-  margin-top: ${UI_CONSTANTS.SPACING.XL};
+// ...existing code...
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: ${UI_CONSTANTS.SPACING.LG};
-  }
-`;
-
-const ChartSection = styled.div`
-  grid-column: 1 / -1;
-  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
-`;
-
-const DietLogSection = styled.div`
-  background: white;
-  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
-  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
-  padding: ${UI_CONSTANTS.SPACING.XL};
-  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
-`;
+// ...existing code...
 
 const SectionTitle = styled.h2`
   font-size: 1.5rem;
@@ -247,8 +241,8 @@ const DietLogPage: React.FC = () => {
   } = useDietStore();
 
   const [dietLog, setDietLog] = useState<DietLogResponse | null>(null);
-  const [isLoadingDietLog, setIsLoadingDietLog] = useState(false);
-  const [dietLogError, setDietLogError] = useState<string | null>(null);
+  const [isLoadingDietLog] = useState(false);
+  const [dietLogError] = useState<string | null>(null);
 
   // 컴포넌트 마운트 시 현재 월의 데이터 로드
   useEffect(() => {
@@ -335,78 +329,76 @@ const DietLogPage: React.FC = () => {
   return (
     <PageContainer>
       <PageTitle>식단 일지</PageTitle>
+      <ContentGrid>
+        {/* 캘린더 카드 */}
+        <Card>
+          <SectionTitle>날짜 선택</SectionTitle>
+          <StyledCalendar
+            value={selectedDate}
+            onChange={handleDateChange}
+            locale="ko-KR"
+            showNeighboringMonth={false}
+          />
+          <SelectedDateInfo>
+            선택한 날짜: {formatSelectedDate(selectedDate)}
+          </SelectedDateInfo>
+          <ActionSection>
+            <Button onClick={handleOpenModal} variant="primary" size="large">
+              일지 작성
+            </Button>
+          </ActionSection>
+        </Card>
+        {/* 식단일지 카드 */}
+        <Card>
+          <SectionTitle>
+            {formatSelectedDate(selectedDate)} 식단일지
+          </SectionTitle>
+          {isLoadingDietLog && (
+            <LoadingMessage>식단일지를 불러오는 중...</LoadingMessage>
+          )}
+          {dietLogError && (
+            <ErrorMessage>오류가 발생했습니다: {dietLogError}</ErrorMessage>
+          )}
+          {!isLoadingDietLog && !dietLogError && !dietLog && (
+            <NoDataMessage>
+              선택한 날짜에 작성된 식단일지가 없습니다.
+              <br />
+              위의 '일지 작성' 버튼을 클릭하여 식단일지를 작성해보세요.
+            </NoDataMessage>
+          )}
+          {!isLoadingDietLog && !dietLogError && dietLog && (
+            <>
+              {renderMealSection("breakfast", dietLog.breakfast)}
+              {renderMealSection("lunch", dietLog.lunch)}
+              {renderMealSection("dinner", dietLog.dinner)}
+              <TotalCalories>
+                <TotalCaloriesTitle>총 칼로리</TotalCaloriesTitle>
+                <TotalCaloriesValue>
+                  {dietLog.totalCalories} kcal
+                </TotalCaloriesValue>
+              </TotalCalories>
+            </>
+          )}
+        </Card>
+      </ContentGrid>
 
-      <CalendarSection>
-        <StyledCalendar
-          value={selectedDate}
-          onChange={handleDateChange}
-          locale="ko-KR"
-          showNeighboringMonth={false}
-        />
-
-        <SelectedDateInfo>
-          선택한 날짜: {formatSelectedDate(selectedDate)}
-        </SelectedDateInfo>
-      </CalendarSection>
-
-      <ActionSection>
-        <Button onClick={handleOpenModal} variant="primary" size="large">
-          선택한 날짜의 일지 작성
-        </Button>
-      </ActionSection>
-
-      {/* 식단일지 내용 섹션 */}
-      <DietLogSection>
-        <SectionTitle>{formatSelectedDate(selectedDate)} 식단일지</SectionTitle>
-
-        {isLoadingDietLog && (
-          <LoadingMessage>식단일지를 불러오는 중...</LoadingMessage>
-        )}
-
-        {dietLogError && (
-          <ErrorMessage>오류가 발생했습니다: {dietLogError}</ErrorMessage>
-        )}
-
-        {!isLoadingDietLog && !dietLogError && !dietLog && (
-          <NoDataMessage>
-            선택한 날짜에 작성된 식단일지가 없습니다.
-            <br />
-            위의 '일지 작성' 버튼을 클릭하여 식단일지를 작성해보세요.
-          </NoDataMessage>
-        )}
-
-        {!isLoadingDietLog && !dietLogError && dietLog && (
-          <>
-            {renderMealSection("breakfast", dietLog.breakfast)}
-            {renderMealSection("lunch", dietLog.lunch)}
-            {renderMealSection("dinner", dietLog.dinner)}
-
-            <TotalCalories>
-              <TotalCaloriesTitle>총 칼로리</TotalCaloriesTitle>
-              <TotalCaloriesValue>
-                {dietLog.totalCalories} kcal
-              </TotalCaloriesValue>
-            </TotalCalories>
-          </>
-        )}
-      </DietLogSection>
-
-      {/* 로딩 상태 */}
+      {/* 로딩/에러 상태 (월별) */}
       {isLoading && <LoadingMessage>데이터를 불러오는 중...</LoadingMessage>}
-
-      {/* 에러 상태 */}
       {error && <ErrorMessage>오류가 발생했습니다: {error}</ErrorMessage>}
 
-      {/* 차트 섹션 */}
-      <ChartSection>
+      {/* 차트 카드 */}
+      <Card style={{ marginTop: UI_CONSTANTS.SPACING.XL }}>
+        <SectionTitle>{`${selectedDate.getFullYear()}년 ${
+          selectedDate.getMonth() + 1
+        }월 일별 칼로리 섭취량`}</SectionTitle>
         <CalorieChart />
-      </ChartSection>
+      </Card>
 
-      {/* BMI 계산기와 기타 도구들 */}
-      <ContentGrid>
+      {/* BMI 계산기 카드 */}
+      <Card style={{ marginTop: UI_CONSTANTS.SPACING.XL }}>
+        <SectionTitle>BMI 계산기</SectionTitle>
         <BmiCalculator />
-        <div>{/* 향후 추가 도구들을 위한 공간 */}</div>
-      </ContentGrid>
+      </Card>
 
       <DietLogModal />
     </PageContainer>

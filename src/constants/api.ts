@@ -1,8 +1,9 @@
 // API 관련 상수
 export const API_CONFIG = {
   // 최종 배포시 로컬 주소 지우고 env와 ec2 주소만 남겨둘 것!
-  BASE_URL: process.env.REACT_APP_API_BASE_URL || "http://10.10.0.88:4000",
-  // "http://ec2-15-164-151-28.ap-northeast-2.compute.amazonaws.com",
+  BASE_URL:
+    // process.env.REACT_APP_API_BASE_URL || "http://10.10.0.88:4000",
+    "http://ec2-15-164-151-28.ap-northeast-2.compute.amazonaws.com",
   TIMEOUT: 10000,
   HEADERS: {
     "Content-Type": "application/json",
