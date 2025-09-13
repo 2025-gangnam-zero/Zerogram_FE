@@ -143,4 +143,17 @@ export const resetProfileImageApi = async (): Promise<ApiResponse> => {
   }
 };
 
+// 기존 비밀번호 확인 API 함수
+export const verifyCurrentPasswordApi = async (
+  password: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.post("/auth/verify-password", { password });
+    return response.data;
+  } catch (error) {
+    logError("verifyCurrentPasswordApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 export default authApi;

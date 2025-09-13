@@ -3,7 +3,11 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useAuthStore } from "../store/authStore";
-import { updateUserInfoApi, resetProfileImageApi } from "../api/auth";
+import {
+  updateUserInfoApi,
+  resetProfileImageApi,
+  verifyCurrentPasswordApi,
+} from "../api/auth";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
 import { showErrorAlert, showSuccessAlert, getInitials } from "../utils";
@@ -221,6 +225,7 @@ const MyPage: React.FC = () => {
     login_type: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // 미리보기 URL 상태 추가
 
   useEffect(() => {
@@ -368,7 +373,7 @@ const MyPage: React.FC = () => {
   };
 
   // 비밀번호 검증 함수
-  const validatePassword = () => {
+  const validatePassword = async () => {
     // 비밀번호 변경을 시도하는 경우에만 검증
     if (
       editForm.newPassword ||
@@ -410,6 +415,18 @@ const MyPage: React.FC = () => {
         showErrorAlert("새 비밀번호는 기존 비밀번호와 달라야 합니다.");
         return false;
       }
+
+      // 서버에서 기존 비밀번호 확인
+      try {
+        setIsVerifyingPassword(true);
+        await verifyCurrentPasswordApi(editForm.currentPassword);
+        setIsVerifyingPassword(false);
+        return true;
+      } catch (error) {
+        setIsVerifyingPassword(false);
+        showErrorAlert("기존 비밀번호가 올바르지 않습니다.");
+        return false;
+      }
     }
 
     return true;
@@ -419,7 +436,7 @@ const MyPage: React.FC = () => {
     e.preventDefault();
 
     // 비밀번호 검증
-    if (!validatePassword()) {
+    if (!(await validatePassword())) {
       return;
     }
 
@@ -698,7 +715,7 @@ const MyPage: React.FC = () => {
                 variant="secondary"
                 size="medium"
                 onClick={handleCancelEdit}
-                disabled={isSaving}
+                disabled={isSaving || isVerifyingPassword}
               >
                 취소
               </Button>
@@ -706,9 +723,13 @@ const MyPage: React.FC = () => {
                 type="submit"
                 variant="primary"
                 size="medium"
-                disabled={isSaving}
+                disabled={isSaving || isVerifyingPassword}
               >
-                {isSaving ? "저장 중..." : "저장"}
+                {isVerifyingPassword
+                  ? "비밀번호 확인 중..."
+                  : isSaving
+                  ? "저장 중..."
+                  : "저장"}
               </Button>
             </ButtonContainer>
           </EditForm>
