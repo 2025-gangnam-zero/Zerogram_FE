@@ -1,160 +1,138 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
+import type { Value } from "react-calendar/dist/shared/types.js";
 import { useDietStore } from "../store";
 import { UI_CONSTANTS, LAYOUT_CONSTANTS } from "../constants";
 import Button from "../components/common/Button";
 import DietLogModal from "../components/diet/DietLogModal";
 import CalorieChart from "../components/diet/CalorieChart";
 import BmiCalculator from "../components/body/BmiCalculator";
-import { Value } from "react-calendar/dist/shared/types";
-// import { fetchDietLogByDate } from "../api/diet";
 import { DietLogResponse } from "../api/diet";
+import "react-calendar/dist/Calendar.css";
 
 const PageContainer = styled.div`
   max-width: ${LAYOUT_CONSTANTS.MAX_WIDTH};
   margin: 0 auto;
   padding: ${LAYOUT_CONSTANTS.CONTAINER_PADDING};
-  min-height: calc(
-    100vh - ${LAYOUT_CONSTANTS.HEADER_HEIGHT} -
-      ${LAYOUT_CONSTANTS.FOOTER_HEIGHT}
-  );
 `;
 
 const PageTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 32px;
+  font-weight: 700;
   color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
-  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
   text-align: center;
+  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
 `;
 
-const Card = styled.div`
-  background: ${UI_CONSTANTS.COLORS.BACKGROUND};
-  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
-  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
-  padding: ${UI_CONSTANTS.SPACING.XL};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const ContentGrid = styled.div`
+const ContentWrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${UI_CONSTANTS.SPACING.XL};
-  margin-top: ${UI_CONSTANTS.SPACING.XL};
 
-  @media (max-width: 900px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: ${UI_CONSTANTS.SPACING.LG};
   }
 `;
 
-const StyledCalendar = styled(Calendar)`
-  width: 100%;
-  max-width: 400px;
-  border: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
-  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+const CalendarSection = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  padding: ${UI_CONSTANTS.SPACING.LG};
   box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
-  background: ${UI_CONSTANTS.COLORS.BACKGROUND};
+`;
+
+const CalendarWrapper = styled.div`
+  .react-calendar {
+    width: 100%;
+    border: none;
+    font-family: inherit;
+  }
 
   .react-calendar__tile {
-    padding: 12px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    transition: ${UI_CONSTANTS.TRANSITIONS.FAST};
+    border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
+    transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
 
     &:hover {
       background-color: ${UI_CONSTANTS.COLORS.LIGHT};
     }
-
-    &.react-calendar__tile--active {
-      background-color: ${UI_CONSTANTS.COLORS.PRIMARY};
-      color: white;
-    }
-
-    &.react-calendar__tile--now {
-      background-color: ${UI_CONSTANTS.COLORS.INFO};
-      color: white;
-    }
   }
 
-  .react-calendar__navigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background-color: ${UI_CONSTANTS.COLORS.LIGHT};
-    border-bottom: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
-
-    button {
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
-      transition: ${UI_CONSTANTS.TRANSITIONS.FAST};
-
-      &:hover {
-        background-color: ${UI_CONSTANTS.COLORS.BORDER};
-      }
-    }
-  }
-
-  .react-calendar__month-view__weekdays {
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 0;
-    background-color: ${UI_CONSTANTS.COLORS.LIGHT};
-    border-bottom: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
-
-    .react-calendar__month-view__weekdays__weekday {
-      font-weight: bold;
-      color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
-      text-align: center;
-    }
+  .react-calendar__tile--active {
+    background-color: ${UI_CONSTANTS.COLORS.PRIMARY} !important;
+    color: white;
   }
 `;
 
-const SelectedDateInfo = styled.div`
-  margin-top: ${UI_CONSTANTS.SPACING.LG};
+const DietSection = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  padding: ${UI_CONSTANTS.SPACING.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 600;
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+`;
+
+const CreateButton = styled(Button)`
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+`;
+
+const SelectedDate = styled.div`
+  text-align: center;
+  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
   padding: ${UI_CONSTANTS.SPACING.MD};
   background-color: ${UI_CONSTANTS.COLORS.LIGHT};
   border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
-  text-align: center;
-  font-size: 1.1rem;
-  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+
+  span {
+    font-size: 18px;
+    font-weight: 600;
+    color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
+  }
 `;
 
-const ActionSection = styled.div`
-  display: flex;
-  justify-content: center;
+const AdditionalSection = styled.div`
   margin-top: ${UI_CONSTANTS.SPACING.XL};
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${UI_CONSTANTS.SPACING.XL};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-// ...existing code...
+const ChartCard = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  padding: ${UI_CONSTANTS.SPACING.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
+`;
 
-// ...existing code...
-
-const SectionTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
-  margin-bottom: ${UI_CONSTANTS.SPACING.LG};
-  text-align: center;
+const BmiCard = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  padding: ${UI_CONSTANTS.SPACING.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
 `;
 
 const MealSection = styled.div`
   margin-bottom: ${UI_CONSTANTS.SPACING.LG};
+  background: ${UI_CONSTANTS.COLORS.LIGHT};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  border-left: 3px solid ${UI_CONSTANTS.COLORS.PRIMARY};
 `;
 
 const MealTitle = styled.h3`
   font-size: 1.2rem;
   font-weight: 600;
-  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
   margin-bottom: ${UI_CONSTANTS.SPACING.MD};
   padding-bottom: ${UI_CONSTANTS.SPACING.SM};
   border-bottom: 2px solid ${UI_CONSTANTS.COLORS.BORDER};
@@ -170,9 +148,9 @@ const FoodItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: ${UI_CONSTANTS.SPACING.MD};
-  background: ${UI_CONSTANTS.COLORS.BACKGROUND_LIGHT};
-  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  padding: ${UI_CONSTANTS.SPACING.SM} ${UI_CONSTANTS.SPACING.MD};
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
   border: 1px solid ${UI_CONSTANTS.COLORS.BORDER};
 `;
 
@@ -189,10 +167,11 @@ const FoodAmount = styled.span`
 const TotalCalories = styled.div`
   text-align: center;
   padding: ${UI_CONSTANTS.SPACING.LG};
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, rgb(27, 219, 49) 100%);
   color: white;
   border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
   margin-top: ${UI_CONSTANTS.SPACING.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.SM};
 `;
 
 const TotalCaloriesTitle = styled.h3`
@@ -329,30 +308,29 @@ const DietLogPage: React.FC = () => {
   return (
     <PageContainer>
       <PageTitle>식단 일지</PageTitle>
-      <ContentGrid>
-        {/* 캘린더 카드 */}
-        <Card>
+
+      <ContentWrapper>
+        <CalendarSection>
           <SectionTitle>날짜 선택</SectionTitle>
-          <StyledCalendar
-            value={selectedDate}
-            onChange={handleDateChange}
-            locale="ko-KR"
-            showNeighboringMonth={false}
-          />
-          <SelectedDateInfo>
-            선택한 날짜: {formatSelectedDate(selectedDate)}
-          </SelectedDateInfo>
-          <ActionSection>
-            <Button onClick={handleOpenModal} variant="primary" size="large">
-              일지 작성
-            </Button>
-          </ActionSection>
-        </Card>
-        {/* 식단일지 카드 */}
-        <Card>
-          <SectionTitle>
-            {formatSelectedDate(selectedDate)} 식단일지
-          </SectionTitle>
+          <CalendarWrapper>
+            <Calendar
+              onChange={handleDateChange}
+              value={selectedDate}
+              locale="ko-KR"
+            />
+          </CalendarWrapper>
+        </CalendarSection>
+
+        <DietSection>
+          <SectionTitle>식단 기록</SectionTitle>
+          <SelectedDate>
+            <span>{formatSelectedDate(selectedDate)}</span>
+          </SelectedDate>
+
+          <CreateButton onClick={handleOpenModal} fullWidth>
+            일지 작성
+          </CreateButton>
+
           {isLoadingDietLog && (
             <LoadingMessage>식단일지를 불러오는 중...</LoadingMessage>
           )}
@@ -362,8 +340,6 @@ const DietLogPage: React.FC = () => {
           {!isLoadingDietLog && !dietLogError && !dietLog && (
             <NoDataMessage>
               선택한 날짜에 작성된 식단일지가 없습니다.
-              <br />
-              위의 '일지 작성' 버튼을 클릭하여 식단일지를 작성해보세요.
             </NoDataMessage>
           )}
           {!isLoadingDietLog && !dietLogError && dietLog && (
@@ -379,26 +355,27 @@ const DietLogPage: React.FC = () => {
               </TotalCalories>
             </>
           )}
-        </Card>
-      </ContentGrid>
+        </DietSection>
+      </ContentWrapper>
 
       {/* 로딩/에러 상태 (월별) */}
       {isLoading && <LoadingMessage>데이터를 불러오는 중...</LoadingMessage>}
       {error && <ErrorMessage>오류가 발생했습니다: {error}</ErrorMessage>}
 
-      {/* 차트 카드 */}
-      <Card style={{ marginTop: UI_CONSTANTS.SPACING.XL }}>
-        <SectionTitle>{`${selectedDate.getFullYear()}년 ${
-          selectedDate.getMonth() + 1
-        }월 일별 칼로리 섭취량`}</SectionTitle>
-        <CalorieChart />
-      </Card>
+      {/* 추가 섹션 - 차트와 BMI 계산기 */}
+      <AdditionalSection>
+        <ChartCard>
+          <SectionTitle>{`${selectedDate.getFullYear()}년 ${
+            selectedDate.getMonth() + 1
+          }월 일별 칼로리 섭취량`}</SectionTitle>
+          <CalorieChart />
+        </ChartCard>
 
-      {/* BMI 계산기 카드 */}
-      <Card style={{ marginTop: UI_CONSTANTS.SPACING.XL }}>
-        <SectionTitle>BMI 계산기</SectionTitle>
-        <BmiCalculator />
-      </Card>
+        <BmiCard>
+          <SectionTitle>BMI 계산기</SectionTitle>
+          <BmiCalculator />
+        </BmiCard>
+      </AdditionalSection>
 
       <DietLogModal />
     </PageContainer>

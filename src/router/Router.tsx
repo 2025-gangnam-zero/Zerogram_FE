@@ -10,7 +10,6 @@ import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import MyPage from "../pages/MyPage";
 import WorkoutLogPage from "../pages/WorkoutLogPage";
-import DietPage from "../pages/DietPage";
 import DietLogPage from "../pages/DietLogPage";
 
 import { useAuthStore } from "../store/authStore";
@@ -49,7 +48,6 @@ export default function Router() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/workout" element={<WorkoutLogPage />} />
-            <Route path="/diet" element={<DietPage />} />
             <Route path="/diet-log" element={<DietLogPage />} />
           </Routes>
         </MainContent>
