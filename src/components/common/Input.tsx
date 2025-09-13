@@ -4,11 +4,14 @@ import { InputType } from "../../types";
 import { UI_CONSTANTS } from "../../constants";
 
 interface InputProps {
+  ref?: React.RefObject<HTMLInputElement>;
   label?: string;
   type?: InputType;
   placeholder?: string;
   value?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   error?: string;
   disabled?: boolean;
   required?: boolean;
@@ -86,11 +89,14 @@ const ErrorMessage = styled.span`
 `;
 
 const Input: React.FC<InputProps> = ({
+  ref,
   label,
   type = "text",
   placeholder,
   value,
   onChange,
+  onFocus,
+  onKeyDown,
   error,
   required = false,
   disabled = false,
@@ -106,6 +112,8 @@ const Input: React.FC<InputProps> = ({
         placeholder={placeholder}
         {...(type === "file" ? {} : { value })}
         onChange={onChange}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
         $hasError={!!error}
         disabled={disabled}
         required={required}

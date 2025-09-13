@@ -54,6 +54,7 @@ const CalendarWrapper = styled.div`
   .react-calendar__tile {
     border-radius: ${UI_CONSTANTS.BORDER_RADIUS.SM};
     transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+    position: relative;
 
     &:hover {
       background-color: ${UI_CONSTANTS.COLORS.LIGHT};
@@ -64,6 +65,43 @@ const CalendarWrapper = styled.div`
     background-color: ${UI_CONSTANTS.COLORS.PRIMARY} !important;
     color: white;
   }
+`;
+
+const WorkoutIndicator = styled.div<{ $hasWorkout: boolean }>`
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: ${({ $hasWorkout }) =>
+    $hasWorkout ? UI_CONSTANTS.COLORS.SUCCESS : "transparent"};
+  transition: all ${UI_CONSTANTS.TRANSITIONS.FAST};
+`;
+
+const CalendarLegend = styled.div`
+  display: flex;
+  gap: ${UI_CONSTANTS.SPACING.LG};
+  margin-top: ${UI_CONSTANTS.SPACING.MD};
+  padding: ${UI_CONSTANTS.SPACING.MD};
+  background-color: ${UI_CONSTANTS.COLORS.LIGHT};
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.MD};
+  font-size: 14px;
+`;
+
+const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${UI_CONSTANTS.SPACING.SM};
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+`;
+
+const LegendDot = styled.div<{ $color: string }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color};
 `;
 
 const WorkoutSection = styled.div`
@@ -248,6 +286,24 @@ const WorkoutLogPage: React.FC = () => {
     });
   };
 
+  // 특정 날짜에 운동일지가 있는지 확인하는 함수
+  const hasWorkoutOnDate = (date: Date): boolean => {
+    const workoutsOnDate = getWorkoutsByDate(date);
+    return workoutsOnDate.length > 0;
+  };
+
+  // 달력 타일 내용을 렌더링하는 함수
+  const renderTileContent = ({ date, view }: { date: Date; view: string }) => {
+    // 월 보기에서만 표시
+    if (view !== "month") return null;
+
+    const hasWorkout = hasWorkoutOnDate(date);
+
+    return (
+      <div>{hasWorkout && <WorkoutIndicator $hasWorkout={hasWorkout} />}</div>
+    );
+  };
+
   // 로그인하지 않은 경우
   if (!isLoggedIn) {
     return (
@@ -284,8 +340,16 @@ const WorkoutLogPage: React.FC = () => {
               value={selectedDate}
               locale="ko-KR"
               onActiveStartDateChange={handleActiveStartDateChange}
+              tileContent={renderTileContent}
             />
           </CalendarWrapper>
+
+          <CalendarLegend>
+            <LegendItem>
+              <LegendDot $color={UI_CONSTANTS.COLORS.SUCCESS} />
+              <span>운동일지 있음</span>
+            </LegendItem>
+          </CalendarLegend>
         </CalendarSection>
 
         <WorkoutSection>

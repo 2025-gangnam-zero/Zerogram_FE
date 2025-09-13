@@ -200,7 +200,7 @@ const SignupPage: React.FC = () => {
         <Input
           label="비밀번호"
           type="password"
-          placeholder="비밀번호를 입력하세요 (8자 이상)"
+          placeholder="비밀번호를 입력하세요 (6자 이상)"
           value={formData.password}
           onChange={handleInputChange("password")}
           error={errors.password}

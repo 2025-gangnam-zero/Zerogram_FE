@@ -240,11 +240,14 @@ const Header: React.FC = () => {
   const handleWorkoutClick = () => {
     navigate("/workout");
   };
+  const handleDietClick = () => {
+    navigate("/diet-log");
+  };
 
   // 추후 확장될 네비게이션 메뉴들
   const navigationItems = [
     { path: "/workout", label: "운동일지", onClick: handleWorkoutClick },
-    // { path: "/diet", label: "식단일지", onClick: () => navigate("/diet") },
+    { path: "/diet-log", label: "식단일지", onClick: handleDietClick },
     // { path: "/board", label: "모집게시판", onClick: () => navigate("/board") },
   ];
 
