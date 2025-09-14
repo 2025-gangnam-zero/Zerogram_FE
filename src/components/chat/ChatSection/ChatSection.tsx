@@ -1,45 +1,44 @@
-import { useMemo } from "react";
+import { mockItems } from "../../../data/chat.mock";
+import { useComposerStore } from "../../../store";
+import {
+  ChatHeader,
+  DNDWrapper,
+  MessageInput,
+  MessageList,
+} from "../../../components/chat";
 import styles from "./ChatSection.module.css";
-import { CHThread, Message } from "../../../types";
-import { ChatHeader } from "../ChatHeader";
-import { MessageInput } from "../MessageInput";
-import { MessageList } from "../MessageList";
-import { me, mockMessages } from "../../../data/data";
-import { DNDWrapper } from "../DNDWrapper";
+import { useParams } from "react-router-dom";
 
-interface ChatSectionProps {
-  disabled?: boolean;
-  crs: CHThread[];   // 여러 채팅방(스레드)
-  activeId: string;  // 현재 활성화된 방 id
-}
+export const ChatSection = () => {
+  const { roomId } = useParams();
+  const room = mockItems.find((r) => r.id === roomId) ?? mockItems[0];
 
-export const ChatSection = ({ crs, activeId, disabled }: ChatSectionProps) => {
-  const active = useMemo(
-    () => crs.find((thread) => thread.id === activeId),
-    [activeId, crs]
-  );
+  const ensureRoom = useComposerStore((s) => s.ensureRoom);
+  if (roomId) ensureRoom(roomId); // 간단 보장
 
-  const messages: Message[] = useMemo(
-    () => (active ? mockMessages[active.id] ?? [] : []),
-    [active]
-  );
-
-  const handleSend = (text: string) => {
-    if (!active) return;
-    console.log("SEND:", { text, to: active.id });
-    // 실제 앱에서는 API 호출 로직이 들어가야 함
-  };
+  if (!roomId)
+    return <section className={styles.container}>채팅방을 선택하세요.</section>;
 
   return (
-    <section className={styles.chat}>
-      {/* ✅ 단체방에 맞게 room 정보 전달 */}
-      <ChatHeader
-        room={active?.room}
-        subtitle="Google Meet 4시 접속 확인"
-      />
-      <DNDWrapper>
-        <MessageList messages={messages} meId={me.id} />
-        {!disabled && <MessageInput onSend={handleSend} />}
+    <section className={styles.container}>
+      <header className={styles.header}>
+        <ChatHeader
+          roomName={room.roomName}
+          roomDescription={room.roomDescription}
+          memberCount={room.memberCount}
+          memberCapacity={room.memberCapacity}
+          roomImageUrl={room.roomImageUrl}
+        />
+      </header>
+
+      {/* ✅ DND로 리스트+인풋 감싸기 (roomId 단위) */}
+      <DNDWrapper roomId={roomId}>
+        <div className={styles.messageArea}>
+          <MessageList />
+        </div>
+        <footer className={styles.inputArea}>
+          <MessageInput />
+        </footer>
       </DNDWrapper>
     </section>
   );

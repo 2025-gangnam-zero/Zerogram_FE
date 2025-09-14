@@ -1,67 +1,94 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, {
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import styles from "./DNDWrapper.module.css";
-import { UploadModal } from "../UploadModal";
+import { useComposerStore } from "../../../store";
+import { DNDPreviewModal } from "../DNDPreviewModal";
+import { DroppedItem } from "../../../types";
 
 type Props = {
+  roomId: string;
   children: React.ReactNode;
-  maxFileSizeMB?: number;
 };
 
-export const DNDWrapper: React.FC<Props> = ({
-  children,
-  maxFileSizeMB = 5,
-}) => {
+const ACCEPT = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+export const DNDWrapper: React.FC<Props> = ({ roomId, children }) => {
+  const addFiles = useComposerStore((s) => s.addFiles);
+
   const [isDragging, setIsDragging] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
-  const [showModal, setShowModal] = useState(false);
   const dragCounter = useRef(0);
 
-  const onDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
+  const [items, setItems] = useState<DroppedItem[]>([]);
+  const [open, setOpen] = useState(false);
 
+  const totalMB = useMemo(
+    () =>
+      (items.reduce((a, b) => a + b.file.size, 0) / (1024 * 1024)).toFixed(1),
+    [items]
+  );
+
+  // DnD events
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     dragCounter.current += 1;
     setIsDragging(true);
-  }, []);
-
-  const onDragOver = useCallback((e: React.DragEvent) => {
+  };
+  const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
-  }, []);
-
-  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+  };
+  const onDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     dragCounter.current -= 1;
-    if (dragCounter.current <= 0) {
-      setIsDragging(false);
-    }
-  }, []);
+    if (dragCounter.current <= 0) setIsDragging(false);
+  };
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer?.files ?? []).filter((f) =>
+      ACCEPT.includes(f.type)
+    );
+    if (!files.length) return;
+    setItems(
+      files.map((f) => ({
+        id: Math.random().toString(36).slice(2),
+        file: f,
+        isImage: true,
+        selected: true,
+      }))
+    );
+    setOpen(true);
+  };
 
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      dragCounter.current = 0;
-      setIsDragging(false);
+  const close = () => setOpen(false);
+  const toggle = (id: string) =>
+    setItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, selected: !it.selected } : it))
+    );
+  const remove = (id: string) =>
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  const selectAll = (on = true) =>
+    setItems((prev) => prev.map((it) => ({ ...it, selected: on })));
+  const cancel = () => {
+    setItems([]);
+    setOpen(false);
+  };
 
-      const dropped = Array.from(e.dataTransfer.files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-
-      const validated = dropped.filter((file) => {
-        if (!file.type.startsWith("image/")) return false;
-        if (file.size > maxFileSizeMB * 1024 * 1024) {
-          alert(`${file.name} 은(는) ${maxFileSizeMB}MB를 초과합니다.`);
-          return false;
-        }
-        return true;
-      });
-
-      if (validated.length > 0) {
-        setFiles(validated);
-        setShowModal(true);
-      }
-    },
-    [maxFileSizeMB]
-  );
+  const confirm = async () => {
+    const picked = items.filter((i) => i.selected).map((i) => i.file);
+    if (picked.length) await addFiles(roomId, picked); // ✅ composer로 전달(압축 포함)
+    cancel();
+  };
 
   return (
     <div
@@ -75,13 +102,26 @@ export const DNDWrapper: React.FC<Props> = ({
 
       {isDragging && (
         <div className={styles.overlay}>
-          <p>이미지를 여기에 드롭하세요</p>
+          <div className={styles.overlayBox}>
+            <div className={styles.overlayTitle}>여기에 놓아 첨부</div>
+            <div className={styles.overlayHint}>
+              이미지 파일만 가능 (JPG/PNG/WEBP/GIF)
+            </div>
+          </div>
         </div>
       )}
 
-      {showModal && (
-        <UploadModal files={files} onClose={() => setShowModal(false)} />
-      )}
+      <DNDPreviewModal
+        open={open}
+        items={items}
+        totalMB={totalMB}
+        onClose={close}
+        onToggleSelect={toggle}
+        onRemove={remove}
+        onSelectAll={selectAll}
+        onCancel={cancel}
+        onConfirm={confirm}
+      />
     </div>
   );
 };

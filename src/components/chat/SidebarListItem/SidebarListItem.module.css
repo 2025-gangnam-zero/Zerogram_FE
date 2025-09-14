@@ -1,0 +1,115 @@
+.item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-decoration: none; /* Link 밑줄 제거 */
+  color: inherit; /* 글자 색상 상속 */
+}
+
+.item:hover {
+  background: #f5f7fa;
+}
+
+.selected {
+  background: #eef2ff;
+}
+
+.avatarWrap {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 위 단 */
+.topRow {
+  display: flex;
+  justify-content: space-between; /* 좌: 제목, 우: 시간 */
+  align-items: center;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.leadingIcon {
+  font-size: 16px;
+  color: #111827;
+}
+
+.roomName {
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.memberCount {
+  color: #6b7280;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.pin {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.time {
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* 아래 단 */
+.bottomRow {
+  display: flex;
+  justify-content: space-between; /* 좌: 메시지, 우: 뱃지 */
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lastMsg {
+  color: #6b7280;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

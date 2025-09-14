@@ -1,6 +1,33 @@
-.chat {
-  flex: 1;
-  display: flex; /* 🔑 */
+.container {
+  display: flex;
   flex-direction: column;
-  min-height: 0; /* 🔑 */
+  height: 100%; /* ✅ 상위로부터 높이 상속 */
+  min-height: 0; /* ✅ flex 오버플로우 방지 */
+  overflow: hidden; /* 부모 스크롤 차단 (추가) */
+}
+
+.header {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  position: sticky; /* ✅ 위 고정 */
+  top: 0;
+  z-index: 10;
+}
+
+.messageArea {
+  flex: 1 1 auto;
+  min-height: 0; /* ✅ 반드시 필요 */
+  overflow: auto; /* ✅ 대화창만 스크롤 */
+  padding: 12px 16px;
+  background: #f9fafb;
+}
+
+.inputArea {
+  flex: 0 0 auto; /* ✅ 하단 고정 (position 사용 안 함) */
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  bottom: 0;
 }

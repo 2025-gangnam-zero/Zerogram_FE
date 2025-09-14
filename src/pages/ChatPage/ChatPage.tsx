@@ -1,22 +1,19 @@
-import { useEffect, useState } from "react";
+// src/pages/ChatPage/ChatPage.tsx
 import styles from "./ChatPage.module.css";
-import { CHThread } from "../../types";
-import { ChatSection, Sidebar } from "../../components/chat";
-import { me, mockThreads } from "../../data/data"; // ✅ 변경된 목데이터
-import { bootstrapChat } from "../../store/bootstrap";
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "../../components/chat";
 
 export const ChatPage = () => {
-  const [activeId, setActiveId] = useState<string>(mockThreads[0]?.id ?? "");
-  const crs: CHThread[] = mockThreads;
-
-  useEffect(() => {
-    bootstrapChat({ meId: me.id }); // user 스토어에서 id를 가져와 넘겨도 됨
-  }, []);
-
   return (
     <div className={styles.wrap}>
-      <Sidebar crs={crs} activeId={activeId} onSelect={setActiveId} />
-      <ChatSection crs={crs} activeId={activeId} />
+      <aside className={styles.sidebar}>
+        <Sidebar />
+      </aside>
+      <main className={styles.main}>
+        <Outlet />
+      </main>
+      {/* ✅ 모달 포탈 루트 (ChatPage 범위 안에서 중앙 정렬을 하기 위함) */}
+      <div id="chatpage-modal-root" />
     </div>
   );
 };

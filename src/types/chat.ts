@@ -1,54 +1,53 @@
-export type Sender = {
-  id: string;
-  name: string;
-  avatarUrl: string;
-};
+import { WorkoutType } from "./workout";
 
-export type RoomMember = {
-  user: Pick<Sender, "id" | "name" | "avatarUrl">;
-  joinedAt: number; // epoch ms
-  leftAt?: number | null; // null이면 아직 활동 중
-  lastReadAt?: number | null;
-  isBot?: boolean;
-};
-
-export type Room = {
+export type ChatroomListItem = {
   id: string;
   roomName: string;
   roomImageUrl: string;
-  memberCount: number; // 리스트/헤더용 캐시 숫자
-  members?: RoomMember[]; // 상세/읽음 계산용 (지연 로딩 가능)
-};
-
-export type Message = {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorAvatarUrl: string;
-  content: string;
-  createdAt: number;
-};
-
-export type LastMessage = {
-  id: string;
-  author: Pick<Sender, "id" | "name">;
-  type: "text" | "image" | "video" | "file" | "audio" | "sticker" | "system";
-  text?: string;
-  attachments?: Array<{
-    kind: "image" | "video" | "file" | "audio" | "sticker";
-    name?: string;
-    mime?: string;
-    size?: number;
-    thumbUrl?: string;
-  }>;
-  createdAt: number;
-  deleted?: boolean;
-  pinned?: boolean;
-};
-
-export type CHThread = {
-  id: string;
-  room: Room;
-  lastMessage?: LastMessage;
+  memberCount: number;
+  lastMessage: string | null;
+  lastMessageAt: string; // "오전 12:15" 같은 포맷 텍스트 그대로 받는다고 가정
   unreadCount: number;
+  isPinned?: boolean; // 고정 여부(핀)
+  workoutType: WorkoutType;
+  memberCapacity: number; // 최대 정원
+  roomDescription: string; // 방 설명
+};
+
+export type ChatMessage = {
+  id: string;
+  roomId: string;
+  author: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+  };
+  content?: string; // 텍스트 메시지
+  images?: string[]; // 이미지 URL 배열
+  createdAt: string; // 표시용 시간
+  isMine?: boolean; // 본인 여부
+  unreadByCount?: number; // 아직 이 메시지를 읽지 않은 멤버 수
+};
+
+export type MessagesByRoom = {
+  [roomId: string]: ChatMessage[];
+};
+
+export type Attachment = {
+  id: string;
+  file: File;
+  mime: string;
+  size: number;
+  previewUrl: string; // ObjectURL
+  width?: number;
+  height?: number;
+  processed?: boolean; // 압축/전처리 완료 플래그
+};
+
+export type DroppedItem = {
+  id: string;
+  file: File;
+  isImage: boolean;
+  previewUrl?: string; // 이미지면 ObjectURL
+  selected: boolean;
 };

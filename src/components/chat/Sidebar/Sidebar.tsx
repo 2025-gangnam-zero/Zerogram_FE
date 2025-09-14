@@ -1,31 +1,19 @@
-import { CHAT_SIDEBAR_TITLE } from "../../../constants";
-import { CHThread } from "../../../types";
-import { CRItem } from "../CRItem";
+// src/components/chat/Sidebar.tsx
 import styles from "./Sidebar.module.css";
+import { SidebarList, SidebarSearch } from "../../../components/chat";
 
-type Props = {
-  crs: CHThread[];
-  activeId?: string;
-  onSelect: (id: string) => void;
-};
-
-export const Sidebar = ({ crs, activeId, onSelect }: Props) => {
-  console.log(crs);
-  console.log(activeId);
-
+export const Sidebar = () => {
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.header}>{CHAT_SIDEBAR_TITLE}</div>
-      <nav className={styles.list}>
-        {crs.map((cr) => (
-          <CRItem
-            key={cr.id}
-            cr={cr}
-            active={cr.id === activeId}
-            onClick={() => onSelect(cr.id)}
-          />
-        ))}
-      </nav>
-    </aside>
+    <div className={styles.sidebar}>
+      <div className={styles.searchArea}>
+        <SidebarSearch />
+      </div>
+
+      <div className={styles.divider} aria-hidden="true" />
+
+      <div className={styles.listArea}>
+        <SidebarList />
+      </div>
+    </div>
   );
 };

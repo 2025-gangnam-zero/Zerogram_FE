@@ -1,98 +1,158 @@
-import { Message, RoomMember } from "../../../types";
+// src/pages/ChatSection/MessageItem.tsx
+import { ChatMessage } from "../../../types";
+import { isImageUrl } from "../../../utils";
+import { LinkPreview } from "../LinkPreview";
 import styles from "./MessageItem.module.css";
-import { computeUnreadCount } from "../../../utils";
 
 type Props = {
-  message: Message;
-  mine?: boolean;
-  members: RoomMember[]; // ✅ 방 멤버 목록(타임라인 포함)
-  showReceiptFor?: "mine" | "all"; // 기본 "mine": 내가 보낸 메시지에만 표시
-  includeAuthorInCount?: boolean; // 기본 false
+  message: ChatMessage;
+  onImageClick?: (src: string, index: number, all: string[]) => void;
 };
 
-export const MessageItem: React.FC<Props> = ({
-  message,
-  mine,
-  members,
-  showReceiptFor = "mine",
-  includeAuthorInCount = false,
-}) => {
-  const shouldShow =
-    showReceiptFor === "all" || (showReceiptFor === "mine" && mine);
+// 텍스트 내의 URL을 a 태그로 바꿔주는 유틸
+const linkify = (text: string) => {
+  const regex = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    // 이전 일반 텍스트
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+    // 링크
+    const raw = match[0];
+    const href = raw.startsWith("http") ? raw : `https://${raw}`;
+    nodes.push(
+      <a
+        key={`lnk-${match.index}`}
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className={styles.inlineLink}
+      >
+        {raw}
+      </a>
+    );
+    last = regex.lastIndex;
+  }
+  // 남은 일반 텍스트
+  if (last < text.length) nodes.push(text.slice(last));
+  return <span className={styles.linkified}>{nodes}</span>;
+};
 
-  const unreadCount = shouldShow
-    ? computeUnreadCount(message, members, {
-        includeAuthor: includeAuthorInCount,
-      })
-    : 0;
+export const MessageItem = ({ message, onImageClick }: Props) => {
+  const mine = !!message.isMine;
+  const unread = message.unreadByCount;
+
+  const images = message.images ?? [];
+  const hasImages = images.length > 0;
+  const raw = message.content ?? "";
+
+  // URL 감지 (raw URL 추출)
+  const urlMatch = raw.match(/(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/i);
+  const firstUrlRaw = urlMatch?.[0];
+  const firstUrl = firstUrlRaw
+    ? firstUrlRaw.startsWith("http")
+      ? firstUrlRaw
+      : `https://${firstUrlRaw}`
+    : null;
+
+  // 링크 미리보기: 이미지가 없고, URL이 이미지가 아닐 때만
+  const showLinkPreview = !!firstUrl && !isImageUrl(firstUrl) && !hasImages;
+
+  // 텍스트(아래 표시용): URL은 제거
+  const textBelow =
+    showLinkPreview && firstUrlRaw
+      ? raw.replace(firstUrlRaw, "").trim()
+      : raw.trim();
+
+  const hasText = raw.trim().length > 0;
+
+  const gridClass =
+    images.length === 1
+      ? styles.c1
+      : images.length === 2
+      ? styles.c2
+      : images.length === 3
+      ? styles.c3
+      : images.length === 4
+      ? styles.c4
+      : styles.cMore;
+
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    (e.currentTarget as HTMLImageElement).src =
+      "https://placehold.co/300x200?text=IMG";
+  };
 
   return (
-    <div className={mine ? styles.rowMine : styles.row}>
+    <div
+      role="listitem"
+      className={`${styles.row} ${mine ? styles.mine : styles.theirs}`}
+    >
       {!mine && (
         <img
           className={styles.avatar}
-          src={message.authorAvatarUrl}
-          alt={message.authorName}
+          src={message.author.avatarUrl}
+          alt={`${message.author.name} 아바타`}
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src =
+              "https://placehold.co/32x32?text=?";
+          }}
         />
       )}
 
-      <div className={styles.inline}>
-        {" "}
-        {/* ← 버블과 뱃지를 한 줄로 */}
-        {/* 왼쪽 버블(상대 메시지)일 때: 뱃지를 버블 오른쪽에 */}
+      <div className={styles.stack}>
         {!mine && (
-          <>
-            <div className={styles.bubble}>
-              <div className={styles.header}>
-                <span className={styles.author}>{message.authorName}</span>
-                <span className={styles.time}>
-                  {new Date(message.createdAt).toLocaleTimeString()}
-                </span>
+          <div className={styles.authorName}>{message.author.name}</div>
+        )}
+
+        {/* 말풍선/미리보기 + 메타를 한 줄에 배치 */}
+        <div className={`${styles.bubbleLine} ${mine ? styles.reverse : ""}`}>
+          {/* ⬇️ 콘텐츠 컬럼: 링크 미리보기 → (이미지 or 텍스트) 순으로 세로 배치 */}
+          <div className={styles.contentCol}>
+            {showLinkPreview && <LinkPreview url={firstUrl!} />}
+
+            {hasImages && (
+              <div className={`${styles.imageGrid} ${gridClass}`}>
+                {images.map((url, idx) => (
+                  <img
+                    key={idx}
+                    className={styles.image}
+                    src={url}
+                    alt="메시지 이미지"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    onError={handleImgError}
+                    onClick={() => onImageClick?.(url, idx, images)}
+                  />
+                ))}
               </div>
-              <div className={styles.content}>{message.content}</div>
-            </div>
-            {shouldShow && (
+            )}
+
+            {hasText && (
+              <div className={styles.bubble}>
+                {linkify(raw)} {/* ← URL을 삭제하지 않고 링크로 치환 */}
+              </div>
+            )}
+          </div>
+
+          {/* 메타: 안읽음(위) → 시간(아래) */}
+          <div className={styles.meta}>
+            {typeof unread === "number" && (
               <span
-                className={
-                  unreadCount > 0 ? styles.receiptUnread : styles.receiptRead
-                }
-                aria-label={
-                  unreadCount > 0 ? `안 읽음 ${unreadCount}` : "모두 읽음"
-                }
-                title={unreadCount > 0 ? `안 읽음 ${unreadCount}` : "모두 읽음"}
+                className={`${styles.receipt} ${
+                  unread === 0 ? styles.readAll : ""
+                }`}
+                title={unread === 0 ? "모두 읽음" : `안 읽음 ${unread}명`}
+                aria-label={unread === 0 ? "모두 읽음" : `안 읽음 ${unread}명`}
               >
-                {unreadCount > 0 ? `안읽음 ${unreadCount}` : "모두 읽음"}
+                {unread === 0 ? "모두 읽음" : unread}
               </span>
             )}
-          </>
-        )}
-        {/* 오른쪽 버블(내 메시지)일 때: 뱃지를 버블 왼쪽에 */}
-        {mine && (
-          <>
-            {shouldShow && (
-              <span
-                className={
-                  unreadCount > 0 ? styles.receiptUnread : styles.receiptRead
-                }
-                aria-label={
-                  unreadCount > 0 ? `안 읽음 ${unreadCount}` : "모두 읽음"
-                }
-                title={unreadCount > 0 ? `안 읽음 ${unreadCount}` : "모두 읽음"}
-              >
-                {unreadCount > 0 ? `${unreadCount}` : ""}
-              </span>
-            )}
-            <div className={styles.bubble}>
-              <div className={styles.header}>
-                <span className={styles.author}>{message.authorName}</span>
-                <span className={styles.time}>
-                  {new Date(message.createdAt).toLocaleTimeString()}
-                </span>
-              </div>
-              <div className={styles.content}>{message.content}</div>
-            </div>
-          </>
-        )}
+            <span className={styles.time}>{message.createdAt}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

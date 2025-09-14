@@ -1,32 +1,50 @@
 .header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
-
-.titleWrap {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px; /* 방 이미지는 둥근 네모 */
-  object-fit: cover;
-  background: #d1d5db;
+.avatarWrap {
+  flex-shrink: 0;
 }
 
-.title {
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px; /* Sidebar와 동일한 스타일 */
+  object-fit: cover;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomName {
+  font-size: 16px;
   font-weight: 700;
   color: #111827;
+  margin: 0;
 }
 
-.subtitle {
-  font-size: 12px;
+.memberCount {
+  font-size: 13px;
   color: #6b7280;
+}
+
+.description {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

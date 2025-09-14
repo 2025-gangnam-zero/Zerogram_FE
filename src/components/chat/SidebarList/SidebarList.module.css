@@ -1,0 +1,6 @@
+/* src/components/chat/SidebarList.module.css */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}

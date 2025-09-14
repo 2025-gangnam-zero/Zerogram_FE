@@ -1,93 +1,14 @@
-.wrapper {
-  position: relative;
-  flex: 1 1 auto;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Drag overlay */
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.35);
-  display: grid;
-  place-items: center;
-  z-index: 30;
-}
-
-.overlayBox {
-  background: #ffffff;
-  border: 2px dashed #94a3b8;
-  color: #0f172a;
-  padding: 24px 28px;
-  border-radius: 16px;
-  text-align: center;
-  min-width: 280px;
-}
-.overlayTitle {
-  font-weight: 700;
-}
-.overlayHint {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 6px;
-}
-
-/* Modal */
-.modal {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: grid;
-  place-items: center;
-  z-index: 40;
-}
-
-.modalCard {
-  width: min(860px, 92vw);
-  max-height: 82vh;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-}
-.modalTitle {
-  font-weight: 700;
-}
-.iconBtn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.modalBody {
-  padding: 14px 16px;
-  overflow: auto;
+/* src/pages/ChatSection/DNDPreviewModal.module.css */
+.body {
   display: grid;
   gap: 12px;
 }
-
 .sectionTitle {
   font-size: 12px;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
-/* Images */
 .imgGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -115,7 +36,6 @@
   text-overflow: ellipsis;
 }
 
-/* Files */
 .fileList {
   display: grid;
   gap: 8px;
@@ -139,12 +59,11 @@
   color: #64748b;
 }
 
-/* Footer */
-.modalFooter {
+.footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 0 0;
   border-top: 1px solid #e5e7eb;
   gap: 8px;
 }

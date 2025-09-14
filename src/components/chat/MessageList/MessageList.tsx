@@ -1,65 +1,49 @@
-import { useEffect, useMemo, useRef } from "react";
+// src/pages/ChatSection/MessageList.tsx
+import { useMemo, useState } from "react";
 import styles from "./MessageList.module.css";
-import { Message, RoomMember } from "../../../types";
-import { MessageItem } from "../MessageItem";
+import { useParams } from "react-router-dom";
+import { ImageLightbox, MessageItem } from "../../../components/chat";
+import { useMessagesStore } from "../../../store";
 
-type Props = {
-  messages: Message[];
-  meId: string;
-  members?: RoomMember[]; // ✅ 방 멤버 전달 (없으면 빈 배열)
-  showReceiptFor?: "mine" | "all";
-  includeAuthorInCount?: boolean;
-};
+export const MessageList = () => {
+  const { roomId } = useParams();
+  const byRoom = useMessagesStore((s) => s.byRoom);
+  const messages = useMemo(
+    () => (roomId ? byRoom[roomId] ?? [] : []),
+    [byRoom, roomId]
+  );
 
-export const MessageList: React.FC<Props> = ({
-  messages,
-  meId,
-  members = [],
-  showReceiptFor = "mine",
-  includeAuthorInCount = false,
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const [lbOpen, setLbOpen] = useState(false);
+  const [lbImages, setLbImages] = useState<string[]>([]);
+  const [lbIndex, setLbIndex] = useState(0);
 
-  useEffect(() => {
-    ref.current?.scrollTo({ top: ref.current.scrollHeight });
-  }, [messages.length]);
+  const handleImageClick = (_url: string, index: number, all: string[]) => {
+    setLbImages(all);
+    setLbIndex(index);
+    setLbOpen(true);
+  };
 
-  // ✅ 내(뷰어)의 마지막 읽은 시각
-  const myLastReadAt = useMemo(() => {
-    const me = members.find((m) => m.user.id === meId);
-    return me?.lastReadAt ?? 0;
-  }, [members, meId]);
-
-  // ✅ 첫 안읽은 메시지 인덱스 (없으면 -1)
-  const firstUnreadIndex = useMemo(() => {
-    if (!myLastReadAt) return -1;
-    return messages.findIndex((m) => m.createdAt > myLastReadAt);
-  }, [messages, myLastReadAt]);
+  if (!roomId) {
+    return <div className={styles.empty}>채팅방이 선택되지 않았습니다.</div>;
+  }
+  if (messages.length === 0) {
+    return <div className={styles.empty}>메시지가 없습니다.</div>;
+  }
 
   return (
-    <div className={styles.wrap} ref={ref}>
-      {messages.map((msg, i) => (
-        <div key={msg.id}>
-          {/* ✅ 첫 안읽은 메시지 직전에 구분선 렌더 */}
-          {i === firstUnreadIndex && (
-            <div
-              className={styles.unreadDivider}
-              role="separator"
-              aria-label="여기까지 읽으셨습니다."
-            >
-              <span className={styles.unreadChip}>여기까지 읽으셨습니다.</span>
-            </div>
-          )}
+    <>
+      <div className={styles.list} role="list" aria-label="메시지 목록">
+        {messages.map((m) => (
+          <MessageItem key={m.id} message={m} onImageClick={handleImageClick} />
+        ))}
+      </div>
 
-          <MessageItem
-            message={msg}
-            mine={msg.authorId === meId}
-            members={members}
-            showReceiptFor={showReceiptFor}
-            includeAuthorInCount={includeAuthorInCount}
-          />
-        </div>
-      ))}
-    </div>
+      <ImageLightbox
+        open={lbOpen}
+        images={lbImages}
+        index={lbIndex}
+        onClose={() => setLbOpen(false)}
+      />
+    </>
   );
 };
