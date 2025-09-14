@@ -11,9 +11,7 @@ export const Sidebar = () => {
 
       <div className={styles.divider} aria-hidden="true" />
 
-      <div className={styles.listArea}>
-        <SidebarList />
-      </div>
+      <div className={styles.listArea}><SidebarList /></div>
     </div>
   );
 };

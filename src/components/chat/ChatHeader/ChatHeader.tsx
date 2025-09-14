@@ -1,20 +1,20 @@
+import { useParams } from "react-router-dom";
+import { useChatDataStore } from "../../../store";
 import styles from "./ChatHeader.module.css";
 
-type ChatHeaderProps = {
-  roomName: string;
-  roomDescription?: string;
-  memberCount: number;
-  memberCapacity?: number;
-  roomImageUrl: string;
-};
+export const ChatHeader = () => {
+  const roomId = useParams().roomId!;
+  const room = useChatDataStore((s) => s.getRoom(roomId));
 
-export const ChatHeader = ({
-  roomName,
-  roomDescription,
-  memberCount,
-  memberCapacity,
-  roomImageUrl,
-}: ChatHeaderProps) => {
+  if (!room) return null;
+
+  const {
+    roomName,
+    roomImageUrl,
+    memberCapacity,
+    memberCount,
+    roomDescription,
+  } = room;
   return (
     <div className={styles.header}>
       <div className={styles.avatarWrap}>

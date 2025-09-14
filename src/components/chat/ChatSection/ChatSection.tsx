@@ -1,4 +1,3 @@
-import { mockItems } from "../../../data/chat.mock";
 import { useComposerStore } from "../../../store";
 import {
   ChatHeader,
@@ -8,13 +7,17 @@ import {
 } from "../../../components/chat";
 import styles from "./ChatSection.module.css";
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 
 export const ChatSection = () => {
   const { roomId } = useParams();
-  const room = mockItems.find((r) => r.id === roomId) ?? mockItems[0];
 
   const ensureRoom = useComposerStore((s) => s.ensureRoom);
-  if (roomId) ensureRoom(roomId); // 간단 보장
+
+  useEffect(() => {
+    if (roomId) ensureRoom(roomId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]); // ensureRoom 제거 - 함수는 의존성 배열에 포함하지 않음
 
   if (!roomId)
     return <section className={styles.container}>채팅방을 선택하세요.</section>;
@@ -22,13 +25,7 @@ export const ChatSection = () => {
   return (
     <section className={styles.container}>
       <header className={styles.header}>
-        <ChatHeader
-          roomName={room.roomName}
-          roomDescription={room.roomDescription}
-          memberCount={room.memberCount}
-          memberCapacity={room.memberCapacity}
-          roomImageUrl={room.roomImageUrl}
-        />
+        <ChatHeader />
       </header>
 
       {/* ✅ DND로 리스트+인풋 감싸기 (roomId 단위) */}
