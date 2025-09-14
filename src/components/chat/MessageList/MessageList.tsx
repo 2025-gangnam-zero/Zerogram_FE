@@ -1,19 +1,15 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import styles from "./MessageList.module.css";
 import { useParams } from "react-router-dom";
 import { ImageLightbox, MessageItem } from "../../../components/chat";
-import { useChatDataStore } from "../../../store";
+import { useMessagesStore } from "../../../store";
 
 export const MessageList = () => {
-  const { roomId } = useParams();
+  const { roomId } = useParams<{ roomId: string }>();
 
   // 직접 상태를 구독하여 무한 리렌더링 방지
-  const messagesByRoom = useChatDataStore((s) => s.messagesByRoom);
-
-  const messages = useMemo(() => {
-    if (!roomId) return [];
-    return messagesByRoom[roomId] ?? [];
-  }, [roomId, messagesByRoom]);
+  const byRoomId = useMessagesStore((s) => s.byRoomId);
+  const messages = roomId ? byRoomId[roomId]?.items ?? [] : [];
 
   const [lbOpen, setLbOpen] = useState(false);
   const [lbImages, setLbImages] = useState<string[]>([]);

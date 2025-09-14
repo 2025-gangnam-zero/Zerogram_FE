@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./MessageInput.module.css";
 import { useParams } from "react-router-dom";
-import { useChatDataStore, useComposerStore } from "../../../store";
+import { useComposerStore, useMessagesStore } from "../../../store";
 import { ChatMessage } from "../../../types";
 
 // 간단 시간 포맷
@@ -27,7 +27,7 @@ export const MessageInput = () => {
   const setPendingSend = useComposerStore((s) => s.setPendingSend);
   const clear = useComposerStore((s) => s.clear);
 
-  const addMessage = useChatDataStore((s) => s.addMessage);
+  const addMessage = useMessagesStore((s) => s.addMessage);
 
   const [isComposing, setIsComposing] = useState(false);
 
@@ -40,15 +40,12 @@ export const MessageInput = () => {
   const attachments = composer?.attachments ?? [];
   const isEmpty = value.trim().length === 0 && attachments.length === 0;
 
-  const autoResize = () => {
+  useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  };
-  useEffect(() => {
-    autoResize();
-  }, [value]);
+  }, [value]); // autoResize 함수 제거하고 직접 실행
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!roomId) return;

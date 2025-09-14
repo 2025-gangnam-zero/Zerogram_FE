@@ -2,20 +2,36 @@
 import styles from "./ChatPage.module.css";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "../../components/chat";
-import { useChatDataStore } from "../../store/chatDataStore";
+
 import { useEffect } from "react";
-import { mockItems, mockMessages } from "../../data/chat.mock";
+import { getRoomsApi } from "../../api/chat";
+import { useRoomsStore } from "../../store";
 
 export const ChatPage = () => {
-  const bootstrap = useChatDataStore((s) => s.bootstrap);
-  const rooms = useChatDataStore((s) => s.rooms);
+  const replaceRooms = useRoomsStore((s) => s.replaceRooms);
+  const setLoading = useRoomsStore((s) => s.setLoading);
+  const setError = useRoomsStore((s) => s.setError);
 
   useEffect(() => {
-    if (Object.keys(rooms).length === 0) {
-      bootstrap(mockItems, mockMessages);
-    }
+    (async () => {
+      try {
+        setLoading(true);
+        // getRoomsApi는 RoomsListResponseDTO를 반환한다고 가정
+        const res = await getRoomsApi({ limit: 30 });
+
+        const { items, nextCursor } = res.data;
+
+        replaceRooms({ items, nextCursor });
+      } catch (e: any) {
+        setError(e?.message ?? "rooms fetch failed");
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooms]); // bootstrap 제거 - 함수는 의존성 배열에 포함하지 않음
+  }, []); // 함수들은 의존성 배열에서 제거
+
   return (
     <div className={styles.wrap}>
       <aside className={styles.sidebar}>

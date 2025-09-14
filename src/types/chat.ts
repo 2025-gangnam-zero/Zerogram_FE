@@ -51,3 +51,8 @@ export type DroppedItem = {
   previewUrl?: string; // 이미지면 ObjectURL
   selected: boolean;
 };
+
+export interface RoomsListResponseDTO {
+  items: ChatroomListItem[];
+  nextCursor?: string | null;
+}

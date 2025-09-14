@@ -1,10 +1,10 @@
-import { useParams } from "react-router-dom";
-import { useChatDataStore } from "../../../store";
 import styles from "./ChatHeader.module.css";
+import { useParams } from "react-router-dom";
+import { useRoomsStore } from "../../../store";
 
 export const ChatHeader = () => {
   const roomId = useParams().roomId!;
-  const room = useChatDataStore((s) => s.getRoom(roomId));
+  const room = useRoomsStore((s) => s.byId[roomId]);
 
   if (!room) return null;
 

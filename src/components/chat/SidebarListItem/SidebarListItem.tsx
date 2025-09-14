@@ -5,7 +5,7 @@ import { RiPushpin2Fill } from "react-icons/ri";
 import { FaRunning, FaDumbbell } from "react-icons/fa";
 import React from "react";
 import { Link } from "react-router-dom";
-import { useChatDataStore } from "../../../store";
+import { useRoomsStore } from "../../../store";
 
 type Props = {
   item: ChatroomListItem;
@@ -32,7 +32,7 @@ export const SidebarListItem = ({ item, selected = false }: Props) => {
 
   const LeadingIcon = workoutType === "running" ? RunningIcon : FitnessIcon;
 
-  const selectRoom = useChatDataStore((s) => s.selectRoom);
+  const selectRoom = useRoomsStore((s) => s.selectRoom);
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     // 보조키/비좌클릭(새탭 등)은 선택/읽음 처리하지 않음

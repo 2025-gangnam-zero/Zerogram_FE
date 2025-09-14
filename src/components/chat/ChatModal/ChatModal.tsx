@@ -22,7 +22,8 @@ export const ChatModal = ({ open, onClose, title, children }: Props) => {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // onClose 제거
 
   if (!open) return null;
   return createPortal(

@@ -4,7 +4,9 @@ export * from "./userStore";
 export * from "./workoutStore";
 export * from "./dietStore";
 export * from "./composerStore";
-export * from "./chatDataStore";
+export * from "./roomsStore";
+export * from "./messagesStore";
+export * from "./chatUIStore";
 
 // Store types for backward compatibility
 export type RootState = {
@@ -12,5 +14,7 @@ export type RootState = {
   user: ReturnType<typeof import("./userStore").useUserStore>;
   diet: ReturnType<typeof import("./dietStore").useDietStore>;
   composer: ReturnType<typeof import("./composerStore").useComposerStore>;
-  chatData: ReturnType<typeof import("./chatDataStore").useChatDataStore>;
+  room: ReturnType<typeof import("./roomsStore").useRoomsStore>;
+  message: ReturnType<typeof import("./messagesStore").useMessagesStore>;
+  chatUI: ReturnType<typeof import("./chatUIStore").useChatUIStore>;
 };
