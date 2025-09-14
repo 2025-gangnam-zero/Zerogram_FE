@@ -14,7 +14,11 @@ import DietPage from "../pages/DietPage";
 import DietLogPage from "../pages/DietLogPage";
 import { useAuthStore } from "../store/authStore";
 import { ChatPage } from "../pages/ChatPage";
-import { ChatIndex, ChatSection } from "../components/chat";
+import {
+  ChatIndex,
+  ChatNotificationFab,
+  ChatSection,
+} from "../components/chat";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -57,6 +61,7 @@ export default function Router() {
               <Route path=":roomId" element={<ChatSection />} />
             </Route>
           </Routes>
+          <ChatNotificationFab />
         </MainContent>
         <Footer />
       </AppContainer>

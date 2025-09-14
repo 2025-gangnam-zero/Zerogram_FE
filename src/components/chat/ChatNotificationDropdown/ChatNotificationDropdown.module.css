@@ -1,0 +1,59 @@
+.panel {
+  /* 위치 지정 금지(absolute/fixed 넣지 말 것) */
+  min-width: 280px; /* 세로로 쪼개지는 현상 방지 */
+  max-width: 90vw;
+  white-space: normal; /* 강제 줄바꿈 방지 */
+  writing-mode: horizontal-tb; /* 혹시 전역 스타일 영향 차단용 안전장치 */
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 60vh;
+  overflow: auto;
+  padding: 8px 0;
+  z-index: 1; /* 상자 자체도 레이어 확보 */
+}
+
+.titleRead {
+  color: #6b7280; /* gray-500 */
+}
+.unreadDot {
+  margin-top: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--notif-orange);
+}
+.message {
+  margin-top: 2px;
+  font-size: 14px;
+  color: #4b5563; /* gray-600 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.time {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #9ca3af; /* gray-400 */
+}
+.actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  padding-left: 52px; /* 썸네일 정렬 보정 */
+}
+.linkBtn,
+.deleteBtn {
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+.linkBtn:hover,
+.deleteBtn:hover {
+  background: #f3f4f6;
+}

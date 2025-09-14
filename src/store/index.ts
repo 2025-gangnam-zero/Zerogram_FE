@@ -7,6 +7,7 @@ export * from "./composerStore";
 export * from "./roomsStore";
 export * from "./messagesStore";
 export * from "./chatUIStore";
+export * from "./chatNotificationStore";
 
 // Store types for backward compatibility
 export type RootState = {
@@ -17,4 +18,7 @@ export type RootState = {
   room: ReturnType<typeof import("./roomsStore").useRoomsStore>;
   message: ReturnType<typeof import("./messagesStore").useMessagesStore>;
   chatUI: ReturnType<typeof import("./chatUIStore").useChatUIStore>;
+  chatNotification: ReturnType<
+    typeof import("./chatNotificationStore").useChatNotificationStore
+  >;
 };

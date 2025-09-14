@@ -13,3 +13,5 @@ export * from "./DNDWrapper";
 export * from "./DNDPreviewModal";
 export * from "./ComposerAttachmentsBar";
 export * from "./ImageLightbox";
+export * from "./ChatNotificationFab";
+export * from "./ChatNotificationDropdown";
