@@ -1,3 +1,6 @@
+import { SendMessageAck, UploadAttachment } from "../types";
+import { getSocket } from "./socket";
+
 export const extractFirstUrl = (text?: string) => {
   if (!text) return null;
   const m = text.match(/(https?:\/\/[^\s<>"']+)|(www\.[^\s<>"']+)/i);
@@ -91,4 +94,23 @@ export const processImages = async (files: File[], opt: Options) => {
     });
   }
   return out;
+};
+
+export const sendMessage = (opts: {
+  roomId: string;
+  text?: string;
+  attachments?: UploadAttachment[];
+  clientId: string;
+}) => {
+  return new Promise<SendMessageAck>((resolve) => {
+    const sock = getSocket();
+    sock.emit("msg:send", opts, (ack: { ok: boolean; serverId?: string }) => {
+      resolve(ack);
+    });
+  });
+};
+
+export const setTyping = (roomId: string, on: boolean) => {
+  const sock = getSocket();
+  sock.emit("typing", { roomId, on });
 };

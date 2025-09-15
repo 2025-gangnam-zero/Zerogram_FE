@@ -6,11 +6,18 @@ import { Sidebar } from "../../components/chat";
 import { useEffect } from "react";
 import { getRoomsApi } from "../../api/chat";
 import { useRoomsStore } from "../../store";
+import { useChatSocket } from "../../hooks/useChatSocket";
 
 export const ChatPage = () => {
   const replaceRooms = useRoomsStore((s) => s.replaceRooms);
   const setLoading = useRoomsStore((s) => s.setLoading);
   const setError = useRoomsStore((s) => s.setError);
+
+  const rooms = useRoomsStore((s) => s.allIds);
+
+  const roomIds = Object.keys(rooms);
+
+  useChatSocket(roomIds);
 
   useEffect(() => {
     (async () => {

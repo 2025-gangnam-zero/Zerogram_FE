@@ -16,31 +16,50 @@ const RunningIcon = FaRunning as React.ComponentType<{ className?: string }>;
 const FitnessIcon = FaDumbbell as React.ComponentType<{ className?: string }>;
 const PinIcon = RiPushpin2Fill as React.ComponentType<{ className?: string }>;
 
+const fmtTime = (iso?: string | null) => {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const d = new Date(t);
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const isAM = h < 12;
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${isAM ? "오전" : "오후"} ${hh}:${m}`;
+};
+
 export const SidebarListItem = ({ item, selected = false }: Props) => {
   const {
     id,
     roomName,
     roomImageUrl,
     memberCount,
-    memberCapacity,
+    memberCapacity, // optional
     lastMessage,
-    lastMessageAt,
+    lastMessageAt, // ISO or null/undefined
     unreadCount,
     isPinned,
-    workoutType,
+    workoutType, // optional
   } = item;
 
-  const LeadingIcon = workoutType === "running" ? RunningIcon : FitnessIcon;
+  const LeadingIcon =
+    workoutType === "running"
+      ? RunningIcon
+      : workoutType === "fitness"
+      ? FitnessIcon
+      : null;
 
   const selectRoom = useRoomsStore((s) => s.selectRoom);
 
   const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    // 보조키/비좌클릭(새탭 등)은 선택/읽음 처리하지 않음
     if (e.defaultPrevented) return;
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
       return;
     selectRoom(id);
   };
+
+  const avatarFallback = "https://placehold.co/40x40?text=R";
+  const timeText = fmtTime(lastMessageAt);
 
   return (
     <Link
@@ -53,7 +72,15 @@ export const SidebarListItem = ({ item, selected = false }: Props) => {
     >
       {/* 왼쪽 아바타 */}
       <div className={styles.avatarWrap}>
-        <img className={styles.avatar} src={roomImageUrl} alt="" />
+        <img
+          className={styles.avatar}
+          src={roomImageUrl ?? avatarFallback}
+          alt=""
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = avatarFallback;
+          }}
+          loading="lazy"
+        />
       </div>
 
       {/* 오른쪽 본문 */}
@@ -61,12 +88,15 @@ export const SidebarListItem = ({ item, selected = false }: Props) => {
         {/* 상단 */}
         <div className={styles.topRow}>
           <div className={styles.titleRow}>
-            <span className={styles.leadingIcon} aria-hidden="true">
-              <LeadingIcon />
-            </span>
+            {LeadingIcon && (
+              <span className={styles.leadingIcon} aria-hidden="true">
+                <LeadingIcon />
+              </span>
+            )}
             <span className={styles.roomName}>{roomName}</span>
             <span className={styles.memberCount}>
-              {memberCount}/{memberCapacity}
+              {memberCount}
+              {typeof memberCapacity === "number" ? `/${memberCapacity}` : ""}
             </span>
             {isPinned && (
               <span className={styles.pin} title="고정됨" aria-label="고정됨">
@@ -74,7 +104,7 @@ export const SidebarListItem = ({ item, selected = false }: Props) => {
               </span>
             )}
           </div>
-          <div className={styles.time}>{lastMessageAt}</div>
+          <div className={styles.time}>{timeText}</div>
         </div>
 
         {/* 하단 */}

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Attachment } from "../types/chat";
+import type { UploadAttachment } from "../types"; // ✅ 변경: ../types/chat -> ../types
 import { processImages } from "../utils";
 
 const MAX_IMAGES = 4;
@@ -8,7 +8,7 @@ const MAX_EACH_MB = 10;
 type RoomComposer = {
   text: string;
   pendingSend: boolean; // IME Enter 중 전송 대기
-  attachments: Attachment[]; // 전송 전 첨부
+  attachments: UploadAttachment[]; // ✅ 변경: Attachment -> UploadAttachment
 };
 
 type ComposerState = {
@@ -108,7 +108,7 @@ export const useComposerStore = create<ComposerState>((set, get) => ({
       maxEdge: 2048,
       quality: 0.85,
     });
-    const toAdd: Attachment[] = processed.map((p) => ({
+    const toAdd: UploadAttachment[] = processed.map((p) => ({
       id: Math.random().toString(36).slice(2),
       file: p.file,
       mime: p.file.type,
@@ -150,6 +150,15 @@ export const useComposerStore = create<ComposerState>((set, get) => ({
   reorderAttachments: (roomId, from, to) =>
     set((s) => {
       const list = [...(s.byRoom[roomId]?.attachments ?? [])];
+      if (
+        list.length === 0 ||
+        from < 0 ||
+        to < 0 ||
+        from >= list.length ||
+        to >= list.length
+      ) {
+        return { byRoom: s.byRoom };
+      }
       const [moved] = list.splice(from, 1);
       list.splice(to, 0, moved);
       return {

@@ -14,11 +14,13 @@ const Bell = FiBell as React.ComponentType<{
 
 export const ChatNotificationFab = () => {
   const { pathname } = useLocation();
-  const unreadCount = useChatNotificationStore((s) => s.unreadCount());
+  const totalUnreadCount = useChatNotificationStore((s) =>
+    s.totalUnreadCount()
+  );
   const [open, setOpen] = useState(false);
 
   const isChatPage = pathname.startsWith("/chat/");
-  const visible = true; //!isChatPage && unreadCount > 0;
+  const visible = true; //!isChatPage && totalUnreadCount > 0;
 
   // 래퍼 ref (바깥 클릭 닫힘 판단에 사용)
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -43,9 +45,9 @@ export const ChatNotificationFab = () => {
         >
           <span className={styles.iconWrap}>
             <Bell width={24} height={24} />
-            {unreadCount > 0 && (
+            {totalUnreadCount > 0 && (
               <span className={styles.badge}>
-                {unreadCount > 99 ? "99+" : unreadCount}
+                {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
               </span>
             )}
           </span>

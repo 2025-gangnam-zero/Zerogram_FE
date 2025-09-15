@@ -16,9 +16,7 @@ const linkify = (text: string) => {
   let last = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
-    // 이전 일반 텍스트
     if (match.index > last) nodes.push(text.slice(last, match.index));
-    // 링크
     const raw = match[0];
     const href = raw.startsWith("http") ? raw : `https://${raw}`;
     nodes.push(
@@ -34,7 +32,6 @@ const linkify = (text: string) => {
     );
     last = regex.lastIndex;
   }
-  // 남은 일반 텍스트
   if (last < text.length) nodes.push(text.slice(last));
   return <span className={styles.linkified}>{nodes}</span>;
 };
@@ -43,8 +40,13 @@ export const MessageItem = ({ message, onImageClick }: Props) => {
   const mine = !!message.isMine;
   const unread = message.unreadByCount;
 
-  const images = message.images ?? [];
+  // ✅ attachments에서 image인 것만 URL 뽑기
+  const images =
+    message.attachments
+      ?.filter((a) => a.kind === "image" && !!a.url)
+      .map((a) => a.url!) ?? [];
   const hasImages = images.length > 0;
+
   const raw = message.content ?? "";
 
   // URL 감지 (raw URL 추출)
@@ -132,7 +134,7 @@ export const MessageItem = ({ message, onImageClick }: Props) => {
 
             {hasText && (
               <div className={styles.bubble}>
-                {linkify(raw)} {/* ← URL을 삭제하지 않고 링크로 치환 */}
+                {linkify(raw)} {/* URL을 삭제하지 않고 링크로 치환 */}
               </div>
             )}
           </div>
@@ -150,6 +152,7 @@ export const MessageItem = ({ message, onImageClick }: Props) => {
                 {unread === 0 ? "모두 읽음" : unread}
               </span>
             )}
+            {/* createdAt은 ISO string이므로 그대로 표시하거나 포맷터 적용 */}
             <span className={styles.time}>{message.createdAt}</span>
           </div>
         </div>

@@ -2,16 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./MessageInput.module.css";
 import { useParams } from "react-router-dom";
 import { useComposerStore, useMessagesStore } from "../../../store";
-import { ChatMessage } from "../../../types";
-
-// 간단 시간 포맷
-const fmtTime = (d = new Date()) => {
-  const h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, "0");
-  const isAM = h < 12;
-  const hh = h % 12 === 0 ? 12 : h % 12;
-  return `${isAM ? "오전" : "오후"} ${hh}:${m}`;
-};
+import type { ChatMessage, ChatAttachment } from "../../../types";
+import { sendMessage } from "../../../utils";
 
 const MAX_LEN = 250;
 
@@ -34,7 +26,7 @@ export const MessageInput = () => {
   useEffect(() => {
     if (roomId) ensureRoom(roomId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId]); // ensureRoom 제거 - 함수는 의존성 배열에 포함하지 않음
+  }, [roomId]);
 
   const value = composer?.text ?? "";
   const attachments = composer?.attachments ?? [];
@@ -45,46 +37,109 @@ export const MessageInput = () => {
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
-  }, [value]); // autoResize 함수 제거하고 직접 실행
+  }, [value]);
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!roomId) return;
-
     const next = e.target.value;
-    if (next.length > MAX_LEN) return; // 초과 차단
+    if (next.length > MAX_LEN) return;
     setText(roomId, next);
   };
 
-  const sendNow = () => {
+  const sendNow = async () => {
     if (isEmpty || !roomId) return;
 
+    const clientId = `tmp-${Date.now()}`;
+
+    // 방의 현재 마지막 seq를 가져와 임시 seq를 결정(정렬이 맨 뒤로 가도록)
+    const { byRoomId } = useMessagesStore.getState();
+    const lastSeq =
+      byRoomId[roomId]?.items?.[byRoomId[roomId].items.length - 1]?.seq ?? 0;
+    const tempSeq = lastSeq + 1;
+
+    // 낙관적 첨부: previewUrl을 url로 매핑
+    const optimisticAttachments: ChatAttachment[] =
+      attachments.length > 0
+        ? attachments.map((a) => ({
+            kind: "image",
+            url: a.previewUrl,
+            mimeType: a.mime,
+            size: a.size,
+            width: a.width,
+            height: a.height,
+            originalName: a.file.name,
+            thumbUrl: a.previewUrl,
+          }))
+        : [];
+
+    const hasImages = optimisticAttachments.length > 0;
+    const trimmed = value.trim();
+
     const msg: ChatMessage = {
-      id: `tmp-${Date.now()}`,
+      id: clientId,
       roomId,
+      seq: tempSeq,
       author: {
         id: "me",
         name: "나",
         avatarUrl: "https://placehold.co/32x32/000000/FFFFFF?text=ME",
       },
-      content: value.trim() || undefined,
-      images: attachments.length
-        ? attachments.map((a) => a.previewUrl)
-        : undefined,
-      createdAt: fmtTime(),
+      type: hasImages ? "image" : "text",
+      content: trimmed || null,
+      attachments: hasImages ? optimisticAttachments : undefined,
+      createdAt: new Date().toISOString(),
       isMine: true,
       unreadByCount: 0,
+      pending: true,
+      failed: false,
     };
+
+    // 1) 낙관적 추가
     addMessage(roomId, msg);
-    clear(roomId); // 입력/첨부 초기화
-    // 포커스 유지
+
+    // 2) 입력/첨부 초기화 + 포커스 유지
+    clear(roomId);
     setTimeout(() => textareaRef.current?.focus(), 0);
+
+    // 3) 전송(텍스트 + 업로드 첨부)
+    try {
+      const ack = await sendMessage({
+        roomId,
+        text: trimmed || undefined,
+        // 업로드는 원본 파일로 전달(서버가 URL 생성 → ACK로 회신한다고 가정)
+        attachments, // UploadAttachment[]
+        clientId, // 반드시 tmp id 전달
+      });
+
+      // ACK 형식 가정:
+      // { ok: boolean, serverId?: string, seq?: number, createdAt?: string, attachments?: ChatAttachment[] }
+      if (ack?.ok && ack.serverId) {
+        // id 교체
+        useMessagesStore
+          .getState()
+          .replaceMessageId(roomId, clientId, ack.serverId);
+        // seq/createdAt/attachments 등 서버 권위 값 반영
+        const patch: Partial<ChatMessage> = {
+          seq: typeof ack.seq === "number" ? ack.seq : undefined,
+          createdAt: ack.createdAt ?? undefined,
+          attachments: ack.attachments ?? undefined, // 서버가 최종 URL을 제공했다면 교체
+          pending: false,
+          failed: false,
+        };
+        useMessagesStore.getState().updateMessage(roomId, ack.serverId, patch);
+        useMessagesStore.getState().markDelivered(roomId, ack.serverId);
+      } else {
+        useMessagesStore.getState().markFailed(roomId, clientId);
+      }
+    } catch {
+      useMessagesStore.getState().markFailed(roomId, clientId);
+    }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!roomId) return;
 
     if (e.key === "Enter" && !e.shiftKey) {
-      // IME 조합 중 Enter도 전송: composition 상태에 따라 처리
       if (isComposing) {
         e.preventDefault();
         setPendingSend(roomId, true);
@@ -95,12 +150,10 @@ export const MessageInput = () => {
     }
   };
 
-  const onCompositionStart = () => {
-    setIsComposing(true);
-  };
+  const onCompositionStart = () => setIsComposing(true);
+
   const onCompositionEnd = () => {
     if (!roomId) return;
-
     setIsComposing(false);
     if (composer?.pendingSend) {
       setPendingSend(roomId, false);
@@ -120,7 +173,6 @@ export const MessageInput = () => {
       {/* 프리뷰 바 (첨부가 있을 때) */}
       {attachments.length > 0 && (
         <div className={styles.previewBar}>
-          {/* 별도 컴포넌트로 분리해도 되지만 의존 줄이기 위해 간단 표현 */}
           {attachments.map((a) => (
             <div key={a.id} className={styles.previewItem} title={a.file.name}>
               <img

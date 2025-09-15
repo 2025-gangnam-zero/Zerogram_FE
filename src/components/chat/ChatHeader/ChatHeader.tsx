@@ -5,6 +5,7 @@ import { useRoomsStore } from "../../../store";
 export const ChatHeader = () => {
   const roomId = useParams().roomId!;
   const room = useRoomsStore((s) => s.byId[roomId]);
+  const fallback = "https://placehold.co/40x40?text=R";
 
   if (!room) return null;
 
@@ -20,7 +21,8 @@ export const ChatHeader = () => {
       <div className={styles.avatarWrap}>
         <img
           className={styles.avatar}
-          src={roomImageUrl}
+          src={roomImageUrl ?? fallback}
+          onError={(e) => (e.currentTarget.src = fallback)}
           alt={`${roomName} 이미지`}
         />
       </div>

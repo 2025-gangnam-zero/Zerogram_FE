@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { ChatroomListItem } from "../types";
-import { mockItems } from "../data/chat.mock"; // TODO: Mock 데이터 제거 시 이 import 삭제
 
 export type RoomsState = {
   byId: Record<string, ChatroomListItem>;
@@ -29,38 +28,52 @@ export type RoomsState = {
   setQuery: (q: string) => void;
 };
 
+/** 안전한 시간 파싱 (ISO string | null | undefined -> number) */
+const ts = (iso?: string | null): number => {
+  if (!iso) return 0;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : 0;
+};
+
+/** 고정핀 우선 -> 최신 메시지 시각 내림차순 -> 이름 사전순 */
 const sortRooms = (a: ChatroomListItem, b: ChatroomListItem) => {
-  if ((a.isPinned ?? false) !== (b.isPinned ?? false)) {
-    return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
-  }
-  const ta = a.lastMessageAt ? Date.parse(a.lastMessageAt as any) || 0 : 0;
-  const tb = b.lastMessageAt ? Date.parse(b.lastMessageAt as any) || 0 : 0;
+  const ap = a.isPinned ?? false;
+  const bp = b.isPinned ?? false;
+  if (ap !== bp) return bp ? 1 : -1;
+
+  const ta = ts(a.lastMessageAt);
+  const tb = ts(b.lastMessageAt);
   if (ta !== tb) return tb - ta;
+
   return a.roomName.localeCompare(b.roomName);
 };
 
-
 export const useRoomsStore = create<RoomsState>((set, get) => ({
-  byId: {},  
-  allIds: [], 
+  byId: {},
+  allIds: [],
   cursor: null,
   loading: false,
   error: null,
   q: "",
 
   selectedId: null,
+
+  /** 방 선택 시(옵션) unreadCount를 0으로 낙관적 반영 */
   selectRoom: (id) => {
     const st = get();
-    // 선택 상태 저장
-    let byId = st.byId;
-
-    // (옵션) 선택과 동시에 미읽음 뱃지 제거(낙관적)
-    if (byId[id] && (byId[id] as any).unreadCount > 0) {
-      byId = { ...byId, [id]: { ...byId[id], unreadCount: 0 } };
+    const cur = st.byId[id];
+    if (!cur) {
+      set({ selectedId: id });
+      return;
     }
-
-    set({ selectedId: id, byId });
+    const nextById: Record<string, ChatroomListItem> = {
+      ...st.byId,
+      [id]: { ...cur, unreadCount: 0 },
+    };
+    set({ selectedId: id, byId: nextById });
   },
+
+  /** 목록 교체 */
   replaceRooms: ({ items, nextCursor = null }) => {
     const byId: Record<string, ChatroomListItem> = {};
     for (const r of items) byId[r.id] = r;
@@ -68,6 +81,7 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
     set({ byId, allIds, cursor: nextCursor, error: null });
   },
 
+  /** 목록 뒤에 합치기(중복 upsert 후 전체 정렬) */
   appendRooms: ({ items, nextCursor = null }) => {
     const st = get();
     const byId: Record<string, ChatroomListItem> = { ...st.byId };
@@ -78,15 +92,20 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
     set({ byId, allIds, cursor: nextCursor });
   },
 
+  /** 단건 upsert 후 정렬 갱신 */
   upsertRoom: (room) => {
     const st = get();
-    const byId = { ...st.byId, [room.id]: { ...st.byId[room.id], ...room } };
+    const byId: Record<string, ChatroomListItem> = {
+      ...st.byId,
+      [room.id]: { ...st.byId[room.id], ...room },
+    };
     const allIds = Object.values(byId)
       .sort(sortRooms)
       .map((r) => r.id);
     set({ byId, allIds });
   },
 
+  /** 단건 제거 */
   removeRoom: (id) => {
     const st = get();
     if (!st.byId[id]) return;
