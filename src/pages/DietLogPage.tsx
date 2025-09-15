@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
 import type { Value } from "react-calendar/dist/shared/types.js";
@@ -8,7 +8,6 @@ import Button from "../components/common/Button";
 import DietLogModal from "../components/diet/DietLogModal";
 import CalorieChart from "../components/diet/CalorieChart";
 import BmiCalculator from "../components/body/BmiCalculator";
-import { DietLogResponse } from "../api/diet";
 import "react-calendar/dist/Calendar.css";
 
 const PageContainer = styled.div`
@@ -249,59 +248,86 @@ const DietLogPage: React.FC = () => {
     selectedDate,
     setSelectedDate,
     openModal,
-    getMonthlyLogs,
-    currentYear,
-    currentMonth,
-    monthlyLogs, // monthlyLogs 추가
+    setCurrentMonth,
+    getDietLogByDate,
+    setEditingDietLog,
     isLoading,
     error,
   } = useDietStore();
 
-  const [dietLog, setDietLog] = useState<DietLogResponse | null>(null);
-  const [isLoadingDietLog] = useState(false);
-  const [dietLogError] = useState<string | null>(null);
+  // selectedDateDietLog를 사용하므로 별도 상태 불필요
 
-  // 컴포넌트 마운트 시 현재 월의 데이터 로드
+  // 초기 식단일지 로드 (WorkoutLogPage와 동일한 방식)
   useEffect(() => {
-    const today = new Date();
-    getMonthlyLogs(today.getFullYear(), today.getMonth() + 1);
-  }, [getMonthlyLogs]);
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    console.log("DietLogPage 초기 로드:", { year, month });
+    setCurrentMonth(year, month);
+  }, [setCurrentMonth]);
 
-  // 선택된 날짜가 변경될 때 해당 월의 데이터 로드
-  useEffect(() => {
-    const selectedYear = selectedDate.getFullYear();
-    const selectedMonth = selectedDate.getMonth() + 1;
+  // 선택된 날짜의 식단일지 필터링 (WorkoutLogPage와 동일한 방식)
+  const selectedDateDietLog = getDietLogByDate(selectedDate);
 
-    // 현재 로드된 월과 다르면 새로 로드
-    if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
-      getMonthlyLogs(selectedYear, selectedMonth);
+  // 디버깅: selectedDateDietLog 데이터 구조 확인
+  console.log("selectedDateDietLog:", selectedDateDietLog);
+  if (selectedDateDietLog) {
+    console.log(
+      "selectedDateDietLog 상세:",
+      JSON.stringify(selectedDateDietLog, null, 2)
+    );
+  }
+
+  // 달력에서 월 변경 시 새로운 데이터 로드 (WorkoutLogPage와 동일한 방식)
+  const handleActiveStartDateChange = ({
+    activeStartDate,
+  }: {
+    activeStartDate: Date | null;
+  }) => {
+    if (activeStartDate) {
+      const year = activeStartDate.getFullYear();
+      const month = activeStartDate.getMonth() + 1;
+      setCurrentMonth(year, month);
     }
-  }, [selectedDate, currentYear, currentMonth, getMonthlyLogs]);
+  };
 
-  // 선택된 날짜의 식단일지 로드 (월별 데이터에서 찾기)
-  useEffect(() => {
-    if (monthlyLogs && monthlyLogs.length > 0) {
-      const targetDate = selectedDate.toISOString().split("T")[0];
-      const dietLogForDate = monthlyLogs.find(
-        (log: any) => log.date === targetDate
-      );
-      setDietLog(dietLogForDate || null);
-    } else {
-      setDietLog(null);
+  // 날짜 선택 시 (WorkoutLogPage와 동일한 방식)
+  const handleDateChange = (value: Value) => {
+    let selectedDate: Date | null = null;
+
+    if (value) {
+      if (Array.isArray(value)) {
+        selectedDate = value[0];
+      } else {
+        selectedDate = value;
+      }
     }
-  }, [selectedDate, monthlyLogs]);
 
-  const handleDateChange = (
-    value: Value,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    if (value && typeof value === "object" && value instanceof Date) {
-      setSelectedDate(value);
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+
+      // 선택된 날짜가 현재 로드된 월과 다르면 새로운 데이터 로드
+      const selectedYear = selectedDate.getFullYear();
+      const selectedMonth = selectedDate.getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
+        setCurrentMonth(selectedYear, selectedMonth);
+      }
     }
   };
 
   const handleOpenModal = () => {
     openModal();
+  };
+
+  const handleEditModal = () => {
+    // 수정할 식단일지 설정 후 모달 열기
+    if (selectedDateDietLog) {
+      setEditingDietLog(selectedDateDietLog);
+      openModal();
+    }
   };
 
   const formatSelectedDate = (date: Date) => {
@@ -313,12 +339,19 @@ const DietLogPage: React.FC = () => {
     });
   };
 
-  // 특정 날짜에 식단일지가 있는지 확인하는 함수
+  // 특정 날짜에 식단일지가 있는지 확인하는 함수 (최적화된 버전)
   const hasDietOnDate = (date: Date): boolean => {
-    if (!monthlyLogs || monthlyLogs.length === 0) return false;
+    const { monthlyLogs } = useDietStore.getState();
 
-    const targetDate = date.toISOString().split("T")[0];
-    return monthlyLogs.some((log: any) => log.date === targetDate);
+    // 로컬 시간 기준으로 날짜 문자열 생성
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const targetDate = `${year}-${month}-${day}`;
+
+    const hasDiet = monthlyLogs.some((log) => log.date === targetDate);
+
+    return hasDiet;
   };
 
   // 달력 타일 내용을 렌더링하는 함수
@@ -373,6 +406,7 @@ const DietLogPage: React.FC = () => {
               onChange={handleDateChange}
               value={selectedDate}
               locale="ko-KR"
+              onActiveStartDateChange={handleActiveStartDateChange}
               tileContent={renderTileContent}
             />
           </CalendarWrapper>
@@ -391,40 +425,40 @@ const DietLogPage: React.FC = () => {
             <span>{formatSelectedDate(selectedDate)}</span>
           </SelectedDate>
 
-          <CreateButton onClick={handleOpenModal} fullWidth>
-            일지 작성
-          </CreateButton>
+          {selectedDateDietLog ? (
+            <CreateButton onClick={handleEditModal} fullWidth>
+              수정
+            </CreateButton>
+          ) : (
+            <CreateButton onClick={handleOpenModal} fullWidth>
+              일지 작성
+            </CreateButton>
+          )}
 
-          {isLoadingDietLog && (
+          {isLoading && (
             <LoadingMessage>식단일지를 불러오는 중...</LoadingMessage>
           )}
-          {dietLogError && (
-            <ErrorMessage>오류가 발생했습니다: {dietLogError}</ErrorMessage>
-          )}
-          {!isLoadingDietLog && !dietLogError && !dietLog && (
+          {error && <ErrorMessage>오류가 발생했습니다: {error}</ErrorMessage>}
+          {!isLoading && !error && !selectedDateDietLog && (
             <NoDataMessage>
               선택한 날짜에 작성된 식단일지가 없습니다.
             </NoDataMessage>
           )}
-          {!isLoadingDietLog && !dietLogError && dietLog && (
+          {!isLoading && !error && selectedDateDietLog && (
             <>
-              {renderMealSection("breakfast", dietLog.breakfast)}
-              {renderMealSection("lunch", dietLog.lunch)}
-              {renderMealSection("dinner", dietLog.dinner)}
+              {renderMealSection("breakfast", selectedDateDietLog.breakfast)}
+              {renderMealSection("lunch", selectedDateDietLog.lunch)}
+              {renderMealSection("dinner", selectedDateDietLog.dinner)}
               <TotalCalories>
                 <TotalCaloriesTitle>총 칼로리</TotalCaloriesTitle>
                 <TotalCaloriesValue>
-                  {dietLog.totalCalories} kcal
+                  {selectedDateDietLog.total_calories} kcal
                 </TotalCaloriesValue>
               </TotalCalories>
             </>
           )}
         </DietSection>
       </ContentWrapper>
-
-      {/* 로딩/에러 상태 (월별) */}
-      {isLoading && <LoadingMessage>데이터를 불러오는 중...</LoadingMessage>}
-      {error && <ErrorMessage>오류가 발생했습니다: {error}</ErrorMessage>}
 
       {/* 추가 섹션 - 차트와 BMI 계산기 */}
       <AdditionalSection>

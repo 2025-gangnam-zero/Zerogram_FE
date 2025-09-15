@@ -84,7 +84,9 @@ const CalorieChart: React.FC = () => {
       const day = logDate.getDate();
 
       if (day >= 1 && day <= daysInMonth) {
-        dailyCalories[day - 1] = log.totalCalories;
+        // 같은 날짜의 칼로리를 누적 합산
+        //const beforeCalories = dailyCalories[day - 1];
+        dailyCalories[day - 1] += log.total_calories;
       }
     });
 
@@ -102,7 +104,6 @@ const CalorieChart: React.FC = () => {
           pointRadius: 5,
           pointHoverRadius: 8,
           tension: 0.4,
-          fill: true,
         },
       ],
     };
