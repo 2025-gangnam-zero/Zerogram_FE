@@ -10,7 +10,7 @@ export const OAUTH_CONFIG = {
     CLIENT_ID: process.env.REACT_APP_KAKAO_CLIENT_ID,
     REDIRECT_URI:
       process.env.REACT_APP_OAUTH_REDIRECT_URI ||
-      "http://10.10.0.88:4000/auth/oauth",
+      "http://10.10.0.101:4000/auth/oauth",
     AUTH_URL: "https://kauth.kakao.com/oauth/authorize",
     RESPONSE_TYPE: "code",
     STATE: "kakao",
@@ -19,7 +19,7 @@ export const OAUTH_CONFIG = {
     CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
     REDIRECT_URI:
       process.env.REACT_APP_GOOGLE_REDIRECT_URI ||
-      "http://10.10.0.88.nip.io:4000/auth/oauth",
+      "http://10.10.0.101.nip.io:4000/auth/oauth",
     AUTH_URL: "https://accounts.google.com/o/oauth2/v2/auth",
     RESPONSE_TYPE: "code",
     SCOPE: "openid email profile",

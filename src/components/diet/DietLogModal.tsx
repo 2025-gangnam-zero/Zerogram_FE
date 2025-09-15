@@ -5,20 +5,17 @@ import { UI_CONSTANTS } from "../../constants";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import FoodSearch from "./FoodSearch";
-import { DietLogData } from "../../api/diet";
+import {
+  DietLogData,
+  SelectedFood,
+  MealType,
+  DietUpdateData,
+  MealUpdateData,
+  FoodUpdateData,
+} from "../../types/diet";
+import foodData from "../../data/food.json";
 
-// 선택된 음식 타입
-interface SelectedFood {
-  uniqueId: number; // 고유 식별자 추가
-  foodId: string;
-  foodName: string;
-  calories: number; // 100g 기준 칼로리
-  amount: number; // 섭취량 (그람 단위)
-  totalCalories: number; // 계산된 총 칼로리
-}
-
-// 식사 시간 타입
-type MealType = "breakfast" | "lunch" | "dinner";
+// 타입들은 types/diet.ts에서 import
 
 const ModalContent = styled.div`
   width: 100%;
@@ -200,13 +197,59 @@ const ButtonGroup = styled.div`
 `;
 
 const DietLogModal: React.FC = () => {
-  const { isModalOpen, closeModal, selectedDate, addDietLog } = useDietStore();
+  const {
+    isModalOpen,
+    closeModal,
+    selectedDate,
+    addDietLog,
+    editingDietLog,
+    setEditingDietLog,
+    deleteDietLog,
+    updateDietLog,
+  } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
   const [breakfastFoods, setBreakfastFoods] = useState<SelectedFood[]>([]);
   const [lunchFoods, setLunchFoods] = useState<SelectedFood[]>([]);
   const [dinnerFoods, setDinnerFoods] = useState<SelectedFood[]>([]);
   const [currentMealType, setCurrentMealType] = useState<MealType>("breakfast");
+
+  const getFoodCalories = (foodName: string): number => {
+    const food = foodData.find((item) => item.foodName === foodName);
+    return food ? food.calories : 0;
+  };
+
+  // 수정 모드일 때 기존 데이터 로드
+  React.useEffect(() => {
+    if (editingDietLog) {
+      // 기존 식단일지 데이터를 로컬 상태로 변환
+
+      const convertToSelectedFoods = (foods: any[]): SelectedFood[] => {
+        return foods.map((food, index) => {
+          const calories = getFoodCalories(food.food_name);
+          const amount = food.food_amount || 0;
+          return {
+            uniqueId: index,
+            foodId: food._id,
+            foodName: food.food_name,
+            calories: calories,
+            amount: amount,
+            total_calories: Math.round((calories * amount) / 100),
+            mealId: food.mealId, // Store에서 추가한 mealId 사용
+          };
+        });
+      };
+
+      setBreakfastFoods(convertToSelectedFoods(editingDietLog.breakfast));
+      setLunchFoods(convertToSelectedFoods(editingDietLog.lunch));
+      setDinnerFoods(convertToSelectedFoods(editingDietLog.dinner));
+    } else {
+      // 새로 작성할 때는 빈 상태로 초기화
+      setBreakfastFoods([]);
+      setLunchFoods([]);
+      setDinnerFoods([]);
+    }
+  }, [editingDietLog]);
 
   // 날짜 포맷팅 함수
   const formatDate = (date: Date) => {
@@ -234,7 +277,7 @@ const DietLogModal: React.FC = () => {
       uniqueId: Date.now() + Math.random(), // 고유 ID 생성
       ...food,
       amount: 100, // 기본 섭취량 100g
-      totalCalories: calculateTotalCalories(food.calories, 100),
+      total_calories: calculateTotalCalories(food.calories, 100),
     };
 
     // 현재 선택된 식사 시간에 따라 해당 배열에 추가
@@ -284,7 +327,7 @@ const DietLogModal: React.FC = () => {
           ? {
               ...food,
               amount: newAmount,
-              totalCalories: calculateTotalCalories(food.calories, newAmount),
+              total_calories: calculateTotalCalories(food.calories, newAmount),
             }
           : food
       );
@@ -305,8 +348,11 @@ const DietLogModal: React.FC = () => {
   // 저장 핸들러
   const handleSave = async () => {
     try {
-      // 날짜를 YYYY-MM-DD 형식으로 변환
-      const dateString = selectedDate.toISOString().split("T")[0];
+      // 로컬 시간 기준으로 날짜를 YYYY-MM-DD 형식으로 변환
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+      const day = String(selectedDate.getDate()).padStart(2, "0");
+      const dateString = `${year}-${month}-${day}`;
 
       // API에 전달할 데이터 형식으로 변환
       const logData: DietLogData = {
@@ -316,23 +362,23 @@ const DietLogModal: React.FC = () => {
           foodName: food.foodName,
           calories: food.calories,
           amount: food.amount,
-          totalCalories: food.totalCalories,
+          total_calories: food.total_calories,
         })),
         lunch: lunchFoods.map((food) => ({
           foodId: food.foodId,
           foodName: food.foodName,
           calories: food.calories,
           amount: food.amount,
-          totalCalories: food.totalCalories,
+          total_calories: food.total_calories,
         })),
         dinner: dinnerFoods.map((food) => ({
           foodId: food.foodId,
           foodName: food.foodName,
           calories: food.calories,
           amount: food.amount,
-          totalCalories: food.totalCalories,
+          total_calories: food.total_calories,
         })),
-        totalCalories: getTotalCalories(),
+        total_calories: getTotalCalories(),
       };
 
       console.log("저장할 데이터:", logData);
@@ -350,6 +396,79 @@ const DietLogModal: React.FC = () => {
     }
   };
 
+  // 수정 핸들러 - 백엔드 DTO 형식에 맞게 수정
+  const handleUpdate = async () => {
+    try {
+      if (!editingDietLog) {
+        throw new Error("수정할 식단일지가 없습니다.");
+      }
+
+      // 식사별로 Meal을 그룹화하고 백엔드 DTO 형식으로 변환
+      const createMealUpdate = (
+        foods: SelectedFood[],
+        mealType: string
+      ): MealUpdateData | null => {
+        if (foods.length === 0) return null;
+
+        // 같은 mealId를 가진 foods들을 그룹화
+        const mealId = foods[0]?.mealId;
+        if (!mealId) return null;
+
+        const foodUpdates: FoodUpdateData[] = foods.map((food) => ({
+          _id: food.foodId, // Food의 _id
+          food_name: food.foodName,
+          food_amount: food.amount,
+        }));
+
+        return {
+          _id: mealId, // Meal의 _id
+          meal_type: mealType,
+          foods: foodUpdates,
+        };
+      };
+
+      const meals: MealUpdateData[] = [];
+
+      // 각 식사별로 Meal 업데이트 데이터 생성
+      const breakfastMeal = createMealUpdate(breakfastFoods, "breakfast");
+      const lunchMeal = createMealUpdate(lunchFoods, "lunch");
+      const dinnerMeal = createMealUpdate(dinnerFoods, "dinner");
+
+      if (breakfastMeal) meals.push(breakfastMeal);
+      if (lunchMeal) meals.push(lunchMeal);
+      if (dinnerMeal) meals.push(dinnerMeal);
+
+      const updateData: DietUpdateData = {
+        total_calories: getTotalCalories(),
+        feedback: "", // 현재는 피드백 기능 없음
+        meals: meals,
+      };
+
+      console.log("수정할 데이터:", updateData);
+
+      await updateDietLog(editingDietLog._id, updateData);
+      closeModal();
+      console.log("식단일지 수정 성공");
+    } catch (error) {
+      console.error("식단일지 수정 실패:", error);
+      alert("식단일지 수정에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+
+  // 삭제 핸들러
+  const handleDelete = async (dietLogId: string) => {
+    if (window.confirm("정말로 이 식단일지를 삭제하시겠습니까?")) {
+      try {
+        await deleteDietLog(dietLogId);
+        closeModal();
+        alert("식단일지가 삭제되었습니다.");
+      } catch (error) {
+        console.error("식단일지 삭제 실패:", error);
+        alert("식단일지 삭제에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
+
   // 모달 닫기 핸들러
   const handleClose = () => {
     // 상태 초기화
@@ -357,12 +476,13 @@ const DietLogModal: React.FC = () => {
     setLunchFoods([]);
     setDinnerFoods([]);
     setCurrentMealType("breakfast");
+    setEditingDietLog(null); // 수정 모드 초기화
     closeModal();
   };
 
   // 각 식사별 총 칼로리 계산
   const getMealTotalCalories = (foods: SelectedFood[]): number => {
-    return foods.reduce((total, food) => total + food.totalCalories, 0);
+    return foods.reduce((total, food) => total + food.total_calories, 0);
   };
 
   // 전체 총 칼로리 계산
@@ -380,8 +500,8 @@ const DietLogModal: React.FC = () => {
     foods: SelectedFood[],
     mealName: string
   ) => {
-    const totalCalories = foods.reduce(
-      (sum, food) => sum + food.totalCalories,
+    const total_calories = foods.reduce(
+      (sum, food) => sum + food.total_calories,
       0
     );
 
@@ -399,7 +519,7 @@ const DietLogModal: React.FC = () => {
                   <MealFoodName>{food.foodName}</MealFoodName>
                   <MealFoodCalories>
                     {food.calories} kcal/100g × {food.amount}g ={" "}
-                    {food.totalCalories} kcal
+                    {food.total_calories} kcal
                   </MealFoodCalories>
                 </MealFoodInfo>
                 <div
@@ -442,16 +562,22 @@ const DietLogModal: React.FC = () => {
             </div>
           )}
         </MealFoodsList>
-        {totalCalories > 0 && <MealTotal>총 {totalCalories} kcal</MealTotal>}
+        {total_calories > 0 && <MealTotal>총 {total_calories} kcal</MealTotal>}
       </MealSection>
     );
   };
 
   return (
-    <Modal isOpen={isModalOpen} onClose={handleClose} title="식단 일지 작성">
+    <Modal
+      isOpen={isModalOpen}
+      onClose={handleClose}
+      title={editingDietLog ? "식단 일지 수정" : "식단 일지 작성"}
+    >
       <ModalContent>
         <ModalHeader>
-          <ModalTitle>식단 일지 작성</ModalTitle>
+          <ModalTitle>
+            {editingDietLog ? "식단 일지 수정" : "식단 일지 작성"}
+          </ModalTitle>
           <SelectedDate>{formatDate(selectedDate)}</SelectedDate>
         </ModalHeader>
 
@@ -515,8 +641,19 @@ const DietLogModal: React.FC = () => {
           <Button variant="secondary" onClick={handleClose}>
             닫기
           </Button>
-          <Button variant="primary" onClick={handleSave}>
-            생성
+          {editingDietLog && (
+            <Button
+              variant="danger"
+              onClick={() => handleDelete(editingDietLog._id)}
+            >
+              삭제
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            onClick={editingDietLog ? handleUpdate : handleSave}
+          >
+            {editingDietLog ? "수정" : "생성"}
           </Button>
         </ButtonGroup>
       </ModalContent>

@@ -155,9 +155,6 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
       return workouts.filter((workout) => {
         // 백엔드에서 제공하는 date 필드 사용 (우선)
         if (workout.date) {
-          console.log(
-            `운동일지 ID: ${workout._id}, 백엔드 date 필드: ${workout.date}, 선택된 날짜: ${targetDateStr}`
-          );
           return workout.date === targetDateStr;
         }
 
@@ -165,13 +162,6 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
         const workoutCreatedAt = new Date(workout.createdAt);
         const workoutDateStr = formatDateToLocal(workoutCreatedAt);
         const isSameDateResult = isSameDate(date, workoutCreatedAt);
-
-        console.log(`
-          운동일지 ID: ${workout._id} (date 필드 없음)
-          createdAt 기반 날짜: ${workoutDateStr}
-          선택된 날짜: ${targetDateStr}
-          매칭 결과: ${workoutDateStr === targetDateStr || isSameDateResult}
-        `);
 
         return workoutDateStr === targetDateStr || isSameDateResult;
       });
