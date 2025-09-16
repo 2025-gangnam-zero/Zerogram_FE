@@ -9,14 +9,15 @@ export type ChatroomListItem = {
 
   workoutType?: WorkoutType;
 
-  memberCount: number;
+  memberCount?: number;
   memberCapacity?: number;
 
   lastMessage?: string | null;
   lastMessageAt?: string | null; // ISO string (표시 시 포맷팅)
 
-  unreadCount: number;
+  unreadCount?: number;
 
+  createdAt?: string;
   /** RoomMembership 기반 사용자 개별 설정 */
   isPinned?: boolean;
 };
@@ -91,7 +92,7 @@ export type DroppedItem = {
 /** 방 리스트 API 응답 */
 export interface RoomsListResponseDTO {
   items: ChatroomListItem[];
-  nextCursor?: string | null;
+  nextCursor?: CursorPayload | null;
 }
 
 export type ChatNotificationItem = {
@@ -117,4 +118,67 @@ export type SendMessageAck = {
   attachments?: ChatAttachment[];
 
   error?: string;
+};
+
+export type CursorPayload = { lastMessageAt: string | null; id: string };
+
+export type ListRoomsRequestDto = {
+  q?: string;
+  workoutType?: WorkoutType;
+  cursor?: CursorPayload; // 둘 다 있어야 세팅
+  limit?: number; // 기본 50
+};
+
+export type RoomListItemDto = {
+  id: string;
+  roomName: string;
+  roomImageUrl?: string;
+  createdAt?: string;
+  lastMessage?: string;
+  lastMessageAt?: string | null;
+  memberCount?: number;
+  unreadCount?: number;
+};
+
+export type ListRoomsResponseDto = {
+  items: RoomListItemDto[];
+  nextCursor?: CursorPayload | null;
+};
+
+export type CreateRoomRequestDto = {
+  roomName: string;
+  roomImageUrl?: string;
+  workoutType?: WorkoutType;
+};
+
+export type CreateRoomResponseDto = {
+  room: RoomListItemDto;
+};
+
+export type DeleteRoomResponseDto = {
+  roomId: string;
+};
+
+// 서버 응답 래퍼
+export type ApiEnvelope<TData> = {
+  success: boolean;
+  message: string;
+  code: string;
+  timestamp: string;
+  data: TData;
+};
+
+// 프로젝트 공용 타입과 최대한 호환되게(서버 응답 필드 superset)
+export type ServerRoom = {
+  id: string;
+  roomName: string;
+  roomImageUrl?: string | null;
+  roomDescription?: string | null;
+  workoutType?: "running" | "fitness";
+  memberCount?: number;
+  memberCapacity?: number;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  unreadCount?: number;
+  createdAt?: string;
 };

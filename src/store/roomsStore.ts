@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import type { ChatroomListItem } from "../types";
+import type { ChatroomListItem, CursorPayload } from "../types";
 
 export type RoomsState = {
   byId: Record<string, ChatroomListItem>;
   allIds: string[]; // 정렬된 id 목록
-  cursor: string | null; // 무한스크롤 커서
+  cursor?: CursorPayload | null; // 무한스크롤 커서
   loading: boolean;
   error: string | null;
   q: string; // 검색어(옵션)
@@ -14,17 +14,17 @@ export type RoomsState = {
   selectRoom: (id: string) => void;
   replaceRooms: (payload: {
     items: ChatroomListItem[];
-    nextCursor?: string | null;
+    nextCursor?: CursorPayload | null;
   }) => void;
   appendRooms: (payload: {
     items: ChatroomListItem[];
-    nextCursor?: string | null;
+    nextCursor?: CursorPayload | null;
   }) => void;
   upsertRoom: (room: ChatroomListItem) => void;
   removeRoom: (id: string) => void;
   setLoading: (b: boolean) => void;
   setError: (m: string | null) => void;
-  setCursor: (c: string | null) => void;
+  setCursor: (c: CursorPayload | null) => void;
   setQuery: (q: string) => void;
 };
 

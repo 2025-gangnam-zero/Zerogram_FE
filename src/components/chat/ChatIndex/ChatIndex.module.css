@@ -10,18 +10,6 @@
   }
 }
 
-.toast {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 50;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  border-radius: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-}
-
 .headerRow {
   display: flex;
   align-items: center;

@@ -1,0 +1,54 @@
+.formGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.formColWide {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 200px;
+}
+
+.label {
+  font-size: 14px;
+  color: #333;
+}
+
+.input,
+.select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.primaryBtn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.resetBtn {
+  background: #f3f4f6;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}

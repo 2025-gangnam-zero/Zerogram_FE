@@ -4,9 +4,10 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "../../components/chat";
 
 import { useEffect } from "react";
-import { getRoomsApi } from "../../api/chat";
+
 import { useRoomsStore } from "../../store";
 import { useChatSocket } from "../../hooks/useChatSocket";
+import { listMyJoinedRoomsApi } from "../../api/room";
 
 export const ChatPage = () => {
   const replaceRooms = useRoomsStore((s) => s.replaceRooms);
@@ -23,10 +24,8 @@ export const ChatPage = () => {
     (async () => {
       try {
         setLoading(true);
-        // getRoomsApi는 RoomsListResponseDTO를 반환한다고 가정
-        const res = await getRoomsApi({ limit: 30 });
 
-        const { items, nextCursor } = res.data;
+        const { items, nextCursor } = await listMyJoinedRoomsApi({ limit: 30 });
 
         replaceRooms({ items, nextCursor });
       } catch (e: any) {

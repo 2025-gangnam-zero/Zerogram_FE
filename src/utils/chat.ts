@@ -1,4 +1,9 @@
-import { SendMessageAck, UploadAttachment } from "../types";
+import {
+  ChatroomListItem,
+  SendMessageAck,
+  ServerRoom,
+  UploadAttachment,
+} from "../types";
 import { getSocket } from "./socket";
 
 export const extractFirstUrl = (text?: string) => {
@@ -114,3 +119,31 @@ export const setTyping = (roomId: string, on: boolean) => {
   const sock = getSocket();
   sock.emit("typing", { roomId, on });
 };
+
+export function pickDefined<T extends Record<string, unknown>>(
+  obj: T
+): Partial<T> {
+  return (Object.keys(obj) as Array<keyof T>).reduce((acc, key) => {
+    const v = obj[key];
+    if (v === undefined || v === null) return acc;
+    if (typeof v === "string" && v.trim() === "") return acc;
+    acc[key] = v as T[typeof key];
+    return acc;
+  }, {} as Partial<T>);
+}
+
+// 서버 -> 전역 스토어 매핑
+export const toClientRoom = (r: ServerRoom): ChatroomListItem => ({
+  id: r.id,
+  roomName: r.roomName,
+  roomImageUrl: r.roomImageUrl ?? undefined,
+  roomDescription: r.roomDescription ?? undefined,
+  workoutType: r.workoutType ?? undefined,
+  memberCount: r.memberCount ?? 1,
+  memberCapacity: r.memberCapacity ?? undefined,
+  lastMessage: r.lastMessage ?? undefined,
+  lastMessageAt: r.lastMessageAt ?? undefined,
+  unreadCount: r.unreadCount ?? 0,
+  createdAt: r.createdAt,
+  isPinned: undefined,
+});

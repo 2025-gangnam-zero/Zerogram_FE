@@ -112,7 +112,7 @@ export const SidebarListItem = ({ item, selected = false }: Props) => {
           <div className={styles.lastMsg} title={lastMessage ?? ""}>
             {lastMessage ?? ""}
           </div>
-          {unreadCount > 0 && (
+          {unreadCount && unreadCount > 0 && (
             <div
               className={styles.badge}
               aria-label={`읽지 않음 ${unreadCount}개`}
