@@ -19,3 +19,5 @@ export * from "./Toast";
 export * from "./RoomForm";
 export * from "./RoomListItem";
 export * from "./RoomList";
+export * from "./SidebarPublicList";
+export * from "./SidebarPublicListItem";

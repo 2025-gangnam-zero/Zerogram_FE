@@ -1,0 +1,137 @@
+/* src/components/chat/SidebarPublicListItem.module.css */
+
+.item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  cursor: default;
+  text-decoration: none;
+  color: inherit;
+}
+
+.item:hover {
+  background: #f5f7fa;
+}
+
+.avatarWrap {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 상단 */
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.leadingIcon {
+  font-size: 16px;
+  color: #111827;
+}
+
+.roomName {
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.memberCount {
+  color: #6b7280;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.time {
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* 하단 */
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lastMsg {
+  color: #6b7280;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 가입 버튼 */
+.joinBtn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 64px;
+}
+
+.joinBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.joinBtn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.leaveBtn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #ef4444;
+  background: #fff;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 64px;
+}
+
+.leaveBtn:hover {
+  background: #fee2e2;
+}
+
+.leaveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -27,3 +27,28 @@
   min-height: 0; /* 스크롤 정상 동작을 위한 필수 설정 */
   overflow: auto; /* 목록 영역 스크롤 */
 }
+
+/* 기존 스타일 유지 + 아래 추가 */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 0;
+}
+
+.tab {
+  appearance: none;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}

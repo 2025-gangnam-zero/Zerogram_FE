@@ -132,12 +132,15 @@ export type ListRoomsRequestDto = {
 export type RoomListItemDto = {
   id: string;
   roomName: string;
-  roomImageUrl?: string;
-  createdAt?: string;
-  lastMessage?: string;
-  lastMessageAt?: string | null;
+  roomImageUrl?: string | null;
+  roomDescription?: string | null;
+  workoutType?: "running" | "fitness";
   memberCount?: number;
-  unreadCount?: number;
+  memberCapacity?: number;
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  unreadCount?: number; // 퍼블릭 목록에서는 보통 없음(서버가 0 주거나 누락)
+  createdAt?: string;
 };
 
 export type ListRoomsResponseDto = {
@@ -180,5 +183,32 @@ export type ServerRoom = {
   lastMessage?: string | null;
   lastMessageAt?: string | null;
   unreadCount?: number;
+  createdAt?: string;
+};
+
+// 퍼블릭 방 목록 조회 요청/응답 DTO (필요시 프로젝트 타입에 맞게 조정)
+export type PublicRoomsRequestDto = {
+  q?: string;
+  workoutType?: "running" | "fitness";
+  limit?: number; // 기본 50
+  cursor?: { id?: string; lastMessageAt?: string | null };
+};
+
+export type PublicRoomsResponseDto = {
+  items: RoomListItemDto[];
+  nextCursor?: { id: string; lastMessageAt: string | null } | null;
+};
+
+export type PublicRoomListItemDto = {
+  id: string;
+  roomName: string;
+  roomImageUrl?: string | null;
+  roomDescription?: string | null;
+  workoutType?: "running" | "fitness";
+  memberCapacity?: number;
+  memberCount?: number;
+
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
   createdAt?: string;
 };
