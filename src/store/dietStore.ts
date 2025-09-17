@@ -12,6 +12,7 @@ import {
   updateDietLogApi,
   addMealToDietLogApi,
   addFoodToMealApi,
+  deleteMealApi,
 } from "../api/diet";
 
 interface DietStoreState {
@@ -100,6 +101,9 @@ interface DietStoreActions {
     }>,
     total_calories: number
   ) => Promise<void>;
+
+  // 식사 삭제
+  deleteMeal: (dietLogId: string, mealId: string) => Promise<void>;
 }
 
 export const useDietStore = create<DietStoreState & DietStoreActions>()(
@@ -333,13 +337,16 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             console.log("예상하지 못한 데이터 구조:", response.data);
           }
 
+          // null이나 undefined 값 제거
+          const filteredLogs = logsArray.filter((log) => log != null);
+
           set({
-            monthlyLogs: logsArray,
+            monthlyLogs: filteredLogs,
             isLoading: false,
           });
 
           console.log(
-            `${year}년 ${month}월 식단 일지 ${logsArray.length}개 로드됨`
+            `${year}년 ${month}월 식단 일지 ${filteredLogs.length}개 로드됨`
           );
         } catch (error) {
           const errorMessage =
@@ -359,13 +366,20 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
       getDietLogByDate: (date: Date) => {
         const { monthlyLogs } = get();
 
+        // monthlyLogs가 없거나 비어있으면 null 반환
+        if (!monthlyLogs || monthlyLogs.length === 0) {
+          return null;
+        }
+
         // 로컬 시간 기준으로 날짜 문자열 생성
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
         const targetDate = `${year}-${month}-${day}`;
 
-        return monthlyLogs.find((log) => log.date === targetDate) || null;
+        return (
+          monthlyLogs.find((log) => log && log.date === targetDate) || null
+        );
       },
 
       // 수정할 식단일지 설정
@@ -425,7 +439,7 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
           set({
             monthlyLogs: updatedLogs,
             isLoading: false,
-            editingDietLog: null,
+            // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
 
           console.log("식단일지 수정 성공");
@@ -481,7 +495,7 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
           set({
             monthlyLogs: updatedLogs,
             isLoading: false,
-            editingDietLog: null,
+            // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
 
           console.log("새 식사 추가 성공");
@@ -537,7 +551,7 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
           set({
             monthlyLogs: updatedLogs,
             isLoading: false,
-            editingDietLog: null,
+            // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
 
           console.log("음식 추가 성공");
@@ -546,6 +560,46 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             error instanceof Error
               ? error.message
               : "음식 추가에 실패했습니다.";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // 식사 삭제
+      deleteMeal: async (dietLogId: string, mealId: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          console.log("식사 삭제 시작:", {
+            dietLogId,
+            mealId,
+          });
+
+          // 1. API 호출
+          const response = await deleteMealApi(dietLogId, mealId);
+
+          // 2. monthlyLogs에서 해당 항목 찾아서 교체
+          const { monthlyLogs } = get();
+          const updatedLogs = monthlyLogs.map((log) =>
+            log._id === dietLogId
+              ? response.data // API 응답으로 교체
+              : log
+          );
+
+          set({
+            monthlyLogs: updatedLogs,
+            isLoading: false,
+          });
+
+          console.log("식사 삭제 성공");
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "식사 삭제에 실패했습니다.";
           set({
             isLoading: false,
             error: errorMessage,

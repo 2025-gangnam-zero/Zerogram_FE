@@ -296,7 +296,7 @@ export const addFoodToMealApi = async (
   }
 };
 
-// 식단일지 삭제 API
+// 식단 삭제 API
 export const deleteDietLogApi = async (
   dietLogId: string
 ): Promise<ApiResponse> => {
@@ -305,6 +305,39 @@ export const deleteDietLogApi = async (
     return response.data;
   } catch (error) {
     logError("deleteDietLogApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// meal 삭제 API
+export const deleteMealApi = async (
+  dietLogId: string,
+  mealId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/diets/${dietLogId}/meals/${mealId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteMealApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// food 삭제 API
+export const deleteFoodApi = async (
+  dietLogId: string,
+  mealId: string,
+  foodId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/diets/${dietLogId}/meals/${mealId}/foods/${foodId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteFoodApi", error);
     throw new Error(getApiErrorMessage(error));
   }
 };

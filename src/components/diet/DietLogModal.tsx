@@ -122,6 +122,13 @@ const MealSection = styled.div`
   background: ${UI_CONSTANTS.COLORS.LIGHT};
 `;
 
+const MealHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${UI_CONSTANTS.SPACING.MD};
+`;
+
 const MealFoodsList = styled.div`
   max-height: 150px;
   overflow-y: auto;
@@ -208,6 +215,7 @@ const DietLogModal: React.FC = () => {
     updateDietLog,
     addMealToDietLog,
     addFoodToMeal,
+    deleteMeal,
   } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
@@ -543,6 +551,8 @@ const DietLogModal: React.FC = () => {
         );
       }
 
+      // 모든 API 호출이 완료된 후 editingDietLog를 null로 설정
+      setEditingDietLog(null);
       closeModal();
       console.log("식단일지 수정/추가 성공");
     } catch (error) {
@@ -561,6 +571,23 @@ const DietLogModal: React.FC = () => {
       } catch (error) {
         console.error("식단일지 삭제 실패:", error);
         alert("식단일지 삭제에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
+
+  // 식사 삭제 핸들러
+  const handleDeleteMeal = async (
+    dietLogId: string,
+    mealId: string,
+    mealType: string
+  ) => {
+    if (window.confirm(`정말로 ${mealType} 식사를 삭제하시겠습니까?`)) {
+      try {
+        await deleteMeal(dietLogId, mealId);
+        alert("식사가 삭제되었습니다.");
+      } catch (error) {
+        console.error("식사 삭제 실패:", error);
+        alert("식사 삭제에 실패했습니다. 다시 시도해주세요.");
       }
     }
   };
@@ -601,9 +628,33 @@ const DietLogModal: React.FC = () => {
       0
     );
 
+    // 기존 식사가 있는지 확인하고 mealId 추출
+    const hasExistingMeal =
+      editingDietLog &&
+      editingDietLog[mealType as keyof typeof editingDietLog] &&
+      (editingDietLog[mealType as keyof typeof editingDietLog] as any[])
+        .length > 0;
+    const mealId = hasExistingMeal
+      ? (editingDietLog[mealType as keyof typeof editingDietLog] as any[])[0]
+          ?.mealId
+      : null;
+
     return (
       <MealSection key={mealType}>
-        <MealTypeLabel>{mealName}</MealTypeLabel>
+        <MealHeader>
+          <MealTypeLabel>{mealName}</MealTypeLabel>
+          {hasExistingMeal && mealId && (
+            <Button
+              variant="danger"
+              size="small"
+              onClick={() =>
+                handleDeleteMeal(editingDietLog._id, mealId, mealName)
+              }
+            >
+              삭제
+            </Button>
+          )}
+        </MealHeader>
 
         <MealFoodsList>
           {foods.length > 0 ? (
