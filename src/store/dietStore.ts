@@ -10,6 +10,7 @@ import {
   getDietLogsByMonthApi,
   createDietLogApi,
   updateDietLogApi,
+  addMealToDietLogApi,
 } from "../api/diet";
 
 interface DietStoreState {
@@ -75,6 +76,17 @@ interface DietStoreActions {
   updateDietLog: (
     dietLogId: string,
     updateData: DietUpdateData
+  ) => Promise<void>;
+
+  // 기존 식단일지에 새 식사 추가
+  addMealToDietLog: (
+    dietLogId: string,
+    mealType: string,
+    foods: Array<{
+      food_name: string;
+      food_amount: number;
+    }>,
+    total_calories: number
   ) => Promise<void>;
 }
 
@@ -410,6 +422,62 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             error instanceof Error
               ? error.message
               : "식단일지 수정에 실패했습니다.";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // 기존 식단일지에 새 식사 추가
+      addMealToDietLog: async (
+        dietLogId: string,
+        mealType: string,
+        foods: Array<{
+          food_name: string;
+          food_amount: number;
+        }>,
+        total_calories: number
+      ) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          console.log("새 식사 추가 시작:", {
+            dietLogId,
+            mealType,
+            foods,
+            total_calories,
+          });
+
+          // 1. API 호출
+          const response = await addMealToDietLogApi(
+            dietLogId,
+            mealType,
+            foods,
+            total_calories
+          );
+
+          // 2. monthlyLogs에서 해당 항목 찾아서 교체
+          const { monthlyLogs } = get();
+          const updatedLogs = monthlyLogs.map((log) =>
+            log._id === dietLogId
+              ? response.data // API 응답으로 교체
+              : log
+          );
+
+          set({
+            monthlyLogs: updatedLogs,
+            isLoading: false,
+            editingDietLog: null,
+          });
+
+          console.log("새 식사 추가 성공");
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "새 식사 추가에 실패했습니다.";
           set({
             isLoading: false,
             error: errorMessage,

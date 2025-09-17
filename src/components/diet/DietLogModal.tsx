@@ -206,6 +206,7 @@ const DietLogModal: React.FC = () => {
     setEditingDietLog,
     deleteDietLog,
     updateDietLog,
+    addMealToDietLog,
   } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
@@ -396,14 +397,22 @@ const DietLogModal: React.FC = () => {
     }
   };
 
-  // 수정 핸들러 - 백엔드 DTO 형식에 맞게 수정
+  // 수정 핸들러 - 기존 식사 수정과 새 식사 추가를 구분하여 처리
   const handleUpdate = async () => {
     try {
       if (!editingDietLog) {
         throw new Error("수정할 식단일지가 없습니다.");
       }
 
-      // 식사별로 Meal을 그룹화하고 백엔드 DTO 형식으로 변환
+      // 기존 식사가 있는지 확인하는 함수
+      const hasExistingMeal = (mealType: string) => {
+        const existingMeal = editingDietLog[
+          mealType as keyof typeof editingDietLog
+        ] as any[];
+        return existingMeal && existingMeal.length > 0;
+      };
+
+      // 기존 식사 수정 데이터 생성
       const createMealUpdate = (
         foods: SelectedFood[],
         mealType: string
@@ -427,31 +436,75 @@ const DietLogModal: React.FC = () => {
         };
       };
 
-      const meals: MealUpdateData[] = [];
-
-      // 각 식사별로 Meal 업데이트 데이터 생성
-      const breakfastMeal = createMealUpdate(breakfastFoods, "breakfast");
-      const lunchMeal = createMealUpdate(lunchFoods, "lunch");
-      const dinnerMeal = createMealUpdate(dinnerFoods, "dinner");
-
-      if (breakfastMeal) meals.push(breakfastMeal);
-      if (lunchMeal) meals.push(lunchMeal);
-      if (dinnerMeal) meals.push(dinnerMeal);
-
-      const updateData: DietUpdateData = {
-        total_calories: getTotalCalories(),
-        feedback: "", // 현재는 피드백 기능 없음
-        meals: meals,
+      // 새 식사 추가 데이터 생성
+      const createNewMealData = (foods: SelectedFood[], mealType: string) => {
+        if (foods.length === 0) return null;
+        return foods.map((food) => ({
+          food_name: food.foodName,
+          food_amount: food.amount,
+        }));
       };
 
-      console.log("수정할 데이터:", updateData);
+      const meals: MealUpdateData[] = [];
+      const newMeals: { [key: string]: any[] } = {};
 
-      await updateDietLog(editingDietLog._id, updateData);
+      // 각 식사별로 처리
+      const processMeal = (foods: SelectedFood[], mealType: string) => {
+        if (foods.length === 0) return;
+
+        if (hasExistingMeal(mealType)) {
+          // 기존 식사가 있으면 수정
+          const mealUpdate = createMealUpdate(foods, mealType);
+          if (mealUpdate) meals.push(mealUpdate);
+        } else {
+          // 기존 식사가 없으면 새로 추가
+          const newMealData = createNewMealData(foods, mealType);
+          if (newMealData) newMeals[mealType] = newMealData;
+        }
+      };
+
+      processMeal(breakfastFoods, "breakfast");
+      processMeal(lunchFoods, "lunch");
+      processMeal(dinnerFoods, "dinner");
+
+      // 기존 식사 수정이 있는 경우
+      if (meals.length > 0) {
+        const updateData: DietUpdateData = {
+          total_calories: getTotalCalories(),
+          feedback: "",
+          meals: meals,
+        };
+
+        console.log("기존 식사 수정 데이터:", updateData);
+        await updateDietLog(editingDietLog._id, updateData);
+      }
+
+      // 새 식사 추가가 있는 경우
+      for (const [mealType, foods] of Object.entries(newMeals)) {
+        const newMealTotalCalories = foods.reduce((sum, food) => {
+          const calories = getFoodCalories(food.food_name);
+          return sum + Math.round((calories * food.food_amount) / 100);
+        }, 0);
+
+        console.log(`새 ${mealType} 식사 추가:`, {
+          mealType,
+          foods,
+          newMealTotalCalories,
+        });
+
+        await addMealToDietLog(
+          editingDietLog._id,
+          mealType,
+          foods,
+          editingDietLog.total_calories + newMealTotalCalories
+        );
+      }
+
       closeModal();
-      console.log("식단일지 수정 성공");
+      console.log("식단일지 수정/추가 성공");
     } catch (error) {
-      console.error("식단일지 수정 실패:", error);
-      alert("식단일지 수정에 실패했습니다. 다시 시도해주세요.");
+      console.error("식단일지 수정/추가 실패:", error);
+      alert("식단일지 수정/추가에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
