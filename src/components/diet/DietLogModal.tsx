@@ -466,6 +466,12 @@ const DietLogModal: React.FC = () => {
               (food) => !food.mealId || food.mealId !== mealId
             );
 
+            // 기존 음식들 필터링 (양이 변경된 음식들)
+            const existingFoods = foods.filter(
+              (food) => food.mealId && food.mealId === mealId
+            );
+
+            // 새로 추가된 음식이 있으면 addFoodToMealApi 사용
             if (newFoods.length > 0) {
               const newFoodData = newFoods.map((food) => ({
                 food_name: food.foodName,
@@ -479,13 +485,18 @@ const DietLogModal: React.FC = () => {
                 total_calories: getTotalCalories(),
               });
 
-              // addFoodToMealApi 사용
               await addFoodToMeal(
                 editingDietLog._id,
                 mealId,
                 newFoodData,
                 getTotalCalories()
               );
+            }
+
+            // 기존 음식의 양 수정이 있으면 updateDietLogApi 사용
+            if (existingFoods.length > 0) {
+              const mealUpdate = createMealUpdate(existingFoods, mealType);
+              if (mealUpdate) meals.push(mealUpdate);
             }
           }
         } else {
