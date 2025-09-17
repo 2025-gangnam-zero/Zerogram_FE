@@ -1,13 +1,7 @@
 import authApi from "./auth";
 import { getApiErrorMessage, logError } from "../utils";
 import { ApiResponse } from "../types";
-import {
-  DietLogResponse,
-  DietLogData,
-  DietUpdateData,
-  MealData,
-  FoodUpdateData,
-} from "../types/diet";
+import { DietLogResponse, DietLogData, DietUpdateData } from "../types/diet";
 
 // 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
 const formatDateForAPI = (date: Date): string => {
