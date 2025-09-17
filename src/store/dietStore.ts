@@ -11,6 +11,7 @@ import {
   createDietLogApi,
   updateDietLogApi,
   addMealToDietLogApi,
+  addFoodToMealApi,
 } from "../api/diet";
 
 interface DietStoreState {
@@ -82,6 +83,17 @@ interface DietStoreActions {
   addMealToDietLog: (
     dietLogId: string,
     mealType: string,
+    foods: Array<{
+      food_name: string;
+      food_amount: number;
+    }>,
+    total_calories: number
+  ) => Promise<void>;
+
+  // 기존 식사에 음식 추가
+  addFoodToMeal: (
+    dietLogId: string,
+    mealId: string,
     foods: Array<{
       food_name: string;
       food_amount: number;
@@ -478,6 +490,62 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             error instanceof Error
               ? error.message
               : "새 식사 추가에 실패했습니다.";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // 기존 식사에 음식 추가
+      addFoodToMeal: async (
+        dietLogId: string,
+        mealId: string,
+        foods: Array<{
+          food_name: string;
+          food_amount: number;
+        }>,
+        total_calories: number
+      ) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          console.log("음식 추가 시작:", {
+            dietLogId,
+            mealId,
+            foods,
+            total_calories,
+          });
+
+          // 1. API 호출
+          const response = await addFoodToMealApi(
+            dietLogId,
+            mealId,
+            foods,
+            total_calories
+          );
+
+          // 2. monthlyLogs에서 해당 항목 찾아서 교체
+          const { monthlyLogs } = get();
+          const updatedLogs = monthlyLogs.map((log) =>
+            log._id === dietLogId
+              ? response.data // API 응답으로 교체
+              : log
+          );
+
+          set({
+            monthlyLogs: updatedLogs,
+            isLoading: false,
+            editingDietLog: null,
+          });
+
+          console.log("음식 추가 성공");
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "음식 추가에 실패했습니다.";
           set({
             isLoading: false,
             error: errorMessage,

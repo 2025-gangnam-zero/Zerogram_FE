@@ -251,6 +251,51 @@ export const addMealToDietLogApi = async (
   }
 };
 
+// 기존 식사의 특정 식사에 음식 추가 API
+export const addFoodToMealApi = async (
+  dietLogId: string,
+  mealId: string,
+  foods: Array<{
+    food_name: string;
+    food_amount: number;
+  }>,
+  total_calories: number
+): Promise<ApiResponse<DietLogResponse>> => {
+  try {
+    console.log("음식 추가 API 호출:", {
+      dietLogId,
+      mealId,
+      foods,
+      total_calories,
+    });
+
+    // 백엔드 API에 맞는 데이터 형식
+    const requestData = {
+      foods: foods,
+      total_calories: total_calories,
+    };
+
+    const response = await authApi.post(
+      `/users/me/diets/${dietLogId}/meals/${mealId}`,
+      requestData
+    );
+
+    console.log("음식 추가 API 응답:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("음식 추가 API 에러 상세:", error);
+    console.error("요청 데이터:", {
+      dietLogId,
+      mealId,
+      foods,
+      total_calories,
+    });
+    console.error("에러 응답:", (error as any).response?.data);
+    logError("addFoodToMealApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 // 식단일지 삭제 API
 export const deleteDietLogApi = async (
   dietLogId: string

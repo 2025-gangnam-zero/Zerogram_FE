@@ -207,6 +207,7 @@ const DietLogModal: React.FC = () => {
     deleteDietLog,
     updateDietLog,
     addMealToDietLog,
+    addFoodToMeal,
   } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
@@ -449,13 +450,44 @@ const DietLogModal: React.FC = () => {
       const newMeals: { [key: string]: any[] } = {};
 
       // 각 식사별로 처리
-      const processMeal = (foods: SelectedFood[], mealType: string) => {
+      const processMeal = async (foods: SelectedFood[], mealType: string) => {
         if (foods.length === 0) return;
 
         if (hasExistingMeal(mealType)) {
-          // 기존 식사가 있으면 수정
-          const mealUpdate = createMealUpdate(foods, mealType);
-          if (mealUpdate) meals.push(mealUpdate);
+          // 기존 식사가 있으면 해당 식사에 음식 추가
+          const existingMeal = editingDietLog[
+            mealType as keyof typeof editingDietLog
+          ] as any[];
+          const mealId = existingMeal[0]?.mealId;
+
+          if (mealId) {
+            // 새로 추가된 음식들만 필터링 (기존 음식은 제외)
+            const newFoods = foods.filter(
+              (food) => !food.mealId || food.mealId !== mealId
+            );
+
+            if (newFoods.length > 0) {
+              const newFoodData = newFoods.map((food) => ({
+                food_name: food.foodName,
+                food_amount: food.amount,
+              }));
+
+              console.log(`기존 ${mealType} 식사에 음식 추가:`, {
+                dietLogId: editingDietLog._id,
+                mealId,
+                newFoodData,
+                total_calories: getTotalCalories(),
+              });
+
+              // addFoodToMealApi 사용
+              await addFoodToMeal(
+                editingDietLog._id,
+                mealId,
+                newFoodData,
+                getTotalCalories()
+              );
+            }
+          }
         } else {
           // 기존 식사가 없으면 새로 추가
           const newMealData = createNewMealData(foods, mealType);
@@ -463,9 +495,9 @@ const DietLogModal: React.FC = () => {
         }
       };
 
-      processMeal(breakfastFoods, "breakfast");
-      processMeal(lunchFoods, "lunch");
-      processMeal(dinnerFoods, "dinner");
+      await processMeal(breakfastFoods, "breakfast");
+      await processMeal(lunchFoods, "lunch");
+      await processMeal(dinnerFoods, "dinner");
 
       // 기존 식사 수정이 있는 경우
       if (meals.length > 0) {
