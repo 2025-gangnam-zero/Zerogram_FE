@@ -216,6 +216,7 @@ const DietLogModal: React.FC = () => {
     addMealToDietLog,
     addFoodToMeal,
     deleteMeal,
+    deleteFood,
   } = useDietStore();
 
   // 로컬 상태 - 각 식사별로 음식 목록 관리
@@ -304,26 +305,26 @@ const DietLogModal: React.FC = () => {
     }
   };
 
-  // 음식 제거 핸들러 - uniqueId 기준으로 변경
-  const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
-    switch (mealType) {
-      case "breakfast":
-        setBreakfastFoods((prev) =>
-          prev.filter((food) => food.uniqueId !== uniqueId)
-        );
-        break;
-      case "lunch":
-        setLunchFoods((prev) =>
-          prev.filter((food) => food.uniqueId !== uniqueId)
-        );
-        break;
-      case "dinner":
-        setDinnerFoods((prev) =>
-          prev.filter((food) => food.uniqueId !== uniqueId)
-        );
-        break;
-    }
-  };
+  // // 음식 제거 핸들러 - uniqueId 기준으로 변경
+  // const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
+  //   switch (mealType) {
+  //     case "breakfast":
+  //       setBreakfastFoods((prev) =>
+  //         prev.filter((food) => food.uniqueId !== uniqueId)
+  //       );
+  //       break;
+  //     case "lunch":
+  //       setLunchFoods((prev) =>
+  //         prev.filter((food) => food.uniqueId !== uniqueId)
+  //       );
+  //       break;
+  //     case "dinner":
+  //       setDinnerFoods((prev) =>
+  //         prev.filter((food) => food.uniqueId !== uniqueId)
+  //       );
+  //       break;
+  //   }
+  // };
 
   // 섭취량 변경 핸들러 - uniqueId 기준으로 변경
   const handleAmountChange = (
@@ -592,6 +593,24 @@ const DietLogModal: React.FC = () => {
     }
   };
 
+  // 음식 삭제 핸들러
+  const handleDeleteFood = async (
+    dietLogId: string,
+    mealId: string,
+    foodId: string,
+    foodName: string
+  ) => {
+    if (window.confirm(`정말로 "${foodName}"을(를) 삭제하시겠습니까?`)) {
+      try {
+        await deleteFood(dietLogId, mealId, foodId);
+        alert("음식이 삭제되었습니다.");
+      } catch (error) {
+        console.error("음식 삭제 실패:", error);
+        alert("음식 삭제에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+  };
+
   // 모달 닫기 핸들러
   const handleClose = () => {
     // 상태 초기화
@@ -687,9 +706,16 @@ const DietLogModal: React.FC = () => {
                   />
                   <AmountLabel>g</AmountLabel>
                   <RemoveButton
-                    onClick={() =>
-                      handleRemoveFood(food.uniqueId, mealType)
-                    } /* uniqueId로 변경 */
+                    onClick={() => {
+                      if (editingDietLog && mealId) {
+                        handleDeleteFood(
+                          editingDietLog._id,
+                          mealId,
+                          food.foodId,
+                          food.foodName
+                        );
+                      }
+                    }} /* uniqueId로 변경 */
                   >
                     제거
                   </RemoveButton>

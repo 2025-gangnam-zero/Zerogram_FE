@@ -13,6 +13,8 @@ import {
   addMealToDietLogApi,
   addFoodToMealApi,
   deleteMealApi,
+  deleteDietLogApi,
+  deleteFoodApi,
 } from "../api/diet";
 
 interface DietStoreState {
@@ -104,6 +106,13 @@ interface DietStoreActions {
 
   // 식사 삭제
   deleteMeal: (dietLogId: string, mealId: string) => Promise<void>;
+
+  // 음식 삭제
+  deleteFood: (
+    dietLogId: string,
+    mealId: string,
+    foodId: string
+  ) => Promise<void>;
 }
 
 export const useDietStore = create<DietStoreState & DietStoreActions>()(
@@ -392,10 +401,12 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          // TODO: 삭제 API 호출
-          console.log("식단일지 삭제:", dietLogId);
+          console.log("식단일지 삭제 시작:", dietLogId);
 
-          // monthlyLogs에서 해당 식단일지 제거
+          // 1. API 호출
+          await deleteDietLogApi(dietLogId);
+
+          // 2. monthlyLogs에서 해당 식단일지 제거
           const { monthlyLogs } = get();
           const updatedLogs = monthlyLogs.filter(
             (log) => log._id !== dietLogId
@@ -600,6 +611,47 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             error instanceof Error
               ? error.message
               : "식사 삭제에 실패했습니다.";
+          set({
+            isLoading: false,
+            error: errorMessage,
+          });
+          throw error;
+        }
+      },
+
+      // 음식 삭제
+      deleteFood: async (dietLogId: string, mealId: string, foodId: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          console.log("음식 삭제 시작:", {
+            dietLogId,
+            mealId,
+            foodId,
+          });
+
+          // 1. API 호출
+          const response = await deleteFoodApi(dietLogId, mealId, foodId);
+
+          // 2. monthlyLogs에서 해당 항목 찾아서 교체
+          const { monthlyLogs } = get();
+          const updatedLogs = monthlyLogs.map((log) =>
+            log._id === dietLogId
+              ? response.data // API 응답으로 교체
+              : log
+          );
+
+          set({
+            monthlyLogs: updatedLogs,
+            isLoading: false,
+          });
+
+          console.log("음식 삭제 성공");
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "음식 삭제에 실패했습니다.";
           set({
             isLoading: false,
             error: errorMessage,
