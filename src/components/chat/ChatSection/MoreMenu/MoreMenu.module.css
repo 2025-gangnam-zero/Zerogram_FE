@@ -1,0 +1,65 @@
+.root {
+  position: relative;
+}
+
+.moreBtn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.moreBtn:hover {
+  background: #f3f4f6;
+}
+.moreIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.menuItem:hover {
+  background: #f3f4f6;
+}
+
+.menuIcon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+.sep {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 6px 0;
+}
+.danger {
+  color: #dc2626;
+}

@@ -1,0 +1,25 @@
+.wrapper {
+  border-top: 1px solid #e5e7eb;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  /* position: fixed/sticky 불필요 — 항상 하단 행 */
+}
+
+.textarea {
+  width: 100%;
+  resize: none;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.sendBtn {
+  padding: 0 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}

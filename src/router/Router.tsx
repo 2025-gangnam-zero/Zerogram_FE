@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import GlobalStyle from "../styles/GlobalStyle";
 import { LAYOUT_CONSTANTS } from "../constants";
 import styled from "styled-components";
@@ -13,6 +13,8 @@ import WorkoutLogPage from "../pages/WorkoutLogPage";
 import DietLogPage from "../pages/DietLogPage";
 
 import { useAuthStore } from "../store/authStore";
+import { ChatIndex, ChatPage } from "../pages/chat";
+import { ChatSection } from "../components/chat/ChatSection";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -31,6 +33,8 @@ const MainContent = styled.main`
 
 export default function Router() {
   const { isLoggedIn } = useAuthStore();
+  const { pathname } = useLocation();
+  const isChatRoute = pathname.startsWith("/chat"); // 채팅 페이지면 푸터 숨김
 
   return (
     <>
@@ -49,9 +53,14 @@ export default function Router() {
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/workout" element={<WorkoutLogPage />} />
             <Route path="/diet-log" element={<DietLogPage />} />
+
+            <Route path="/chat" element={<ChatPage />}>
+              <Route index element={<ChatIndex />} />
+              <Route path=":roomid" element={<ChatSection />} />
+            </Route>
           </Routes>
         </MainContent>
-        <Footer />
+        {!isChatRoute && <Footer />}
       </AppContainer>
     </>
   );

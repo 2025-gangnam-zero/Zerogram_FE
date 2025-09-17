@@ -1,0 +1,156 @@
+:root {
+  --icon-sm: 14px;
+}
+
+/* 아이콘 공통 크기 고정 */
+.timeIcon,
+.statIcon,
+.badgeIcon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  flex-shrink: 0;
+}
+
+/* 선택: 약간의 스타일 */
+.statIcon {
+  opacity: 0.8;
+}
+.badgeIcon {
+  opacity: 0.9;
+}
+
+.item {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+.item:hover {
+  background: #f3f4f6;
+}
+.selected {
+  background: #eef2ff;
+}
+
+.link {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.avatarWrap {
+  width: 40px;
+  height: 40px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+.avatarFallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #e5e7eb;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.body {
+  min-width: 0;
+}
+
+/* 상단 라인은 그대로 유지 */
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1; /* 제목 영역 확장 */
+}
+
+/* 제목은 말줄임 */
+.title {
+  font-weight: 600;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 제목 옆 멤버수 */
+.members {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.memberIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.85;
+}
+
+/* 공개 배지 */
+.publicBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  font-size: 12px;
+  background: #f3f4f6;
+  color: #374151;
+  flex-shrink: 0;
+}
+.badgeIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* 우측 시간 */
+.topTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.timeIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+/* 중앙 라인(마지막 메시지 + unread) 유지 */
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+.lastMsg {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

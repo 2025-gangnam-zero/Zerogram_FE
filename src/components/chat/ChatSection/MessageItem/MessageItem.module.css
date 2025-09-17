@@ -1,0 +1,127 @@
+/* 공통 레이아웃 */
+.item {
+  margin: 8px 0;
+}
+.row {
+  display: inline-flex;
+  align-items: flex-end; /* 말풍선과 시간 하단 맞춤 */
+  gap: 6px;
+  max-width: min(72%, 560px); /* 말풍선 최대 너비 */
+}
+
+/* ⬇︎ 추가: 읽음수 위, 시간 아래(세로 스택) */
+.metaCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* 오른쪽 정렬 느낌 */
+  gap: 2px;
+  line-height: 1;
+}
+
+/* ===== 다른 사람(왼쪽) ===== */
+.other {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 8px;
+  align-items: flex-start;
+}
+.avatarWrap {
+  width: 36px;
+  height: 36px;
+}
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+.avatarFallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #e5e7eb;
+  color: #6b7280;
+  font-weight: 700;
+}
+.content {
+  min-width: 0;
+}
+.sender {
+  font-size: 12px;
+  color: #374151;
+  margin-bottom: 2px;
+}
+
+/* ===== 나(오른쪽) ===== */
+.me {
+  display: flex;
+  justify-content: flex-end;
+}
+.me .row {
+  justify-content: flex-end;
+}
+
+/* 말풍선 공통 */
+.bubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+  white-space: pre-wrap; /* 줄바꿈 유지 */
+  position: relative;
+}
+
+/* 다른 사람 말풍선 (좌) */
+.otherBubble {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top-left-radius: 4px; /* 카톡류 느낌 */
+}
+.otherBubble::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 0;
+  border-right: 6px solid #ffffff;
+  border-top: 6px solid transparent;
+}
+.otherBubble::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  bottom: 0;
+  border-right: 7px solid #e5e7eb;
+  border-top: 7px solid transparent;
+}
+
+/* 내 말풍선 (우) */
+.meBubble {
+  background: #fde68a; /* 연한 노랑 (임시) */
+  border: 1px solid #facc15;
+  border-top-right-radius: 4px;
+}
+
+/* 시간/읽음 */
+.time {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+.readCount {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* 내 메시지 쪽은 오른쪽 정렬(기존) */
+.me .metaCol {
+  align-items: flex-end;
+}
+
+/* ⬇️ 다른 사용자용: 왼쪽 정렬 */
+.metaColOther {
+  align-items: flex-start;
+}
