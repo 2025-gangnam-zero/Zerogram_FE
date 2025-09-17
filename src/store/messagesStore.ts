@@ -8,6 +8,7 @@ export type RoomMessages = {
 
 export type MessagesState = {
   byRoomId: Record<string, RoomMessages>;
+  lastSeenSeqByRoom: Record<string, number>;
 
   setPage: (
     roomId: string,
@@ -27,11 +28,15 @@ export type MessagesState = {
   clearRoom: (roomId: string) => void;
   replaceMessageId: (
     roomId: string,
-    clientId: string,
+    clientMessageId: string,
     serverId: string
   ) => void;
   markDelivered: (roomId: string, msgId: string) => void;
   markFailed: (roomId: string, msgId: string) => void;
+
+  getLastSeenSeq(roomId: string): number;
+
+  setLastSeenSeq(roomId: string, seq: number): void;
 };
 
 /** 안전한 시간 파싱 */
@@ -101,6 +106,7 @@ const insertOne = (arr: ChatMessage[], m: ChatMessage): ChatMessage[] => {
 
 export const useMessagesStore = createZ<MessagesState>((set, get) => ({
   byRoomId: {},
+  lastSeenSeqByRoom: {},
 
   /** 페이지 세팅(현재 뷰 기준의 최신쪽; 보통 최초 로드나 리프레시) */
   setPage: (roomId, page) =>
@@ -189,12 +195,12 @@ export const useMessagesStore = createZ<MessagesState>((set, get) => ({
   /** 임시 ID → 서버 ID 교체
    *  - 서버 메시지가 이미 도착해 같은 seq(또는 id)로 존재하면 임시 메시지 제거만 수행
    */
-  replaceMessageId: (roomId, clientId, serverId) =>
+  replaceMessageId: (roomId, clientMessageId, serverId) =>
     set((st) => {
       const curr = st.byRoomId[roomId];
       if (!curr) return st;
 
-      const temp = curr.items.find((m) => m.id === clientId);
+      const temp = curr.items.find((m) => m.id === clientMessageId);
       if (!temp) return st;
 
       // 서버 메시지가 이미 존재하는가?
@@ -203,7 +209,7 @@ export const useMessagesStore = createZ<MessagesState>((set, get) => ({
       );
       if (serverIdx >= 0) {
         // 이미 서버본이 있으므로 임시본만 제거
-        const nextItems = curr.items.filter((m) => m.id !== clientId);
+        const nextItems = curr.items.filter((m) => m.id !== clientMessageId);
         return {
           byRoomId: {
             ...st.byRoomId,
@@ -214,7 +220,7 @@ export const useMessagesStore = createZ<MessagesState>((set, get) => ({
 
       // 서버본이 아직 없다면, 임시 항목의 id/상태만 교체
       const nextItems = curr.items.map((m) =>
-        m.id === clientId
+        m.id === clientMessageId
           ? { ...m, id: serverId, pending: false, failed: false }
           : m
       );
@@ -233,4 +239,18 @@ export const useMessagesStore = createZ<MessagesState>((set, get) => ({
 
   markFailed: (roomId, msgId) =>
     get().updateMessage(roomId, msgId, { pending: false, failed: true }),
+
+  getLastSeenSeq: (roomId) => {
+    const m = get().lastSeenSeqByRoom[roomId];
+    return typeof m === "number" ? m : 0;
+  },
+
+  setLastSeenSeq: (roomId, seq) =>
+    set((st) => {
+      const prev = st.lastSeenSeqByRoom[roomId] ?? 0;
+      if (seq <= prev) return st; // 단조증가 보장
+      return {
+        lastSeenSeqByRoom: { ...st.lastSeenSeqByRoom, [roomId]: seq },
+      };
+    }),
 }));

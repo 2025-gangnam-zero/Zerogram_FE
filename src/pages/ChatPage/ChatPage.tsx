@@ -16,9 +16,7 @@ export const ChatPage = () => {
 
   const rooms = useRoomsStore((s) => s.allIds);
 
-  const roomIds = Object.keys(rooms);
-
-  useChatSocket(roomIds);
+  useChatSocket(rooms);
 
   useEffect(() => {
     (async () => {

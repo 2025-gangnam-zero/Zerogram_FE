@@ -103,13 +103,14 @@ export const processImages = async (files: File[], opt: Options) => {
 
 export const sendMessage = (opts: {
   roomId: string;
-  text?: string;
+  type: "image" | "text";
+  content?: string;
   attachments?: UploadAttachment[];
-  clientId: string;
+  clientMessageId: string;
 }) => {
   return new Promise<SendMessageAck>((resolve) => {
     const sock = getSocket();
-    sock.emit("msg:send", opts, (ack: { ok: boolean; serverId?: string }) => {
+    sock.emit("message:send", opts, (ack: { ok: boolean; id?: string }) => {
       resolve(ack);
     });
   });

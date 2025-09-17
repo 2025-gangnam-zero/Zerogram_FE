@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ChatroomListItem, CursorPayload } from "../types";
+import { useUserStore } from "./userStore";
 
 export type RoomsState = {
   byId: Record<string, ChatroomListItem>;
@@ -26,6 +27,23 @@ export type RoomsState = {
   setError: (m: string | null) => void;
   setCursor: (c: CursorPayload | null) => void;
   setQuery: (q: string) => void;
+  updateRoomSummary(e: {
+    id: string;
+    lastMessage?: string | null;
+    lastMessageAt?: string | null;
+    memberCount?: number;
+    seqCounter: number;
+  }): void;
+  applyReadUpdated(e: {
+    roomId: string;
+    userId: string;
+    lastReadSeq: number;
+    lastReadAt: string;
+  }): void;
+  patchRoom(
+    roomId: string,
+    patch: { notice?: string | null; memberCount?: number }
+  ): void;
 };
 
 /** 안전한 시간 파싱 (ISO string | null | undefined -> number) */
@@ -47,6 +65,9 @@ const sortRooms = (a: ChatroomListItem, b: ChatroomListItem) => {
 
   return a.roomName.localeCompare(b.roomName);
 };
+
+const computeUnread = (seqCounter?: number, lastReadSeq?: number) =>
+  Math.max(0, (seqCounter ?? 0) - (lastReadSeq ?? 0));
 
 export const useRoomsStore = create<RoomsState>((set, get) => ({
   byId: {},
@@ -119,4 +140,62 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
   setError: (m) => set({ error: m }),
   setCursor: (c) => set({ cursor: c }),
   setQuery: (q) => set({ q }),
+
+  updateRoomSummary: (e) => {
+    const st = get();
+    const cur =
+      st.byId[e.id] ?? ({ id: e.id, roomName: "" } as ChatroomListItem);
+
+    const next: ChatroomListItem = {
+      ...cur,
+      lastMessage: e.lastMessage ?? cur.lastMessage ?? null,
+      lastMessageAt: e.lastMessageAt ?? cur.lastMessageAt ?? null,
+      memberCount: e.memberCount ?? cur.memberCount,
+      seqCounter: e.seqCounter, // 서버 최신
+    };
+    next.unreadCount = computeUnread(next.seqCounter, next.lastReadSeq);
+
+    const byId = { ...st.byId, [e.id]: next };
+    const allIds = Object.values(byId)
+      .sort(sortRooms)
+      .map((r) => r.id);
+    set({ byId, allIds });
+  },
+
+  applyReadUpdated: (e) => {
+    // 내 이벤트만 반영
+    const selfId = useUserStore.getState().id;
+    if (!selfId || e.userId !== selfId) return;
+
+    const st = get();
+    const cur = st.byId[e.roomId];
+    if (!cur) return;
+
+    const next: ChatroomListItem = {
+      ...cur,
+      lastReadSeq: e.lastReadSeq,
+    };
+    next.unreadCount = computeUnread(next.seqCounter, next.lastReadSeq);
+
+    const byId = { ...st.byId, [e.roomId]: next };
+    // lastMessageAt 변동 없으니 정렬은 동일하지만, 일관성을 위해 재계산 가능
+    const allIds = Object.values(byId)
+      .sort(sortRooms)
+      .map((r) => r.id);
+    set({ byId, allIds });
+  },
+
+  patchRoom: (roomId, patch) => {
+    const st = get();
+    const cur = st.byId[roomId];
+    if (!cur) return;
+
+    const next: ChatroomListItem = { ...cur, ...patch };
+    // notice/memberCount만 바뀌면 정렬 영향 없음(원하면 정렬 유지)
+    const byId = { ...st.byId, [roomId]: next };
+    const allIds = Object.values(byId)
+      .sort(sortRooms)
+      .map((r) => r.id);
+    set({ byId, allIds });
+  },
 }));

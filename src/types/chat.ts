@@ -20,6 +20,9 @@ export type ChatroomListItem = {
   createdAt?: string;
   /** RoomMembership 기반 사용자 개별 설정 */
   isPinned?: boolean;
+
+  seqCounter?: number;
+  lastReadSeq?: number;
 };
 
 /** 서버 Attachment 매핑 */
@@ -36,29 +39,24 @@ export type ChatAttachment = {
 };
 
 /** 메시지 아이템 */
-export type ChatMessage = {
-  id: string; // Message._id
+export type MessageDto = {
+  id: string;
+  clientMessageId?: string;
   roomId: string;
   seq: number;
-
-  author: {
-    id: string;
-    name: string;
-    avatarUrl: string;
-  };
-
-  type: "text" | "image" | "file" | "system.notice";
+  author: { id: string; name: string; avatarUrl?: string };
+  type: "text" | "system.notice" | "image" | "file";
   content?: string | null;
-  attachments?: ChatAttachment[]; // 이미지/파일 메시지
-
-  createdAt: string; // ISO string
+  attachments?: ChatAttachment[] | null;
+  createdAt: string;
   editedAt?: string | null;
   deletedAt?: string | null;
+};
 
-  isMine?: boolean; // 클라 편의 플래그
-  unreadByCount?: number; // 아직 이 메시지를 읽지 않은 멤버 수
-
-  /** 클라 전송 상태 관리 */
+// UI에서만 쓰는 부가 필드들은 전부 optional
+export type ChatMessage = MessageDto & {
+  isMine?: boolean;
+  unreadByCount?: number;
   pending?: boolean;
   failed?: boolean;
 };
@@ -110,10 +108,11 @@ export type ChatNotificationItem = {
 
 export type SendMessageAck = {
   ok: boolean;
-  serverId?: string;
+  id?: string;
 
   // ✅ 서버가 내려줄 수 있는(선택) 메타들
   seq?: number;
+  clientMessageId?: number;
   createdAt?: string;
   attachments?: ChatAttachment[];
 
@@ -212,3 +211,31 @@ export type PublicRoomListItemDto = {
   lastMessageAt?: string | null;
   createdAt?: string;
 };
+
+export type GlobalRoomSummaryEvent = {
+  id: string; // roomId
+  lastMessage?: string | null;
+  lastMessageAt?: string | null;
+  memberCount?: number;
+  seqCounter: number; // unread = seqCounter - lastReadSeq
+};
+
+export type ReadUpdatedEvent = {
+  roomId: string;
+  userId: string;
+  lastReadSeq: number;
+  lastReadAt: string; // ISO
+};
+
+export type RoomUpdatedEvent = {
+  roomId: string;
+  patch: { notice?: string | null; memberCount?: number };
+  updatedAt: string; // ISO
+};
+
+export type RoomJoinAck =
+  | { ok: true; roomId: string; sinceSeq: number }
+  | {
+      ok: false;
+      code: "ROOM_NOT_MEMBER" | "FORBIDDEN" | "ROOM_NOT_FOUND" | "UNKNOWN";
+    };

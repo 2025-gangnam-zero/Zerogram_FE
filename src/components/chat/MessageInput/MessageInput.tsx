@@ -49,7 +49,7 @@ export const MessageInput = () => {
   const sendNow = async () => {
     if (isEmpty || !roomId) return;
 
-    const clientId = `tmp-${Date.now()}`;
+    const clientMessageId = `cid-${Date.now()}`;
 
     // 방의 현재 마지막 seq를 가져와 임시 seq를 결정(정렬이 맨 뒤로 가도록)
     const { byRoomId } = useMessagesStore.getState();
@@ -76,7 +76,8 @@ export const MessageInput = () => {
     const trimmed = value.trim();
 
     const msg: ChatMessage = {
-      id: clientId,
+      id: clientMessageId,
+      clientMessageId,
       roomId,
       seq: tempSeq,
       author: {
@@ -105,19 +106,20 @@ export const MessageInput = () => {
     try {
       const ack = await sendMessage({
         roomId,
-        text: trimmed || undefined,
+        type: attachments.length ? "image" : "text",
+        content: trimmed || undefined,
         // 업로드는 원본 파일로 전달(서버가 URL 생성 → ACK로 회신한다고 가정)
         attachments, // UploadAttachment[]
-        clientId, // 반드시 tmp id 전달
+        clientMessageId, // 반드시 tmp id 전달
       });
 
       // ACK 형식 가정:
-      // { ok: boolean, serverId?: string, seq?: number, createdAt?: string, attachments?: ChatAttachment[] }
-      if (ack?.ok && ack.serverId) {
+      // { ok: boolean, id?: string, seq?: number, createdAt?: string, attachments?: ChatAttachment[] }
+      if (ack?.ok && ack.id) {
         // id 교체
         useMessagesStore
           .getState()
-          .replaceMessageId(roomId, clientId, ack.serverId);
+          .replaceMessageId(roomId, clientMessageId, ack.id);
         // seq/createdAt/attachments 등 서버 권위 값 반영
         const patch: Partial<ChatMessage> = {
           seq: typeof ack.seq === "number" ? ack.seq : undefined,
@@ -126,13 +128,13 @@ export const MessageInput = () => {
           pending: false,
           failed: false,
         };
-        useMessagesStore.getState().updateMessage(roomId, ack.serverId, patch);
-        useMessagesStore.getState().markDelivered(roomId, ack.serverId);
+        useMessagesStore.getState().updateMessage(roomId, ack.id, patch);
+        useMessagesStore.getState().markDelivered(roomId, ack.id);
       } else {
-        useMessagesStore.getState().markFailed(roomId, clientId);
+        useMessagesStore.getState().markFailed(roomId, clientMessageId);
       }
     } catch {
-      useMessagesStore.getState().markFailed(roomId, clientId);
+      useMessagesStore.getState().markFailed(roomId, clientMessageId);
     }
   };
 
