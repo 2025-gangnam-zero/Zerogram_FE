@@ -343,13 +343,18 @@ const DietLogPage: React.FC = () => {
   const hasDietOnDate = (date: Date): boolean => {
     const { monthlyLogs } = useDietStore.getState();
 
+    // monthlyLogs가 없거나 비어있으면 false 반환
+    if (!monthlyLogs || monthlyLogs.length === 0) {
+      return false;
+    }
+
     // 로컬 시간 기준으로 날짜 문자열 생성
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const targetDate = `${year}-${month}-${day}`;
 
-    const hasDiet = monthlyLogs.some((log) => log.date === targetDate);
+    const hasDiet = monthlyLogs.some((log) => log && log.date === targetDate);
 
     return hasDiet;
   };

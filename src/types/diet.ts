@@ -62,6 +62,8 @@ export interface DietUpdateData {
 
 // API 전송용 음식 데이터 타입 (생성용)
 export interface MealData {
+  _id?: string;
+  meal_type?: string;
   foodId: string;
   foodName: string;
   calories: number; // 100g 기준 칼로리
@@ -81,6 +83,7 @@ export interface FoodUpdateData {
   _id: string; // 백엔드 FoodUpdateRequestDto와 일치
   food_name?: string;
   food_amount?: number;
+  total_calories?: number;
 }
 
 // 모달에서 선택된 음식 타입

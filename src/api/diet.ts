@@ -1,7 +1,13 @@
 import authApi from "./auth";
 import { getApiErrorMessage, logError } from "../utils";
 import { ApiResponse } from "../types";
-import { DietLogResponse, DietLogData, DietUpdateData } from "../types/diet";
+import {
+  DietLogResponse,
+  DietLogData,
+  DietUpdateData,
+  MealData,
+  FoodUpdateData,
+} from "../types/diet";
 
 // 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
 const formatDateForAPI = (date: Date): string => {
@@ -10,8 +16,6 @@ const formatDateForAPI = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
-
-// 타입들은 types/diet.ts에서 import
 
 // 월별 식단 일지 조회 API
 export const getDietLogsByMonthApi = async (
@@ -203,7 +207,96 @@ export const updateDietLogApi = async (
   }
 };
 
-// 식단일지 삭제 API
+// 기존 식단일지에 새로운 식사 추가 API
+export const addMealToDietLogApi = async (
+  dietLogId: string,
+  mealType: string,
+  foods: Array<{
+    food_name: string;
+    food_amount: number;
+  }>,
+  total_calories: number
+): Promise<ApiResponse<DietLogResponse>> => {
+  try {
+    console.log("새 식사 추가 API 호출:", {
+      dietLogId,
+      mealType,
+      foods,
+      total_calories,
+    });
+
+    // 백엔드 POST API에 맞는 데이터 형식 (여러 형식 시도)
+    const requestData = {
+      meals: [
+        {
+          meal_type: mealType,
+          foods: foods,
+        },
+      ],
+      total_calories: total_calories,
+    };
+
+    const response = await authApi.post(
+      `/users/me/diets/${dietLogId}`,
+      requestData
+    );
+
+    console.log("새 식사 추가 API 응답:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("새 식사 추가 API 에러 상세:", error);
+
+    logError("addMealToDietLogApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 기존 식사의 특정 식사에 음식 추가 API
+export const addFoodToMealApi = async (
+  dietLogId: string,
+  mealId: string,
+  foods: Array<{
+    food_name: string;
+    food_amount: number;
+  }>,
+  total_calories: number
+): Promise<ApiResponse<DietLogResponse>> => {
+  try {
+    console.log("음식 추가 API 호출:", {
+      dietLogId,
+      mealId,
+      foods,
+      total_calories,
+    });
+
+    // 백엔드 API에 맞는 데이터 형식
+    const requestData = {
+      foods: foods,
+      total_calories: total_calories,
+    };
+
+    const response = await authApi.post(
+      `/users/me/diets/${dietLogId}/meals/${mealId}`,
+      requestData
+    );
+
+    console.log("음식 추가 API 응답:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("음식 추가 API 에러 상세:", error);
+    console.error("요청 데이터:", {
+      dietLogId,
+      mealId,
+      foods,
+      total_calories,
+    });
+    console.error("에러 응답:", (error as any).response?.data);
+    logError("addFoodToMealApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// 식단 삭제 API
 export const deleteDietLogApi = async (
   dietLogId: string
 ): Promise<ApiResponse> => {
@@ -212,6 +305,39 @@ export const deleteDietLogApi = async (
     return response.data;
   } catch (error) {
     logError("deleteDietLogApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// meal 삭제 API
+export const deleteMealApi = async (
+  dietLogId: string,
+  mealId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/diets/${dietLogId}/meals/${mealId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteMealApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+// food 삭제 API
+export const deleteFoodApi = async (
+  dietLogId: string,
+  mealId: string,
+  foodId: string
+): Promise<ApiResponse> => {
+  try {
+    const response = await authApi.delete(
+      `/users/me/diets/${dietLogId}/meals/${mealId}/foods/${foodId}`
+    );
+    return response.data;
+  } catch (error) {
+    logError("deleteFoodApi", error);
     throw new Error(getApiErrorMessage(error));
   }
 };
