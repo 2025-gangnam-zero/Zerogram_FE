@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import styles from "./MessageList.module.css";
 import { MessageItem, NoticeBanner } from "../../../../components/chat";
-import type { ChatMessage } from "../../../../types/chat";
+import type { ChatMessage } from "../../../../types";
 
 type Props = {
   showNotice?: boolean;

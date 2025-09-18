@@ -2,7 +2,6 @@
 import styles from "./MessageItem.module.css";
 import { formatTimeKo } from "../../../../utils";
 import type { ChatMessage, ChatUser } from "../../../../types";
-import { useUserStore } from "../../../../store";
 
 type Props = {
   message: ChatMessage;

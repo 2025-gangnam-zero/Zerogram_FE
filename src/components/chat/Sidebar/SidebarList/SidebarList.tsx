@@ -1,7 +1,10 @@
 import styles from "./SidebarList.module.css";
-import { SidebarItem, SidebarListItemData } from "../SidebarItem";
 import { useParams } from "react-router-dom";
-import type { SidebarVariant } from "../SidebarItem";
+import {
+  SidebarItem,
+  SidebarListItemData,
+  SidebarVariant,
+} from "../../../chat";
 
 type Props = {
   items: SidebarListItemData[];
