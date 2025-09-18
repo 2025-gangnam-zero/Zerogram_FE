@@ -447,7 +447,21 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
         foods: SelectedFood[],
         mealType: string
       ): MealUpdateData | null => {
-        if (foods.length === 0) return null;
+        // 빈 배열인 경우에도 처리 (모든 음식이 삭제된 경우)
+        if (foods.length === 0) {
+          // 기존 식사가 있는지 확인하고 mealId 가져오기
+          const existingMeal = editingDietLog[
+            mealType as keyof typeof editingDietLog
+          ] as any[];
+          const mealId = existingMeal?.[0]?.mealId;
+          if (!mealId) return null;
+
+          return {
+            _id: mealId, // Meal의 _id
+            meal_type: mealType,
+            foods: [], // 빈 배열
+          };
+        }
 
         // 같은 mealId를 가진 foods들을 그룹화
         const mealId = foods[0]?.mealId;
@@ -480,7 +494,8 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
 
       // 각 식사별로 처리
       const processMeal = async (foods: SelectedFood[], mealType: string) => {
-        if (foods.length === 0) return;
+        // 빈 식사도 처리 (모든 음식이 삭제된 경우)
+        if (foods.length === 0 && !hasExistingMeal(mealType)) return;
 
         if (hasExistingMeal(mealType)) {
           // 기존 식사가 있으면 해당 식사에 음식 추가
@@ -490,6 +505,14 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
           const mealId = existingMeal[0]?.mealId;
 
           if (mealId) {
+            // 모든 음식이 삭제된 경우 (빈 배열)
+            if (foods.length === 0) {
+              const mealUpdate = createMealUpdate(foods, mealType);
+              if (mealUpdate) {
+                meals.push(mealUpdate);
+              }
+              return;
+            }
             // 새로 추가된 음식들만 필터링 (기존 음식은 제외)
             const newFoods = foods.filter(
               (food) => !food.mealId || food.mealId !== mealId
@@ -539,8 +562,8 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
       await processMeal(lunchFoods, "lunch");
       await processMeal(dinnerFoods, "dinner");
 
-      // 기존 식사 수정이 있는 경우
-      if (meals.length > 0) {
+      // 기존 식사 수정이 있는 경우 또는 모든 음식이 삭제된 경우
+      if (meals.length > 0 || getTotalCalories() === 0) {
         const updateData: DietUpdateData = {
           total_calories: getTotalCalories(),
           feedback: "",
@@ -568,7 +591,7 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
           editingDietLog._id,
           mealType,
           foods,
-          editingDietLog.total_calories + newMealTotalCalories
+          getTotalCalories() // 전체 총 칼로리 (로컬 상태 기반)
         );
       }
 
