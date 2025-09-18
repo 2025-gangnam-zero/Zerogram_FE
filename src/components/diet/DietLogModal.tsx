@@ -203,7 +203,11 @@ const ButtonGroup = styled.div`
   margin-top: ${UI_CONSTANTS.SPACING.XL};
 `;
 
-const DietLogModal: React.FC = () => {
+interface DietLogModalProps {
+  onSuccess?: () => void;
+}
+
+const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
   const {
     isModalOpen,
     closeModal,
@@ -410,6 +414,11 @@ const DietLogModal: React.FC = () => {
 
       // 저장 성공 후 모달 닫기
       closeModal();
+
+      // 성공 시 콜백 호출
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("식단 일지 저장 실패:", error);
       // 에러 처리는 스토어에서 이미 처리되므로 여기서는 로그만 출력
@@ -566,6 +575,11 @@ const DietLogModal: React.FC = () => {
       // 모든 API 호출이 완료된 후 editingDietLog를 null로 설정
       setEditingDietLog(null);
       closeModal();
+
+      // 성공 시 콜백 호출
+      if (onSuccess) {
+        onSuccess();
+      }
       console.log("식단일지 수정/추가 성공");
     } catch (error) {
       console.error("식단일지 수정/추가 실패:", error);
@@ -579,6 +593,11 @@ const DietLogModal: React.FC = () => {
       try {
         await deleteDietLog(dietLogId);
         closeModal();
+
+        // 성공 시 콜백 호출
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("식단일지가 삭제되었습니다.");
       } catch (error) {
         console.error("식단일지 삭제 실패:", error);
@@ -596,6 +615,18 @@ const DietLogModal: React.FC = () => {
     if (window.confirm(`정말로 ${mealType} 식사를 삭제하시겠습니까?`)) {
       try {
         await deleteMeal(dietLogId, mealId);
+
+        // API 성공 후 로컬 상태에서도 해당 mealId를 가진 음식들 제거 (모달창 즉시 반영)
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.mealId !== mealId)
+        );
+        setLunchFoods((prev) => prev.filter((food) => food.mealId !== mealId));
+        setDinnerFoods((prev) => prev.filter((food) => food.mealId !== mealId));
+
+        // 성공 시 콜백 호출 (페이지 전체 새로고침)
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("식사가 삭제되었습니다.");
       } catch (error) {
         console.error("식사 삭제 실패:", error);
@@ -614,6 +645,18 @@ const DietLogModal: React.FC = () => {
     if (window.confirm(`정말로 "${foodName}"을(를) 삭제하시겠습니까?`)) {
       try {
         await deleteFood(dietLogId, mealId, foodId);
+
+        // API 성공 후 로컬 상태에서도 해당 음식 제거 (모달창 즉시 반영)
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.foodId !== foodId)
+        );
+        setLunchFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+        setDinnerFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+
+        // 성공 시 콜백 호출 (페이지 전체 새로고침)
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("음식이 삭제되었습니다.");
       } catch (error) {
         console.error("음식 삭제 실패:", error);

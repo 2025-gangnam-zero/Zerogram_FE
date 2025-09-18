@@ -307,7 +307,7 @@ export const deleteDietLogApi = async (
 export const deleteMealApi = async (
   dietLogId: string,
   mealId: string
-): Promise<ApiResponse> => {
+): Promise<ApiResponse<DietLogResponse>> => {
   try {
     const response = await authApi.delete(
       `/users/me/diets/${dietLogId}/meals/${mealId}`
@@ -324,7 +324,7 @@ export const deleteFoodApi = async (
   dietLogId: string,
   mealId: string,
   foodId: string
-): Promise<ApiResponse> => {
+): Promise<ApiResponse<DietLogResponse>> => {
   try {
     const response = await authApi.delete(
       `/users/me/diets/${dietLogId}/meals/${mealId}/foods/${foodId}`
