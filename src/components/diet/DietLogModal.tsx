@@ -739,7 +739,7 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
       <MealSection key={mealType}>
         <MealHeader>
           <MealTypeLabel>{mealName}</MealTypeLabel>
-          {hasExistingMeal && mealId && (
+          {hasExistingMeal && mealId && foods.length > 0 && (
             <Button
               variant="danger"
               size="small"
