@@ -113,6 +113,9 @@ interface DietStoreActions {
     mealId: string,
     foodId: string
   ) => Promise<void>;
+
+  // 데이터 새로고침 (운동일지와 동일한 방식)
+  refreshDietLogs: () => Promise<void>;
 }
 
 export const useDietStore = create<DietStoreState & DietStoreActions>()(
@@ -658,6 +661,18 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
           });
           throw error;
         }
+      },
+
+      // 데이터 새로고침
+      refreshDietLogs: async () => {
+        const { currentYear, currentMonth } = get();
+
+        // 캐시를 무시하고 강제로 새로고침
+        set({
+          currentYear: currentYear,
+          currentMonth: currentMonth,
+        });
+        await get().setCurrentMonth(currentYear, currentMonth);
       },
     }),
     {

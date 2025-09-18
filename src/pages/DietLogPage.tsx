@@ -251,6 +251,7 @@ const DietLogPage: React.FC = () => {
     setCurrentMonth,
     getDietLogByDate,
     setEditingDietLog,
+    refreshDietLogs,
     isLoading,
     error,
   } = useDietStore();
@@ -328,6 +329,10 @@ const DietLogPage: React.FC = () => {
       setEditingDietLog(selectedDateDietLog);
       openModal();
     }
+  };
+
+  const handleDietLogSuccess = () => {
+    refreshDietLogs(); // 데이터 새로고침
   };
 
   const formatSelectedDate = (date: Date) => {
@@ -480,7 +485,7 @@ const DietLogPage: React.FC = () => {
         </BmiCard>
       </AdditionalSection>
 
-      <DietLogModal />
+      <DietLogModal onSuccess={handleDietLogSuccess} />
     </PageContainer>
   );
 };

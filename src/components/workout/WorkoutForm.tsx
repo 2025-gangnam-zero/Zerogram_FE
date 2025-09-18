@@ -158,6 +158,21 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // selectedDate가 변경될 때마다 폼 데이터 초기화
+  React.useEffect(() => {
+    setWorkoutSessions([
+      {
+        id: Date.now().toString(),
+        workout_name: "running",
+        duration: 0,
+        calories: 0,
+        feedback: "",
+        distance: 0,
+        avg_pace: "",
+      },
+    ]);
+  }, [selectedDate]);
+
   // 새 운동 세션 추가
   const addWorkoutSession = () => {
     setWorkoutSessions([
