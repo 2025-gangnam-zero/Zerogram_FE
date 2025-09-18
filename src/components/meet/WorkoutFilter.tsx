@@ -64,7 +64,7 @@ const WorkoutFilter: React.FC<WorkoutFilterProps> = ({
   onTypeChange,
 }) => {
   const workoutOptions = [
-    { value: "all", label: "전체", icon: "🏃‍♂️" },
+    { value: "all", label: "전체", icon: "🏆" },
     { value: "fitness", label: "헬스", icon: "💪" },
     { value: "running", label: "러닝", icon: "🏃‍♀️" },
   ] as const;

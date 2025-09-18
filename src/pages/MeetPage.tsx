@@ -8,9 +8,11 @@ import LocationFilter from "../components/meet/LocationFilter";
 import MeetCard from "../components/meet/MeetCard";
 import SearchBar from "../components/meet/SearchBar";
 import MeetForm, { MeetFormData } from "../components/meet/MeetForm";
+import MeetDetailModal from "../components/meet/MeetDetailModal";
 import Modal from "../components/common/Modal";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { getMeetsByPage, searchMeets } from "../mocks/meetData";
+import { Meet } from "../types/meet";
 
 const PageContainer = styled.div`
   padding: 40px 20px;
@@ -165,6 +167,10 @@ export default function MeetPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
 
   const ITEMS_PER_PAGE = 16;
 
@@ -322,8 +328,16 @@ export default function MeetPage() {
   }, [searchTerm, selectedWorkoutType, selectedLocation]);
 
   const handleMeetClick = (meetId: string) => {
-    console.log("Meet clicked:", meetId);
-    // TODO: 상세 페이지로 이동
+    const meet = [...allMeets, ...searchResults].find((m) => m._id === meetId);
+    if (meet) {
+      setSelectedMeet(meet);
+      setIsDetailModalOpen(true);
+    }
+  };
+
+  const handleDetailModalClose = () => {
+    setIsDetailModalOpen(false);
+    setSelectedMeet(null);
   };
 
   const handleCreateMeet = () => {
@@ -357,6 +371,75 @@ export default function MeetPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleJoinMeet = async (meetId: string) => {
+    setIsJoining(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Joined meet:", meetId);
+
+      // TODO: 실제 API 호출로 참여 처리
+      // await joinMeet(meetId);
+
+      // 성공 시 목록 새로고침
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to join meet:", error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleLeaveMeet = async (meetId: string) => {
+    setIsJoining(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Left meet:", meetId);
+
+      // TODO: 실제 API 호출로 참여 취소 처리
+      // await leaveMeet(meetId);
+
+      // 성공 시 목록 새로고침
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to leave meet:", error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleAddComment = async (meetId: string, content: string) => {
+    setIsCommenting(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Added comment to meet:", meetId, content);
+
+      // TODO: 실제 API 호출로 댓글 추가
+      // await addComment(meetId, content);
+
+      // 성공 시 목록 새로고침
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
+  // 사용자가 참여 중인지 확인하는 함수 (임시)
+  const isUserJoined = (meet: Meet): boolean => {
+    // TODO: 실제 사용자 ID와 비교
+    return meet.crews.some((crew) => crew.userId === "current-user-id");
   };
 
   return (
@@ -434,6 +517,25 @@ export default function MeetPage() {
           onSubmit={handleFormSubmit}
           onCancel={handleModalClose}
           isLoading={isSubmitting}
+        />
+      </Modal>
+
+      {/* 게시글 상세 모달 */}
+      <Modal
+        isOpen={isDetailModalOpen}
+        onClose={handleDetailModalClose}
+        title=""
+        // maxWidth="900px"
+      >
+        <MeetDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={handleDetailModalClose}
+          meet={selectedMeet}
+          onJoin={handleJoinMeet}
+          onLeave={handleLeaveMeet}
+          onAddComment={handleAddComment}
+          isJoined={selectedMeet ? isUserJoined(selectedMeet) : false}
+          isLoading={isJoining || isCommenting}
         />
       </Modal>
     </PageContainer>
