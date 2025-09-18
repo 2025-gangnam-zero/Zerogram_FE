@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { WorkoutType } from "../types/workout";
 import { Location } from "../types/meet";
@@ -6,7 +6,11 @@ import { UI_CONSTANTS } from "../constants";
 import WorkoutFilter from "../components/meet/WorkoutFilter";
 import LocationFilter from "../components/meet/LocationFilter";
 import MeetCard from "../components/meet/MeetCard";
-import { mockMeets } from "../mocks/meetData";
+import SearchBar from "../components/meet/SearchBar";
+import MeetForm, { MeetFormData } from "../components/meet/MeetForm";
+import Modal from "../components/common/Modal";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { getMeetsByPage, searchMeets } from "../mocks/meetData";
 
 const PageContainer = styled.div`
   padding: 40px 20px;
@@ -103,6 +107,49 @@ const CreateButton = styled.button`
   }
 `;
 
+const LoadingState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 16px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid ${UI_CONSTANTS.COLORS.PRIMARY};
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.p`
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  font-size: 0.9rem;
+  margin: 0;
+`;
+
+const EndMessage = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
+  font-size: 0.9rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 20px;
+`;
+
 export default function MeetPage() {
   const [selectedWorkoutType, setSelectedWorkoutType] = useState<
     WorkoutType | "all"
@@ -110,17 +157,169 @@ export default function MeetPage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | "all">(
     "all"
   );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allMeets, setAllMeets] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const ITEMS_PER_PAGE = 16;
+
+  // 검색과 필터링이 적용된 게시글들
   const filteredMeets = useMemo(() => {
-    return mockMeets.filter((meet) => {
-      const workoutMatch =
-        selectedWorkoutType === "all" ||
-        meet.workout_type === selectedWorkoutType;
-      const locationMatch =
-        selectedLocation === "all" || meet.location === selectedLocation;
-      return workoutMatch && locationMatch;
-    });
-  }, [selectedWorkoutType, selectedLocation]);
+    let meets = searchTerm.trim() ? searchResults : allMeets;
+
+    // 운동 종류 필터링
+    if (selectedWorkoutType !== "all") {
+      meets = meets.filter((meet) => meet.workout_type === selectedWorkoutType);
+    }
+
+    // 지역 필터링
+    if (selectedLocation !== "all") {
+      meets = meets.filter((meet) => meet.location === selectedLocation);
+    }
+
+    return meets;
+  }, [
+    allMeets,
+    searchResults,
+    searchTerm,
+    selectedWorkoutType,
+    selectedLocation,
+  ]);
+
+  // 일반 데이터 로드 함수
+  const loadMoreData = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const newMeets = getMeetsByPage(currentPage, ITEMS_PER_PAGE);
+
+      if (newMeets.length === 0) {
+        setHasMore(false);
+      } else {
+        setAllMeets((prev) => [...prev, ...newMeets]);
+        setCurrentPage((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Failed to load more data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, isLoading, hasMore]);
+
+  // 검색 결과 로드 함수
+  const loadMoreSearchResults = useCallback(async () => {
+    if (isLoading || !hasMore || !searchTerm.trim()) return;
+
+    setIsLoading(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const newSearchResults = searchMeets(
+        searchTerm,
+        currentPage,
+        ITEMS_PER_PAGE
+      );
+
+      if (newSearchResults.length === 0) {
+        setHasMore(false);
+      } else {
+        setSearchResults((prev) => [...prev, ...newSearchResults]);
+        setCurrentPage((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Failed to load more search results:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, isLoading, hasMore, searchTerm]);
+
+  // 무한 스크롤 훅
+  const { isIntersecting } = useInfiniteScroll({
+    hasMore,
+    isLoading,
+  });
+
+  // 초기 데이터 로드
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const initialMeets = getMeetsByPage(1, ITEMS_PER_PAGE);
+        setAllMeets(initialMeets);
+        setCurrentPage(2);
+        setHasMore(initialMeets.length === ITEMS_PER_PAGE);
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // 무한 스크롤 트리거
+  useEffect(() => {
+    if (isIntersecting) {
+      if (searchTerm.trim()) {
+        loadMoreSearchResults();
+      } else {
+        loadMoreData();
+      }
+    }
+  }, [isIntersecting, loadMoreData, loadMoreSearchResults, searchTerm]);
+
+  // 검색어나 필터가 변경되면 페이지 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+    setAllMeets([]);
+    setSearchResults([]);
+    setHasMore(true);
+
+    const loadInitialData = async () => {
+      setIsLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        if (searchTerm.trim()) {
+          // 검색 모드: 검색 결과 로드
+          const initialSearchResults = searchMeets(
+            searchTerm,
+            1,
+            ITEMS_PER_PAGE
+          );
+          setSearchResults(initialSearchResults);
+          setHasMore(initialSearchResults.length === ITEMS_PER_PAGE);
+        } else {
+          // 일반 모드: 전체 데이터 로드
+          const initialMeets = getMeetsByPage(1, ITEMS_PER_PAGE);
+          setAllMeets(initialMeets);
+          setHasMore(initialMeets.length === ITEMS_PER_PAGE);
+        }
+
+        setCurrentPage(2);
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [searchTerm, selectedWorkoutType, selectedLocation]);
 
   const handleMeetClick = (meetId: string) => {
     console.log("Meet clicked:", meetId);
@@ -128,13 +327,47 @@ export default function MeetPage() {
   };
 
   const handleCreateMeet = () => {
-    console.log("Create meet clicked");
-    // TODO: 게시글 작성 페이지로 이동
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleFormSubmit = async (formData: MeetFormData) => {
+    setIsSubmitting(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("New meet created:", formData);
+
+      // TODO: 실제 API 호출로 게시글 생성
+      // const newMeet = await createMeet(formData);
+
+      // 성공 시 모달 닫기 및 목록 새로고침
+      setIsModalOpen(false);
+
+      // TODO: 목록 새로고침 로직 추가
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to create meet:", error);
+      // TODO: 에러 메시지 표시
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <PageContainer>
       <PageTitle>모집게시판</PageTitle>
+
+      <SearchBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        placeholder="게시글 제목, 내용, 작성자로 검색..."
+      />
 
       <ContentWrapper>
         <FilterSection>
@@ -154,16 +387,29 @@ export default function MeetPage() {
           </CreateButton>
 
           {filteredMeets.length > 0 ? (
-            <MeetList>
-              {filteredMeets.map((meet) => (
-                <MeetCard
-                  key={meet._id}
-                  meet={meet}
-                  onClick={() => handleMeetClick(meet._id)}
-                />
-              ))}
-            </MeetList>
-          ) : (
+            <>
+              <MeetList>
+                {filteredMeets.map((meet) => (
+                  <MeetCard
+                    key={meet._id}
+                    meet={meet}
+                    onClick={() => handleMeetClick(meet._id)}
+                  />
+                ))}
+              </MeetList>
+
+              {isLoading && (
+                <LoadingState>
+                  <LoadingSpinner />
+                  <LoadingText>게시글을 불러오는 중...</LoadingText>
+                </LoadingState>
+              )}
+
+              {!hasMore && filteredMeets.length > 0 && (
+                <EndMessage>모든 게시글을 불러왔습니다</EndMessage>
+              )}
+            </>
+          ) : !isLoading ? (
             <EmptyState>
               <EmptyIcon>🔍</EmptyIcon>
               <EmptyTitle>검색 결과가 없습니다</EmptyTitle>
@@ -173,9 +419,23 @@ export default function MeetPage() {
                 새로운 모집글을 작성해보세요
               </EmptyDescription>
             </EmptyState>
-          )}
+          ) : null}
         </MeetListSection>
       </ContentWrapper>
+
+      {/* 모집글 작성 모달 */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        title="새 모집글 작성"
+        // maxWidth="600px"
+      >
+        <MeetForm
+          onSubmit={handleFormSubmit}
+          onCancel={handleModalClose}
+          isLoading={isSubmitting}
+        />
+      </Modal>
     </PageContainer>
   );
 }

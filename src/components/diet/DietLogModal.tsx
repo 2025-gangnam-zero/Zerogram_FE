@@ -230,7 +230,7 @@ const DietLogModal: React.FC = () => {
     return food ? food.calories : 0;
   };
 
-  // 수정 모드일 때 기존 데이터 로드
+  // 수정 모드일 때 기존 데이터 로드, 새로 작성할 때는 초기화
   React.useEffect(() => {
     if (editingDietLog) {
       // 기존 식단일지 데이터를 로컬 상태로 변환
@@ -261,6 +261,17 @@ const DietLogModal: React.FC = () => {
       setDinnerFoods([]);
     }
   }, [editingDietLog]);
+
+  // selectedDate가 변경될 때 폼 데이터 초기화 (새로 작성할 때만)
+  React.useEffect(() => {
+    // 모달이 열려있고 수정 모드가 아닐 때만 초기화
+    if (isModalOpen && !editingDietLog) {
+      setBreakfastFoods([]);
+      setLunchFoods([]);
+      setDinnerFoods([]);
+      setCurrentMealType("breakfast");
+    }
+  }, [selectedDate, isModalOpen, editingDietLog]);
 
   // 날짜 포맷팅 함수
   const formatDate = (date: Date) => {
@@ -305,26 +316,26 @@ const DietLogModal: React.FC = () => {
     }
   };
 
-  // // 음식 제거 핸들러 - uniqueId 기준으로 변경
-  // const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
-  //   switch (mealType) {
-  //     case "breakfast":
-  //       setBreakfastFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //     case "lunch":
-  //       setLunchFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //     case "dinner":
-  //       setDinnerFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //   }
-  // };
+  // 음식 제거 핸들러 - uniqueId 기준으로 변경
+  const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
+    switch (mealType) {
+      case "breakfast":
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+      case "lunch":
+        setLunchFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+      case "dinner":
+        setDinnerFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+    }
+  };
 
   // 섭취량 변경 핸들러 - uniqueId 기준으로 변경
   const handleAmountChange = (
@@ -708,14 +719,18 @@ const DietLogModal: React.FC = () => {
                   <RemoveButton
                     onClick={() => {
                       if (editingDietLog && mealId) {
+                        // 수정 모드: API를 통해 삭제
                         handleDeleteFood(
                           editingDietLog._id,
                           mealId,
                           food.foodId,
                           food.foodName
                         );
+                      } else {
+                        // 새로 작성 모드: 로컬 상태에서만 삭제
+                        handleRemoveFood(food.uniqueId, mealType);
                       }
-                    }} /* uniqueId로 변경 */
+                    }}
                   >
                     제거
                   </RemoveButton>
