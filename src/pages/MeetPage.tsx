@@ -436,6 +436,55 @@ export default function MeetPage() {
     }
   };
 
+  const handleUpdateMeet = async (
+    meetId: string,
+    data: { title: string; description: string }
+  ) => {
+    setIsCommenting(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Updated meet:", meetId, data);
+
+      // TODO: 실제 API 호출로 게시글 수정
+      // await updateMeet(meetId, data);
+
+      // 성공 시 목록 새로고침
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to update meet:", error);
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
+  const handleUpdateComment = async (
+    meetId: string,
+    commentId: string,
+    content: string
+  ) => {
+    setIsCommenting(true);
+
+    try {
+      // 실제 API 호출 시뮬레이션
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log("Updated comment:", meetId, commentId, content);
+
+      // TODO: 실제 API 호출로 댓글 수정
+      // await updateComment(meetId, commentId, content);
+
+      // 성공 시 목록 새로고침
+      // refreshMeets();
+    } catch (error) {
+      console.error("Failed to update comment:", error);
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
   // 사용자가 참여 중인지 확인하는 함수 (임시)
   const isUserJoined = (meet: Meet): boolean => {
     // TODO: 실제 사용자 ID와 비교
@@ -534,6 +583,8 @@ export default function MeetPage() {
           onJoin={handleJoinMeet}
           onLeave={handleLeaveMeet}
           onAddComment={handleAddComment}
+          onUpdateMeet={handleUpdateMeet}
+          onUpdateComment={handleUpdateComment}
           isJoined={selectedMeet ? isUserJoined(selectedMeet) : false}
           isLoading={isJoining || isCommenting}
         />

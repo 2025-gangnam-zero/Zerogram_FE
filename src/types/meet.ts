@@ -6,6 +6,7 @@ export interface Meet {
   _id: string;
   userId: string;
   nickname: string;
+  profile_image?: string;
   title: string;
   description: string;
   workout_type: WorkoutType;
@@ -20,6 +21,7 @@ export interface Comment {
   _id: string;
   userId: string;
   nickname: string;
+  profile_image?: string;
   content: string;
   createdAt: Date;
   updatedAt: Date;
@@ -28,4 +30,5 @@ export interface Comment {
 export interface Crew {
   userId: string;
   nickname: string;
+  profile_image?: string;
 }
