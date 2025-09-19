@@ -203,7 +203,11 @@ const ButtonGroup = styled.div`
   margin-top: ${UI_CONSTANTS.SPACING.XL};
 `;
 
-const DietLogModal: React.FC = () => {
+interface DietLogModalProps {
+  onSuccess?: () => void;
+}
+
+const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
   const {
     isModalOpen,
     closeModal,
@@ -230,7 +234,7 @@ const DietLogModal: React.FC = () => {
     return food ? food.calories : 0;
   };
 
-  // 수정 모드일 때 기존 데이터 로드
+  // 수정 모드일 때 기존 데이터 로드, 새로 작성할 때는 초기화
   React.useEffect(() => {
     if (editingDietLog) {
       // 기존 식단일지 데이터를 로컬 상태로 변환
@@ -261,6 +265,17 @@ const DietLogModal: React.FC = () => {
       setDinnerFoods([]);
     }
   }, [editingDietLog]);
+
+  // selectedDate가 변경될 때 폼 데이터 초기화 (새로 작성할 때만)
+  React.useEffect(() => {
+    // 모달이 열려있고 수정 모드가 아닐 때만 초기화
+    if (isModalOpen && !editingDietLog) {
+      setBreakfastFoods([]);
+      setLunchFoods([]);
+      setDinnerFoods([]);
+      setCurrentMealType("breakfast");
+    }
+  }, [selectedDate, isModalOpen, editingDietLog]);
 
   // 날짜 포맷팅 함수
   const formatDate = (date: Date) => {
@@ -305,26 +320,26 @@ const DietLogModal: React.FC = () => {
     }
   };
 
-  // // 음식 제거 핸들러 - uniqueId 기준으로 변경
-  // const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
-  //   switch (mealType) {
-  //     case "breakfast":
-  //       setBreakfastFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //     case "lunch":
-  //       setLunchFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //     case "dinner":
-  //       setDinnerFoods((prev) =>
-  //         prev.filter((food) => food.uniqueId !== uniqueId)
-  //       );
-  //       break;
-  //   }
-  // };
+  // 음식 제거 핸들러 - uniqueId 기준으로 변경
+  const handleRemoveFood = (uniqueId: number, mealType: MealType) => {
+    switch (mealType) {
+      case "breakfast":
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+      case "lunch":
+        setLunchFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+      case "dinner":
+        setDinnerFoods((prev) =>
+          prev.filter((food) => food.uniqueId !== uniqueId)
+        );
+        break;
+    }
+  };
 
   // 섭취량 변경 핸들러 - uniqueId 기준으로 변경
   const handleAmountChange = (
@@ -399,6 +414,11 @@ const DietLogModal: React.FC = () => {
 
       // 저장 성공 후 모달 닫기
       closeModal();
+
+      // 성공 시 콜백 호출
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("식단 일지 저장 실패:", error);
       // 에러 처리는 스토어에서 이미 처리되므로 여기서는 로그만 출력
@@ -427,7 +447,21 @@ const DietLogModal: React.FC = () => {
         foods: SelectedFood[],
         mealType: string
       ): MealUpdateData | null => {
-        if (foods.length === 0) return null;
+        // 빈 배열인 경우에도 처리 (모든 음식이 삭제된 경우)
+        if (foods.length === 0) {
+          // 기존 식사가 있는지 확인하고 mealId 가져오기
+          const existingMeal = editingDietLog[
+            mealType as keyof typeof editingDietLog
+          ] as any[];
+          const mealId = existingMeal?.[0]?.mealId;
+          if (!mealId) return null;
+
+          return {
+            _id: mealId, // Meal의 _id
+            meal_type: mealType,
+            foods: [], // 빈 배열
+          };
+        }
 
         // 같은 mealId를 가진 foods들을 그룹화
         const mealId = foods[0]?.mealId;
@@ -460,7 +494,8 @@ const DietLogModal: React.FC = () => {
 
       // 각 식사별로 처리
       const processMeal = async (foods: SelectedFood[], mealType: string) => {
-        if (foods.length === 0) return;
+        // 빈 식사도 처리 (모든 음식이 삭제된 경우)
+        if (foods.length === 0 && !hasExistingMeal(mealType)) return;
 
         if (hasExistingMeal(mealType)) {
           // 기존 식사가 있으면 해당 식사에 음식 추가
@@ -470,6 +505,14 @@ const DietLogModal: React.FC = () => {
           const mealId = existingMeal[0]?.mealId;
 
           if (mealId) {
+            // 모든 음식이 삭제된 경우 (빈 배열)
+            if (foods.length === 0) {
+              const mealUpdate = createMealUpdate(foods, mealType);
+              if (mealUpdate) {
+                meals.push(mealUpdate);
+              }
+              return;
+            }
             // 새로 추가된 음식들만 필터링 (기존 음식은 제외)
             const newFoods = foods.filter(
               (food) => !food.mealId || food.mealId !== mealId
@@ -519,8 +562,8 @@ const DietLogModal: React.FC = () => {
       await processMeal(lunchFoods, "lunch");
       await processMeal(dinnerFoods, "dinner");
 
-      // 기존 식사 수정이 있는 경우
-      if (meals.length > 0) {
+      // 기존 식사 수정이 있는 경우 또는 모든 음식이 삭제된 경우
+      if (meals.length > 0 || getTotalCalories() === 0) {
         const updateData: DietUpdateData = {
           total_calories: getTotalCalories(),
           feedback: "",
@@ -548,13 +591,18 @@ const DietLogModal: React.FC = () => {
           editingDietLog._id,
           mealType,
           foods,
-          editingDietLog.total_calories + newMealTotalCalories
+          getTotalCalories() // 전체 총 칼로리 (로컬 상태 기반)
         );
       }
 
       // 모든 API 호출이 완료된 후 editingDietLog를 null로 설정
       setEditingDietLog(null);
       closeModal();
+
+      // 성공 시 콜백 호출
+      if (onSuccess) {
+        onSuccess();
+      }
       console.log("식단일지 수정/추가 성공");
     } catch (error) {
       console.error("식단일지 수정/추가 실패:", error);
@@ -568,6 +616,11 @@ const DietLogModal: React.FC = () => {
       try {
         await deleteDietLog(dietLogId);
         closeModal();
+
+        // 성공 시 콜백 호출
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("식단일지가 삭제되었습니다.");
       } catch (error) {
         console.error("식단일지 삭제 실패:", error);
@@ -585,6 +638,18 @@ const DietLogModal: React.FC = () => {
     if (window.confirm(`정말로 ${mealType} 식사를 삭제하시겠습니까?`)) {
       try {
         await deleteMeal(dietLogId, mealId);
+
+        // API 성공 후 로컬 상태에서도 해당 mealId를 가진 음식들 제거 (모달창 즉시 반영)
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.mealId !== mealId)
+        );
+        setLunchFoods((prev) => prev.filter((food) => food.mealId !== mealId));
+        setDinnerFoods((prev) => prev.filter((food) => food.mealId !== mealId));
+
+        // 성공 시 콜백 호출 (페이지 전체 새로고침)
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("식사가 삭제되었습니다.");
       } catch (error) {
         console.error("식사 삭제 실패:", error);
@@ -603,6 +668,18 @@ const DietLogModal: React.FC = () => {
     if (window.confirm(`정말로 "${foodName}"을(를) 삭제하시겠습니까?`)) {
       try {
         await deleteFood(dietLogId, mealId, foodId);
+
+        // API 성공 후 로컬 상태에서도 해당 음식 제거 (모달창 즉시 반영)
+        setBreakfastFoods((prev) =>
+          prev.filter((food) => food.foodId !== foodId)
+        );
+        setLunchFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+        setDinnerFoods((prev) => prev.filter((food) => food.foodId !== foodId));
+
+        // 성공 시 콜백 호출 (페이지 전체 새로고침)
+        if (onSuccess) {
+          onSuccess();
+        }
         alert("음식이 삭제되었습니다.");
       } catch (error) {
         console.error("음식 삭제 실패:", error);
@@ -662,7 +739,7 @@ const DietLogModal: React.FC = () => {
       <MealSection key={mealType}>
         <MealHeader>
           <MealTypeLabel>{mealName}</MealTypeLabel>
-          {hasExistingMeal && mealId && (
+          {hasExistingMeal && mealId && foods.length > 0 && (
             <Button
               variant="danger"
               size="small"
@@ -708,14 +785,18 @@ const DietLogModal: React.FC = () => {
                   <RemoveButton
                     onClick={() => {
                       if (editingDietLog && mealId) {
+                        // 수정 모드: API를 통해 삭제
                         handleDeleteFood(
                           editingDietLog._id,
                           mealId,
                           food.foodId,
                           food.foodName
                         );
+                      } else {
+                        // 새로 작성 모드: 로컬 상태에서만 삭제
+                        handleRemoveFood(food.uniqueId, mealType);
                       }
-                    }} /* uniqueId로 변경 */
+                    }}
                   >
                     제거
                   </RemoveButton>

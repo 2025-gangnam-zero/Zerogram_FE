@@ -29,7 +29,26 @@ const ModalContainer = styled.div`
   width: 90%;
   max-height: 90%;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: ${UI_CONSTANTS.SHADOWS.LG};
+
+  /* 스크롤바 스타일 개선 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -65,14 +84,54 @@ const ModalContent = styled.div`
 `;
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  const [dragStart, setDragStart] = React.useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+
   const handleOverlayClick = (e: React.MouseEvent) => {
+    // 드래그 중이면 모달을 닫지 않음
+    if (isDragging) {
+      return;
+    }
+
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragStart) return;
+
+    const deltaX = Math.abs(e.clientX - dragStart.x);
+    const deltaY = Math.abs(e.clientY - dragStart.y);
+
+    // 드래그 거리가 5px 이상이면 드래그로 간주
+    if (deltaX > 5 || deltaY > 5) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDragStart(null);
+    // 드래그 상태를 잠시 유지한 후 리셋 (클릭 이벤트가 발생할 수 있으므로)
+    setTimeout(() => setIsDragging(false), 100);
+  };
+
   return (
-    <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>
+    <ModalOverlay
+      $isOpen={isOpen}
+      onClick={handleOverlayClick}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       <ModalContainer>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
