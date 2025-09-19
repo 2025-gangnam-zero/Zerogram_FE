@@ -4,34 +4,44 @@ import { Meet, Comment as MeetComment } from "../../types/meet";
 import { UI_CONSTANTS } from "../../constants";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import ImageUpload from "./ImageUpload";
+import { useUserStore } from "../../store/userStore";
 
 type Comment = MeetComment;
 
 interface MeetDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  meet: Meet | null;
+  meet: Meet | null | undefined;
   onJoin?: (meetId: string) => void;
   onLeave?: (meetId: string) => void;
   onAddComment?: (meetId: string, content: string) => void;
   onUpdateMeet?: (
     meetId: string,
-    data: { title: string; description: string }
+    data: {
+      title: string;
+      description: string;
+      images?: string[];
+      newImages?: File[];
+      existingImages?: string[];
+    }
   ) => void;
   onUpdateComment?: (
     meetId: string,
     commentId: string,
     content: string
   ) => void;
+  onDeleteMeet?: (meetId: string) => void;
+  onDeleteComment?: (meetId: string, commentId: string) => void;
   isJoined?: boolean;
   isLoading?: boolean;
 }
 
 const ModalContent = styled.div`
   max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 100%;
+  overflow: visible;
+  position: relative;
 `;
 
 const MeetHeader = styled.div`
@@ -106,10 +116,54 @@ const DefaultProfileIcon = styled.div`
   font-weight: 600;
 `;
 
-const Date = styled.span`
+const DateText = styled.span`
   color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
   font-size: 0.9rem;
 `;
+
+// formatDate 함수를 컴포넌트 외부로 이동하여 Date 충돌 방지
+const formatDate = (date: Date | string | null | undefined) => {
+  try {
+    // date가 없으면 기본값 반환
+    if (!date) {
+      return "날짜 정보 없음";
+    }
+
+    let dateObj: Date;
+
+    if (typeof date === "string") {
+      // 문자열을 Date 객체로 변환
+      const timestamp = globalThis.Date.parse(date);
+      if (isNaN(timestamp)) {
+        return "날짜 정보 없음";
+      }
+      dateObj = new globalThis.Date(timestamp);
+    } else {
+      dateObj = date;
+    }
+
+    // dateObj가 유효한지 확인
+    if (!dateObj || typeof dateObj.getTime !== "function") {
+      return "날짜 정보 없음";
+    }
+
+    // 유효한 날짜인지 확인
+    if (isNaN(dateObj.getTime())) {
+      return "날짜 정보 없음";
+    }
+
+    return new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(dateObj);
+  } catch (error) {
+    console.error("Date formatting error:", error);
+    return "날짜 정보 없음";
+  }
+};
 
 const MeetDescription = styled.div`
   background: #f8f9fa;
@@ -309,6 +363,8 @@ const EditForm = styled.form`
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+  overflow: visible;
+  min-height: 0;
 `;
 
 const EditInput = styled(Input)`
@@ -374,6 +430,37 @@ const SaveButton = styled.button`
   }
 `;
 
+const ImagesSection = styled.div`
+  margin-bottom: 24px;
+`;
+
+const ImagesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+`;
+
+const ImageItem = styled.div`
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e1e5e9;
+`;
+
+const Image = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+
 const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
   isOpen,
   onClose,
@@ -383,6 +470,8 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
   onAddComment,
   onUpdateMeet,
   onUpdateComment,
+  onDeleteMeet,
+  onDeleteComment,
   isJoined = false,
   isLoading = false,
 }) => {
@@ -394,16 +483,17 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
   const [editMeetDescription, setEditMeetDescription] = useState("");
   const [editCommentContent, setEditCommentContent] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editNewImages, setEditNewImages] = useState<File[]>([]);
+  const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  // 현재 사용자 정보 가져오기
+  const { id: currentUserId } = useUserStore();
+
+  // meet이 없으면 모달을 렌더링하지 않음
+  if (!meet) {
+    return null;
+  }
 
   const getWorkoutTypeLabel = (type: string) => {
     return type === "fitness" ? "헬스" : "러닝";
@@ -440,6 +530,9 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
     if (!meet) return;
     setEditMeetTitle(meet.title);
     setEditMeetDescription(meet.description);
+    setEditImages(meet.images || []); // 유지할 이미지들
+    setEditExistingImages([]); // 삭제할 이미지들 (초기에는 빈 배열)
+    setEditNewImages([]); // 새로 추가할 이미지들
     setIsEditingMeet(true);
   };
 
@@ -447,6 +540,9 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
     setIsEditingMeet(false);
     setEditMeetTitle("");
     setEditMeetDescription("");
+    setEditImages([]);
+    setEditExistingImages([]);
+    setEditNewImages([]);
   };
 
   const handleSaveMeet = async (e: React.FormEvent) => {
@@ -461,9 +557,20 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
 
     setIsUpdating(true);
     try {
+      console.log("게시글 수정 데이터:", {
+        title: editMeetTitle.trim(),
+        description: editMeetDescription.trim(),
+        images: editImages, // 유지할 이미지들
+        newImages: editNewImages, // 새로 추가할 이미지들
+        existingImages: editExistingImages, // 삭제할 이미지들
+      });
+
       await onUpdateMeet?.(meet._id, {
         title: editMeetTitle.trim(),
         description: editMeetDescription.trim(),
+        images: editImages,
+        newImages: editNewImages,
+        existingImages: editExistingImages,
       });
       setIsEditingMeet(false);
     } catch (error) {
@@ -504,10 +611,67 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
     }
   };
 
-  // 현재 사용자가 작성자인지 확인하는 함수 (임시)
+  // 현재 사용자가 작성자인지 확인하는 함수
   const isCurrentUser = (userId: string): boolean => {
-    // TODO: 실제 사용자 ID와 비교
-    return userId === "current-user-id";
+    return userId === currentUserId;
+  };
+
+  const handleEditImagesChange = (newImages: string[]) => {
+    // blob URL을 제외한 실제 이미지 URL만 필터링
+    const actualImages = newImages.filter((img) => !img.startsWith("blob:"));
+    setEditImages(actualImages);
+
+    // 원본 이미지에서 현재 선택된 이미지를 제외한 나머지를 삭제할 이미지로 설정
+    if (meet && meet.images) {
+      const deletedImages = meet.images.filter(
+        (img) => !actualImages.includes(img)
+      );
+      setEditExistingImages(deletedImages);
+
+      console.log("이미지 변경:", {
+        원본이미지: meet.images,
+        선택된이미지: newImages,
+        실제이미지: actualImages,
+        삭제할이미지: deletedImages,
+      });
+    }
+  };
+
+  const handleEditNewImagesChange = (files: File[]) => {
+    setEditNewImages(files);
+  };
+
+  const handleEditExistingImagesChange = (urls: string[]) => {
+    setEditExistingImages((prev) => {
+      // 중복 제거하여 추가
+      const newUrls = urls.filter((url) => !prev.includes(url));
+      return [...prev, ...newUrls];
+    });
+  };
+
+  const handleDeleteMeet = async () => {
+    if (!meet || !onDeleteMeet) return;
+
+    if (window.confirm("정말로 이 모집글을 삭제하시겠습니까?")) {
+      try {
+        await onDeleteMeet(meet._id);
+        onClose();
+      } catch (error) {
+        console.error("Failed to delete meet:", error);
+      }
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!meet || !onDeleteComment) return;
+
+    if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
+      try {
+        await onDeleteComment(meet._id, commentId);
+      } catch (error) {
+        console.error("Failed to delete comment:", error);
+      }
+    }
   };
 
   // 프로필 이미지 렌더링 함수
@@ -521,7 +685,6 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
     const DefaultComponent = isSmall
       ? CommentDefaultProfileIcon
       : DefaultProfileIcon;
-    const iconSize = isSmall ? 10 : 12;
 
     if (profileImage) {
       return <ImageComponent src={profileImage} alt={nickname || "Profile"} />;
@@ -550,10 +713,18 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
             {renderProfileImage(meet.profile_image, meet.nickname)}
             <span>{meet.nickname}</span>
             {isCurrentUser(meet.userId) && (
-              <EditText onClick={handleEditMeet}>수정하기</EditText>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <EditText onClick={handleEditMeet}>수정하기</EditText>
+                <EditText
+                  onClick={handleDeleteMeet}
+                  style={{ color: "#e74c3c" }}
+                >
+                  삭제하기
+                </EditText>
+              </div>
             )}
           </AuthorInfo>
-          <Date>{formatDate(meet.createdAt)}</Date>
+          <DateText>{formatDate(meet.createdAt)}</DateText>
         </MeetMeta>
       </MeetHeader>
 
@@ -570,6 +741,18 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
             value={editMeetDescription}
             onChange={(e) => setEditMeetDescription(e.target.value)}
             placeholder="내용을 입력해주세요"
+            disabled={isUpdating}
+          />
+          <ImageUpload
+            images={editImages}
+            onImagesChange={handleEditImagesChange}
+            onNewImagesChange={handleEditNewImagesChange}
+            onExistingImagesChange={handleEditExistingImagesChange}
+            onPreviewImagesChange={(previewUrls) => {
+              // 미리보기 URL들은 별도로 관리 (서버 전송 안함)
+              console.log("미리보기 이미지들:", previewUrls);
+            }}
+            maxImages={10}
             disabled={isUpdating}
           />
           <EditActions>
@@ -596,6 +779,23 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
         <MeetDescription>{meet.description}</MeetDescription>
       )}
 
+      {!isEditingMeet && meet.images && meet.images.length > 0 && (
+        <ImagesSection>
+          <SectionTitle>📷 첨부 이미지 ({meet.images.length}개)</SectionTitle>
+          <ImagesGrid>
+            {meet.images.map((image, index) => (
+              <ImageItem key={`image-${image}-${index}`}>
+                <Image
+                  src={image}
+                  alt={`첨부 이미지 ${index + 1}`}
+                  onClick={() => window.open(image, "_blank")}
+                />
+              </ImageItem>
+            ))}
+          </ImagesGrid>
+        </ImagesSection>
+      )}
+
       <ActionSection>
         <JoinButton
           variant="primary"
@@ -608,28 +808,30 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
       </ActionSection>
 
       <ParticipantsSection>
-        <SectionTitle>👥 참여자 ({meet.crews.length}명)</SectionTitle>
+        <SectionTitle>👥 참여자 ({meet.crews?.length || 0}명)</SectionTitle>
         <ParticipantsList>
-          {meet.crews.map((crew, index) => (
-            <Participant key={index}>
-              {crew.profile_image ? (
-                <ParticipantProfileImage
-                  src={crew.profile_image}
-                  alt={crew.nickname}
-                />
-              ) : (
-                <ParticipantDefaultProfileIcon>
-                  {crew.nickname.charAt(0).toUpperCase()}
-                </ParticipantDefaultProfileIcon>
-              )}
-              <span>{crew.nickname}</span>
-            </Participant>
-          ))}
+          {meet.crews && meet.crews.length > 0
+            ? meet.crews.map((crew, index) => (
+                <Participant key={`${crew.userId}-${index}`}>
+                  {crew.profile_image ? (
+                    <ParticipantProfileImage
+                      src={crew.profile_image}
+                      alt={crew.nickname}
+                    />
+                  ) : (
+                    <ParticipantDefaultProfileIcon>
+                      {crew.nickname.charAt(0).toUpperCase()}
+                    </ParticipantDefaultProfileIcon>
+                  )}
+                  <span>{crew.nickname}</span>
+                </Participant>
+              ))
+            : null}
         </ParticipantsList>
       </ParticipantsSection>
 
       <CommentsSection>
-        <SectionTitle>💬 댓글 ({meet.comments.length}개)</SectionTitle>
+        <SectionTitle>💬 댓글 ({meet.comments?.length || 0}개)</SectionTitle>
 
         <CommentForm onSubmit={handleCommentSubmit}>
           <CommentInput
@@ -649,9 +851,11 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
         </CommentForm>
 
         <CommentsList>
-          {meet.comments.length > 0 ? (
-            meet.comments.map((comment) => (
-              <CommentItem key={comment._id}>
+          {meet.comments && meet.comments.length > 0 ? (
+            meet.comments.map((comment, index) => (
+              <CommentItem
+                key={comment._id || `comment-${comment.userId}-${index}`}
+              >
                 <CommentHeader>
                   <CommentAuthorInfo>
                     {renderProfileImage(
@@ -670,9 +874,17 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
                   >
                     <CommentDate>{formatDate(comment.createdAt)}</CommentDate>
                     {isCurrentUser(comment.userId) && (
-                      <EditText onClick={() => handleEditComment(comment)}>
-                        수정하기
-                      </EditText>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <EditText onClick={() => handleEditComment(comment)}>
+                          수정하기
+                        </EditText>
+                        <EditText
+                          onClick={() => handleDeleteComment(comment._id)}
+                          style={{ color: "#e74c3c" }}
+                        >
+                          삭제하기
+                        </EditText>
+                      </div>
                     )}
                   </div>
                 </CommentHeader>

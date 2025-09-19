@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { WorkoutType } from "../types/workout";
 import { Location } from "../types/meet";
@@ -7,11 +7,13 @@ import WorkoutFilter from "../components/meet/WorkoutFilter";
 import LocationFilter from "../components/meet/LocationFilter";
 import MeetCard from "../components/meet/MeetCard";
 import SearchBar from "../components/meet/SearchBar";
-import MeetForm, { MeetFormData } from "../components/meet/MeetForm";
+import MeetForm from "../components/meet/MeetForm";
+import { MeetFormData } from "../types/meet";
 import MeetDetailModal from "../components/meet/MeetDetailModal";
 import Modal from "../components/common/Modal";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
-import { getMeetsByPage, searchMeets } from "../mocks/meetData";
+import { useMeetStore } from "../store/meetStore";
+import { useUserStore } from "../store/userStore";
 import { Meet } from "../types/meet";
 
 const PageContainer = styled.div`
@@ -153,103 +155,62 @@ const EndMessage = styled.div`
 `;
 
 export default function MeetPage() {
+  // MeetStore에서 상태와 액션 가져오기
+  const {
+    meets,
+    currentMeet,
+    isLoading,
+    isSubmitting,
+    error,
+    hasMore,
+    filters,
+    isDetailModalOpen,
+    isFormModalOpen,
+    fetchMeets,
+    createMeet,
+    updateMeet,
+    deleteMeet,
+    addComment,
+    updateComment,
+    deleteComment,
+    toggleCrew,
+    setFilters,
+    applyFilters,
+    openDetailModal,
+    closeDetailModal,
+    openFormModal,
+    closeFormModal,
+    clearError,
+  } = useMeetStore();
+
+  // UserStore에서 현재 사용자 정보 가져오기
+  const { id: currentUserId, fetchUserInfo } = useUserStore();
+
+  // 사용자 정보가 없으면 로드
+  useEffect(() => {
+    if (!currentUserId) {
+      fetchUserInfo();
+    }
+  }, [currentUserId, fetchUserInfo]);
+
+  // 로컬 상태
   const [selectedWorkoutType, setSelectedWorkoutType] = useState<
     WorkoutType | "all"
-  >("all");
+  >(filters.workout_type);
   const [selectedLocation, setSelectedLocation] = useState<Location | "all">(
-    "all"
+    filters.location
   );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [allMeets, setAllMeets] = useState<any[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMeet, setSelectedMeet] = useState<Meet | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-  const [isCommenting, setIsCommenting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(filters.searchTerm);
+  const [formResetTrigger, setFormResetTrigger] = useState(0);
 
-  const ITEMS_PER_PAGE = 16;
+  // 필터링된 게시글들 (이제 서버에서 필터링되므로 meets를 그대로 사용)
+  const filteredMeets = meets || [];
 
-  // 검색과 필터링이 적용된 게시글들
-  const filteredMeets = useMemo(() => {
-    let meets = searchTerm.trim() ? searchResults : allMeets;
-
-    // 운동 종류 필터링
-    if (selectedWorkoutType !== "all") {
-      meets = meets.filter((meet) => meet.workout_type === selectedWorkoutType);
-    }
-
-    // 지역 필터링
-    if (selectedLocation !== "all") {
-      meets = meets.filter((meet) => meet.location === selectedLocation);
-    }
-
-    return meets;
-  }, [
-    allMeets,
-    searchResults,
-    searchTerm,
-    selectedWorkoutType,
-    selectedLocation,
-  ]);
-
-  // 일반 데이터 로드 함수
+  // 더 많은 데이터 로드 함수
   const loadMoreData = useCallback(async () => {
     if (isLoading || !hasMore) return;
-
-    setIsLoading(true);
-
-    try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const newMeets = getMeetsByPage(currentPage, ITEMS_PER_PAGE);
-
-      if (newMeets.length === 0) {
-        setHasMore(false);
-      } else {
-        setAllMeets((prev) => [...prev, ...newMeets]);
-        setCurrentPage((prev) => prev + 1);
-      }
-    } catch (error) {
-      console.error("Failed to load more data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, isLoading, hasMore]);
-
-  // 검색 결과 로드 함수
-  const loadMoreSearchResults = useCallback(async () => {
-    if (isLoading || !hasMore || !searchTerm.trim()) return;
-
-    setIsLoading(true);
-
-    try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const newSearchResults = searchMeets(
-        searchTerm,
-        currentPage,
-        ITEMS_PER_PAGE
-      );
-
-      if (newSearchResults.length === 0) {
-        setHasMore(false);
-      } else {
-        setSearchResults((prev) => [...prev, ...newSearchResults]);
-        setCurrentPage((prev) => prev + 1);
-      }
-    } catch (error) {
-      console.error("Failed to load more search results:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, isLoading, hasMore, searchTerm]);
+    await fetchMeets(false);
+  }, [isLoading, hasMore, fetchMeets]);
 
   // 무한 스크롤 훅
   const { isIntersecting } = useInfiniteScroll({
@@ -259,204 +220,99 @@ export default function MeetPage() {
 
   // 초기 데이터 로드
   useEffect(() => {
-    const loadInitialData = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const initialMeets = getMeetsByPage(1, ITEMS_PER_PAGE);
-        setAllMeets(initialMeets);
-        setCurrentPage(2);
-        setHasMore(initialMeets.length === ITEMS_PER_PAGE);
-      } catch (error) {
-        console.error("Failed to load initial data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, []);
+    fetchMeets(true);
+  }, [fetchMeets]);
 
   // 무한 스크롤 트리거
   useEffect(() => {
     if (isIntersecting) {
-      if (searchTerm.trim()) {
-        loadMoreSearchResults();
-      } else {
-        loadMoreData();
-      }
+      loadMoreData();
     }
-  }, [isIntersecting, loadMoreData, loadMoreSearchResults, searchTerm]);
+  }, [isIntersecting, loadMoreData]);
 
-  // 검색어나 필터가 변경되면 페이지 리셋
+  // 필터 변경 시 데이터 새로고침
   useEffect(() => {
-    setCurrentPage(1);
-    setAllMeets([]);
-    setSearchResults([]);
-    setHasMore(true);
+    setFilters({
+      workout_type: selectedWorkoutType,
+      location: selectedLocation,
+      searchTerm: searchTerm,
+    });
+  }, [selectedWorkoutType, selectedLocation, searchTerm, setFilters]);
 
-    const loadInitialData = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+  // 필터가 변경되면 데이터 새로고침
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      applyFilters();
+    }, 500); // 디바운싱
 
-        if (searchTerm.trim()) {
-          // 검색 모드: 검색 결과 로드
-          const initialSearchResults = searchMeets(
-            searchTerm,
-            1,
-            ITEMS_PER_PAGE
-          );
-          setSearchResults(initialSearchResults);
-          setHasMore(initialSearchResults.length === ITEMS_PER_PAGE);
-        } else {
-          // 일반 모드: 전체 데이터 로드
-          const initialMeets = getMeetsByPage(1, ITEMS_PER_PAGE);
-          setAllMeets(initialMeets);
-          setHasMore(initialMeets.length === ITEMS_PER_PAGE);
-        }
-
-        setCurrentPage(2);
-      } catch (error) {
-        console.error("Failed to load initial data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, [searchTerm, selectedWorkoutType, selectedLocation]);
+    return () => clearTimeout(timeoutId);
+  }, [filters, applyFilters]);
 
   const handleMeetClick = (meetId: string) => {
-    const meet = [...allMeets, ...searchResults].find((m) => m._id === meetId);
-    if (meet) {
-      setSelectedMeet(meet);
-      setIsDetailModalOpen(true);
-    }
+    openDetailModal(meetId);
   };
 
   const handleDetailModalClose = () => {
-    setIsDetailModalOpen(false);
-    setSelectedMeet(null);
+    closeDetailModal();
   };
 
   const handleCreateMeet = () => {
-    setIsModalOpen(true);
+    openFormModal();
   };
 
   const handleModalClose = () => {
-    setIsModalOpen(false);
+    closeFormModal();
   };
 
   const handleFormSubmit = async (formData: MeetFormData) => {
-    setIsSubmitting(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("New meet created:", formData);
-
-      // TODO: 실제 API 호출로 게시글 생성
-      // const newMeet = await createMeet(formData);
-
-      // 성공 시 모달 닫기 및 목록 새로고침
-      setIsModalOpen(false);
-
-      // TODO: 목록 새로고침 로직 추가
-      // refreshMeets();
+      await createMeet(formData);
+      // 게시글 생성 성공 후 폼 초기화
+      setFormResetTrigger((prev) => prev + 1);
+      closeFormModal();
     } catch (error) {
       console.error("Failed to create meet:", error);
-      // TODO: 에러 메시지 표시
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleJoinMeet = async (meetId: string) => {
-    setIsJoining(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      console.log("Joined meet:", meetId);
-
-      // TODO: 실제 API 호출로 참여 처리
-      // await joinMeet(meetId);
-
-      // 성공 시 목록 새로고침
-      // refreshMeets();
+      await toggleCrew(meetId);
     } catch (error) {
       console.error("Failed to join meet:", error);
-    } finally {
-      setIsJoining(false);
     }
   };
 
   const handleLeaveMeet = async (meetId: string) => {
-    setIsJoining(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      console.log("Left meet:", meetId);
-
-      // TODO: 실제 API 호출로 참여 취소 처리
-      // await leaveMeet(meetId);
-
-      // 성공 시 목록 새로고침
-      // refreshMeets();
+      await toggleCrew(meetId);
     } catch (error) {
       console.error("Failed to leave meet:", error);
-    } finally {
-      setIsJoining(false);
     }
   };
 
   const handleAddComment = async (meetId: string, content: string) => {
-    setIsCommenting(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      console.log("Added comment to meet:", meetId, content);
-
-      // TODO: 실제 API 호출로 댓글 추가
-      // await addComment(meetId, content);
-
-      // 성공 시 목록 새로고침
-      // refreshMeets();
+      await addComment(meetId, content);
     } catch (error) {
       console.error("Failed to add comment:", error);
-    } finally {
-      setIsCommenting(false);
     }
   };
 
   const handleUpdateMeet = async (
     meetId: string,
-    data: { title: string; description: string }
+    data: {
+      title: string;
+      description: string;
+      images?: string[];
+      newImages?: File[];
+      existingImages?: string[];
+    }
   ) => {
-    setIsCommenting(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      console.log("Updated meet:", meetId, data);
-
-      // TODO: 실제 API 호출로 게시글 수정
-      // await updateMeet(meetId, data);
-
-      // 성공 시 목록 새로고침
-      // refreshMeets();
+      await updateMeet(meetId, data as MeetFormData);
     } catch (error) {
       console.error("Failed to update meet:", error);
-    } finally {
-      setIsCommenting(false);
     }
   };
 
@@ -465,35 +321,68 @@ export default function MeetPage() {
     commentId: string,
     content: string
   ) => {
-    setIsCommenting(true);
-
     try {
-      // 실제 API 호출 시뮬레이션
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      console.log("Updated comment:", meetId, commentId, content);
-
-      // TODO: 실제 API 호출로 댓글 수정
-      // await updateComment(meetId, commentId, content);
-
-      // 성공 시 목록 새로고침
-      // refreshMeets();
+      await updateComment(meetId, commentId, content);
     } catch (error) {
       console.error("Failed to update comment:", error);
-    } finally {
-      setIsCommenting(false);
     }
   };
 
-  // 사용자가 참여 중인지 확인하는 함수 (임시)
-  const isUserJoined = (meet: Meet): boolean => {
-    // TODO: 실제 사용자 ID와 비교
-    return meet.crews.some((crew) => crew.userId === "current-user-id");
+  const handleDeleteMeet = async (meetId: string) => {
+    try {
+      await deleteMeet(meetId);
+    } catch (error) {
+      console.error("Failed to delete meet:", error);
+    }
+  };
+
+  const handleDeleteComment = async (meetId: string, commentId: string) => {
+    try {
+      await deleteComment(meetId, commentId);
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+    }
+  };
+
+  // 사용자가 참여 중인지 확인하는 함수
+  const isUserJoined = (meet: Meet | null | undefined): boolean => {
+    if (!meet || !meet.crews || !Array.isArray(meet.crews) || !currentUserId) {
+      return false;
+    }
+    return meet.crews.some((crew) => crew.userId === currentUserId);
   };
 
   return (
     <PageContainer>
       <PageTitle>모집게시판</PageTitle>
+
+      {/* 에러 메시지 표시 */}
+      {error && (
+        <div
+          style={{
+            background: "#fee",
+            color: "#c33",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+            textAlign: "center",
+          }}
+        >
+          {error}
+          <button
+            onClick={clearError}
+            style={{
+              marginLeft: "10px",
+              background: "none",
+              border: "none",
+              color: "#c33",
+              cursor: "pointer",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <SearchBar
         searchTerm={searchTerm}
@@ -518,12 +407,12 @@ export default function MeetPage() {
             + 새 모집글 작성
           </CreateButton>
 
-          {filteredMeets.length > 0 ? (
+          {filteredMeets && filteredMeets.length > 0 ? (
             <>
               <MeetList>
-                {filteredMeets.map((meet) => (
+                {filteredMeets.map((meet, index) => (
                   <MeetCard
-                    key={meet._id}
+                    key={meet._id || `meet-${index}`}
                     meet={meet}
                     onClick={() => handleMeetClick(meet._id)}
                   />
@@ -557,7 +446,7 @@ export default function MeetPage() {
 
       {/* 모집글 작성 모달 */}
       <Modal
-        isOpen={isModalOpen}
+        isOpen={isFormModalOpen}
         onClose={handleModalClose}
         title="새 모집글 작성"
         // maxWidth="600px"
@@ -566,6 +455,7 @@ export default function MeetPage() {
           onSubmit={handleFormSubmit}
           onCancel={handleModalClose}
           isLoading={isSubmitting}
+          resetTrigger={formResetTrigger}
         />
       </Modal>
 
@@ -579,14 +469,16 @@ export default function MeetPage() {
         <MeetDetailModal
           isOpen={isDetailModalOpen}
           onClose={handleDetailModalClose}
-          meet={selectedMeet}
+          meet={currentMeet}
           onJoin={handleJoinMeet}
           onLeave={handleLeaveMeet}
           onAddComment={handleAddComment}
           onUpdateMeet={handleUpdateMeet}
           onUpdateComment={handleUpdateComment}
-          isJoined={selectedMeet ? isUserJoined(selectedMeet) : false}
-          isLoading={isJoining || isCommenting}
+          onDeleteMeet={handleDeleteMeet}
+          onDeleteComment={handleDeleteComment}
+          isJoined={isUserJoined(currentMeet)}
+          isLoading={isSubmitting}
         />
       </Modal>
     </PageContainer>

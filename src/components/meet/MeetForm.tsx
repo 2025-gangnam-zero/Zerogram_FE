@@ -1,22 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { WorkoutType } from "../../types/workout";
-import { Location } from "../../types/meet";
+import { Location, MeetFormData } from "../../types/meet";
 import { UI_CONSTANTS } from "../../constants";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import ImageUpload from "./ImageUpload";
 
 interface MeetFormProps {
   onSubmit: (data: MeetFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
-}
-
-export interface MeetFormData {
-  title: string;
-  description: string;
-  workout_type: WorkoutType;
-  location: Location;
+  resetTrigger?: number; // 폼 초기화 트리거
 }
 
 const FormContainer = styled.div`
@@ -117,6 +112,7 @@ const MeetForm: React.FC<MeetFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
+  resetTrigger,
 }) => {
   const [formData, setFormData] = useState<MeetFormData>({
     title: "",
@@ -125,7 +121,31 @@ const MeetForm: React.FC<MeetFormProps> = ({
     location: "강남구",
   });
 
+  const [images, setImages] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Partial<MeetFormData>>({});
+
+  // 폼 초기화 함수
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      workout_type: "fitness",
+      location: "강남구",
+    });
+    setImages([]);
+    setNewImages([]);
+    setExistingImages([]);
+    setErrors({});
+  };
+
+  // resetTrigger가 변경되면 폼 초기화
+  useEffect(() => {
+    if (resetTrigger !== undefined) {
+      resetForm();
+    }
+  }, [resetTrigger]);
 
   const handleInputChange = (field: keyof MeetFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -134,6 +154,18 @@ const MeetForm: React.FC<MeetFormProps> = ({
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
+  };
+
+  const handleNewImagesChange = (files: File[]) => {
+    setNewImages(files);
+  };
+
+  const handleExistingImagesChange = (urls: string[]) => {
+    setExistingImages(urls);
   };
 
   const validateForm = (): boolean => {
@@ -159,7 +191,12 @@ const MeetForm: React.FC<MeetFormProps> = ({
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        images,
+        newImages,
+        existingImages,
+      });
     }
   };
 
@@ -231,6 +268,18 @@ const MeetForm: React.FC<MeetFormProps> = ({
             </Select>
           </SelectContainer>
         </SelectGroup>
+
+        <FormGroup>
+          <Label>첨부 이미지</Label>
+          <ImageUpload
+            images={images}
+            onImagesChange={handleImagesChange}
+            onNewImagesChange={handleNewImagesChange}
+            onExistingImagesChange={handleExistingImagesChange}
+            maxImages={10}
+            disabled={isLoading}
+          />
+        </FormGroup>
 
         <ButtonGroup>
           <Button

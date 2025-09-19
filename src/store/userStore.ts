@@ -124,16 +124,13 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
             throw new Error("세션 ID가 존재하지 않습니다.");
           }
         }
-      }
-
-      // Zustand 스토어 동기화 - 강제로 업데이트
-      const storeSessionId = get().sessionId;
-      if (sessionId !== storeSessionId) {
-        console.warn("localStorage와 Zustand 스토어의 세션 ID가 일치하지 않음");
-        console.log("localStorage:", sessionId, "Zustand:", storeSessionId);
-        // Zustand 스토어 강제 동기화
-        set({ sessionId });
-        console.log("Zustand 스토어 세션 ID 동기화 완료:", sessionId);
+      } else {
+        // localStorage에서 세션 ID를 가져왔으면 즉시 Zustand 스토어에 동기화
+        const storeSessionId = get().sessionId;
+        if (sessionId !== storeSessionId) {
+          console.log("localStorage에서 세션 ID 동기화:", sessionId);
+          set({ sessionId });
+        }
       }
 
       console.log("사용자 정보 조회 시작, 세션 ID:", sessionId);

@@ -4,7 +4,7 @@ import { Meet } from "../../types/meet";
 import { UI_CONSTANTS } from "../../constants";
 
 interface MeetCardProps {
-  meet: Meet;
+  meet: Meet | null | undefined;
   onClick?: () => void;
 }
 
@@ -111,21 +111,59 @@ const StatIcon = styled.span`
   font-size: 0.9rem;
 `;
 
-const Date = styled.span`
+const DateText = styled.span`
   font-size: 0.8rem;
   color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
 `;
 
-const MeetCard: React.FC<MeetCardProps> = ({ meet, onClick }) => {
-  const formatDate = (date: Date) => {
+// formatDate 함수를 컴포넌트 외부로 이동하여 Date 충돌 방지
+const formatDate = (date: Date | string | null | undefined) => {
+  try {
+    // date가 없으면 기본값 반환
+    if (!date) {
+      return "날짜 정보 없음";
+    }
+
+    let dateObj: Date;
+
+    if (typeof date === "string") {
+      // 문자열을 Date 객체로 변환
+      const timestamp = globalThis.Date.parse(date);
+      if (isNaN(timestamp)) {
+        return "날짜 정보 없음";
+      }
+      dateObj = new globalThis.Date(timestamp);
+    } else {
+      dateObj = date;
+    }
+
+    // dateObj가 유효한지 확인
+    if (!dateObj || typeof dateObj.getTime !== "function") {
+      return "날짜 정보 없음";
+    }
+
+    // 유효한 날짜인지 확인
+    if (isNaN(dateObj.getTime())) {
+      return "날짜 정보 없음";
+    }
+
     return new Intl.DateTimeFormat("ko-KR", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date);
-  };
+    }).format(dateObj);
+  } catch (error) {
+    console.error("Date formatting error:", error);
+    return "날짜 정보 없음";
+  }
+};
 
+const MeetCard: React.FC<MeetCardProps> = ({ meet, onClick }) => {
+  // meet이 없으면 렌더링하지 않음
+  if (!meet) {
+    return null;
+  }
   const getWorkoutTypeLabel = (type: string) => {
     return type === "fitness" ? "헬스" : "러닝";
   };
@@ -156,7 +194,7 @@ const MeetCard: React.FC<MeetCardProps> = ({ meet, onClick }) => {
             <StatIcon>💬</StatIcon>
             <span>{meet.comments.length}</span>
           </StatItem>
-          <Date>{formatDate(meet.createdAt)}</Date>
+          <DateText>{formatDate(meet.createdAt)}</DateText>
         </Stats>
       </CardFooter>
     </CardContainer>

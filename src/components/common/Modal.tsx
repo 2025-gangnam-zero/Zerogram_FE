@@ -29,7 +29,26 @@ const ModalContainer = styled.div`
   width: 90%;
   max-height: 90%;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: ${UI_CONSTANTS.SHADOWS.LG};
+
+  /* 스크롤바 스타일 개선 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 `;
 
 const ModalHeader = styled.div`
