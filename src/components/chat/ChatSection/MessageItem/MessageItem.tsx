@@ -1,23 +1,30 @@
-// src/components/chat/ChatSection/MessageItem/MessageItem.tsx
+import { useEffect } from "react";
 import styles from "./MessageItem.module.css";
 import { formatTimeKo } from "../../../../utils";
-import type { ChatMessage, ChatUser } from "../../../../types";
+import type { ChatMessage } from "../../../../types";
+import { useAuthStore, useUserStore } from "../../../../store";
 
 type Props = {
   message: ChatMessage;
 };
 
-export const CURRENT_USER: ChatUser = {
-  id: "u-001",
-  name: "나",
-  // avatarUrl: ""  // 필요 시 추가
-};
-
 export const MessageItem = ({ message }: Props) => {
-  // const currentUserId = useUserStore((s) => s.id);
+  const { isLoggedIn, checkAuthStatus } = useAuthStore();
+  const { id: userId, fetchUserInfo } = useUserStore();
+
+  useEffect(() => {
+    const actualIsLoggedIn = checkAuthStatus();
+
+    if (actualIsLoggedIn) {
+      fetchUserInfo().catch((error: unknown) => {
+        console.error("사용자 정보 조회 실패:", error);
+      });
+    }
+  }, [isLoggedIn, fetchUserInfo, checkAuthStatus]);
 
   const { text, createdAt, author, meta } = message;
-  const isMe = author.id === CURRENT_USER.id;
+
+  const isMe = author.id === userId;
   const time = formatTimeKo(createdAt);
 
   if (isMe) {
