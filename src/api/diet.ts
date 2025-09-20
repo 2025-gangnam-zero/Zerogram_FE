@@ -39,7 +39,6 @@ export const createDietLogApi = async (
     if (selectedDate) {
       const dateString = formatDateForAPI(selectedDate);
       url += `?date=${dateString}`;
-      console.log(`식단일지 생성 요청 - 선택된 날짜: ${dateString}`);
     }
 
     // 백엔드 DTO에 맞게 데이터 구조 변환
@@ -117,7 +116,6 @@ export const getUserDietLogsApi = async (): Promise<
 > => {
   try {
     const response = await authApi.get("/users/me/diets");
-    console.log("백엔드 응답 데이터:", response.data); // 디버깅용
     return response.data;
   } catch (error) {
     logError("getUserDietLogsApi", error);
@@ -188,7 +186,6 @@ export const updateDietLogApi = async (
   dietData: DietUpdateData
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    console.log("수정 API 호출 데이터:", dietData);
     const response = await authApi.patch(`/users/me/diets/${dietLogId}`, {
       diet: dietData,
     });
@@ -210,13 +207,6 @@ export const addMealToDietLogApi = async (
   total_calories: number
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    console.log("새 식사 추가 API 호출:", {
-      dietLogId,
-      mealType,
-      foods,
-      total_calories,
-    });
-
     // 백엔드 POST API에 맞는 데이터 형식 (여러 형식 시도)
     const requestData = {
       meals: [
@@ -233,7 +223,6 @@ export const addMealToDietLogApi = async (
       requestData
     );
 
-    console.log("새 식사 추가 API 응답:", response.data);
     return response.data;
   } catch (error) {
     logError("addMealToDietLogApi", error);
@@ -252,13 +241,6 @@ export const addFoodToMealApi = async (
   total_calories: number
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    console.log("음식 추가 API 호출:", {
-      dietLogId,
-      mealId,
-      foods,
-      total_calories,
-    });
-
     // 백엔드 API에 맞는 데이터 형식
     const requestData = {
       foods: foods,
@@ -270,7 +252,6 @@ export const addFoodToMealApi = async (
       requestData
     );
 
-    console.log("음식 추가 API 응답:", response.data);
     return response.data;
   } catch (error) {
     logError("addFoodToMealApi", error);

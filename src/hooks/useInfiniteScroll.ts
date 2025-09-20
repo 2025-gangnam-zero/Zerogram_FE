@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-
+import { getMeetListApi } from "../api/meet";
 interface UseInfiniteScrollOptions {
   hasMore: boolean;
   isLoading: boolean;
@@ -47,8 +47,11 @@ export const useInfiniteScroll = ({
 
   const loadMore = useCallback(() => {
     if (hasMore && !isLoading) {
-      // 실제 구현에서는 여기서 API 호출을 트리거
-      console.log("Loading more data...");
+      //  여기서 API 호출을 트리거
+      getMeetListApi({
+        skip: 0,
+        limit: 10,
+      });
     }
   }, [hasMore, isLoading]);
 

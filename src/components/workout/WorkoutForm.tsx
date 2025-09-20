@@ -381,9 +381,6 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
     try {
       // 선택된 날짜와 함께 API 호출
       await createWorkoutApi({ details: workoutDetails }, selectedDate);
-      console.log(
-        `운동일지 생성 완료 - 날짜: ${selectedDate.toLocaleDateString()}`
-      );
       onSuccess();
     } catch (error) {
       console.error("운동일지 생성 실패:", error);

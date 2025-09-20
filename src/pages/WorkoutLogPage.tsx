@@ -10,6 +10,7 @@ import Modal from "../components/common/Modal";
 import WorkoutForm from "../components/workout/WorkoutForm";
 import WorkoutList from "../components/workout/WorkoutList";
 import WorkoutDetailModal from "../components/workout/WorkoutDetailModal";
+import WorkoutCalorieChart from "../components/workout/WorkoutCalorieChart";
 import "react-calendar/dist/Calendar.css";
 import { useWorkoutStore } from "../store/workoutStore";
 
@@ -134,6 +135,24 @@ const SelectedDate = styled.div`
     font-weight: 600;
     color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
   }
+`;
+
+const AdditionalSection = styled.div`
+  margin-top: ${UI_CONSTANTS.SPACING.XL};
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: ${UI_CONSTANTS.SPACING.XL};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ChartCard = styled.div`
+  background: white;
+  border-radius: ${UI_CONSTANTS.BORDER_RADIUS.LG};
+  padding: ${UI_CONSTANTS.SPACING.LG};
+  box-shadow: ${UI_CONSTANTS.SHADOWS.MD};
 `;
 
 // 로컬 시간대 기준으로 날짜 문자열을 반환하는 함수
@@ -389,6 +408,17 @@ const WorkoutLogPage: React.FC = () => {
         workout={selectedWorkout}
         onWorkoutUpdated={handleWorkoutUpdated}
       />
+
+      {/* 추가 섹션 - 칼로리 차트 */}
+      <AdditionalSection>
+        <ChartCard>
+          <SectionTitle>
+            {selectedDate.getFullYear()}년 {selectedDate.getMonth() + 1}월 일별
+            소모 칼로리
+          </SectionTitle>
+          <WorkoutCalorieChart />
+        </ChartCard>
+      </AdditionalSection>
     </PageContainer>
   );
 };

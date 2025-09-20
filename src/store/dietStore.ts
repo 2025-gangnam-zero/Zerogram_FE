@@ -159,7 +159,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
 
         // 이미 같은 년/월의 데이터가 있으면 fetch하지 않음
         if (currentYear === year && currentMonth === month) {
-          console.log(`${year}년 ${month}월 데이터 있음`);
           return;
         }
 
@@ -190,10 +189,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             monthlyLogs: logsArray,
             isLoading: false,
           });
-
-          console.log(
-            `${year}년 ${month}월 식단 일지 ${logsArray.length}개 로드됨`
-          );
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -213,9 +208,7 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("식단 일지 생성 시작:", logData);
           const response = await createDietLogApi(logData);
-          console.log("API 응답:", response);
 
           // 새로 생성된 일지를 monthlyLogs에 추가 (중복 방지)
           const { monthlyLogs } = get();
@@ -240,9 +233,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             monthlyLogs: updatedLogs,
             isLoading: false,
           });
-
-          console.log("식단 일지 생성 성공:", newLog);
-          console.log("업데이트된 월별 로그 수:", updatedLogs.length);
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -381,8 +371,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("식단일지 삭제 시작:", dietLogId);
-
           // 1. API 호출
           await deleteDietLogApi(dietLogId);
 
@@ -397,8 +385,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             isLoading: false,
             editingDietLog: null,
           });
-
-          console.log("식단일지 삭제 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -432,8 +418,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             isLoading: false,
             // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
-
-          console.log("식단일지 수정 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -460,13 +444,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("새 식사 추가 시작:", {
-            dietLogId,
-            mealType,
-            foods,
-            total_calories,
-          });
-
           // 1. API 호출
           const response = await addMealToDietLogApi(
             dietLogId,
@@ -488,8 +465,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             isLoading: false,
             // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
-
-          console.log("새 식사 추가 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -516,13 +491,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("음식 추가 시작:", {
-            dietLogId,
-            mealId,
-            foods,
-            total_calories,
-          });
-
           // 1. API 호출
           const response = await addFoodToMealApi(
             dietLogId,
@@ -544,8 +512,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             isLoading: false,
             // editingDietLog는 null로 설정하지 않음 (다른 API 호출이 있을 수 있음)
           });
-
-          console.log("음식 추가 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -564,11 +530,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("식사 삭제 시작:", {
-            dietLogId,
-            mealId,
-          });
-
           // 1. API 호출
           const response = await deleteMealApi(dietLogId, mealId);
 
@@ -584,8 +545,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             monthlyLogs: updatedLogs,
             isLoading: false,
           });
-
-          console.log("식사 삭제 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -604,12 +563,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          console.log("음식 삭제 시작:", {
-            dietLogId,
-            mealId,
-            foodId,
-          });
-
           // 1. API 호출
           const response = await deleteFoodApi(dietLogId, mealId, foodId);
 
@@ -625,8 +578,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             monthlyLogs: updatedLogs,
             isLoading: false,
           });
-
-          console.log("음식 삭제 성공");
         } catch (error) {
           const errorMessage =
             error instanceof Error

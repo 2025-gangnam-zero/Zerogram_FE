@@ -4,6 +4,7 @@ import { Meet, Comment as MeetComment } from "../../types/meet";
 import { UI_CONSTANTS } from "../../constants";
 import Button from "../common/Button";
 import Input from "../common/Input";
+import Modal from "../common/Modal";
 import ImageUpload from "./ImageUpload";
 import { useUserStore } from "../../store/userStore";
 
@@ -689,234 +690,235 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
   if (!meet) return null;
 
   return (
-    <ModalContent>
-      <MeetHeader>
-        <MeetTitle>{meet.title}</MeetTitle>
+    <Modal isOpen={isOpen} onClose={onClose} title="모집글 상세">
+      <ModalContent>
+        <MeetHeader>
+          <MeetTitle>{meet.title}</MeetTitle>
 
-        <MeetMeta>
-          <WorkoutType $type={meet.workout_type}>
-            {getWorkoutTypeLabel(meet.workout_type)}
-          </WorkoutType>
-          <Location>{meet.location}</Location>
-          <AuthorInfo>
-            {renderProfileImage(meet.profile_image, meet.nickname)}
-            <span>{meet.nickname}</span>
-            {isCurrentUser(meet.userId) && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <EditText onClick={handleEditMeet}>수정하기</EditText>
-                <EditText
-                  onClick={handleDeleteMeet}
-                  style={{ color: "#e74c3c" }}
-                >
-                  삭제하기
-                </EditText>
-              </div>
-            )}
-          </AuthorInfo>
-          <DateText>{formatDate(meet.createdAt)}</DateText>
-        </MeetMeta>
-      </MeetHeader>
-
-      {isEditingMeet ? (
-        <EditForm onSubmit={handleSaveMeet}>
-          <EditInput
-            type="text"
-            value={editMeetTitle}
-            onChange={(e) => setEditMeetTitle(e.target.value)}
-            placeholder="제목을 입력해주세요"
-            disabled={isUpdating}
-          />
-          <EditTextarea
-            value={editMeetDescription}
-            onChange={(e) => setEditMeetDescription(e.target.value)}
-            placeholder="내용을 입력해주세요"
-            disabled={isUpdating}
-          />
-          <ImageUpload
-            images={editImages}
-            onImagesChange={handleEditImagesChange}
-            onNewImagesChange={handleEditNewImagesChange}
-            onExistingImagesChange={handleEditExistingImagesChange}
-            onPreviewImagesChange={(previewUrls) => {
-              // 미리보기 URL들은 별도로 관리 (서버 전송 안함)
-              console.log("미리보기 이미지들:", previewUrls);
-            }}
-            maxImages={10}
-            disabled={isUpdating}
-          />
-          <EditActions>
-            <CancelButton
-              type="button"
-              onClick={handleCancelEditMeet}
-              disabled={isUpdating}
-            >
-              취소
-            </CancelButton>
-            <SaveButton
-              type="submit"
-              disabled={
-                !editMeetTitle.trim() ||
-                !editMeetDescription.trim() ||
-                isUpdating
-              }
-            >
-              {isUpdating ? "저장 중..." : "저장"}
-            </SaveButton>
-          </EditActions>
-        </EditForm>
-      ) : (
-        <MeetDescription>{meet.description}</MeetDescription>
-      )}
-
-      {!isEditingMeet && meet.images && meet.images.length > 0 && (
-        <ImagesSection>
-          <SectionTitle>📷 첨부 이미지 ({meet.images.length}개)</SectionTitle>
-          <ImagesGrid>
-            {meet.images.map((image, index) => (
-              <ImageItem key={`image-${image}-${index}`}>
-                <Image
-                  src={image}
-                  alt={`첨부 이미지 ${index + 1}`}
-                  onClick={() => window.open(image, "_blank")}
-                />
-              </ImageItem>
-            ))}
-          </ImagesGrid>
-        </ImagesSection>
-      )}
-
-      <ActionSection>
-        <JoinButton
-          variant="primary"
-          onClick={handleJoinClick}
-          disabled={isLoading}
-          $isJoined={isJoined}
-        >
-          {isLoading ? "처리 중..." : isJoined ? "참여 취소" : "참여하기"}
-        </JoinButton>
-      </ActionSection>
-
-      <ParticipantsSection>
-        <SectionTitle>👥 참여자 ({meet.crews?.length || 0}명)</SectionTitle>
-        <ParticipantsList>
-          {meet.crews && meet.crews.length > 0
-            ? meet.crews.map((crew, index) => (
-                <Participant key={`${crew.userId}-${index}`}>
-                  {crew.profile_image ? (
-                    <ParticipantProfileImage
-                      src={crew.profile_image}
-                      alt={crew.nickname}
-                    />
-                  ) : (
-                    <ParticipantDefaultProfileIcon>
-                      {crew.nickname.charAt(0).toUpperCase()}
-                    </ParticipantDefaultProfileIcon>
-                  )}
-                  <span>{crew.nickname}</span>
-                </Participant>
-              ))
-            : null}
-        </ParticipantsList>
-      </ParticipantsSection>
-
-      <CommentsSection>
-        <SectionTitle>💬 댓글 ({meet.comments?.length || 0}개)</SectionTitle>
-
-        <CommentForm onSubmit={handleCommentSubmit}>
-          <CommentInput
-            type="text"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="댓글을 입력해주세요..."
-            disabled={isSubmittingComment}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={!commentText.trim() || isSubmittingComment}
-          >
-            {isSubmittingComment ? "등록 중..." : "등록"}
-          </Button>
-        </CommentForm>
-
-        <CommentsList>
-          {meet.comments && meet.comments.length > 0 ? (
-            meet.comments.map((comment, index) => (
-              <CommentItem
-                key={comment._id || `comment-${comment.userId}-${index}`}
-              >
-                <CommentHeader>
-                  <CommentAuthorInfo>
-                    {renderProfileImage(
-                      comment.profile_image,
-                      comment.nickname,
-                      "small"
-                    )}
-                    <CommentAuthor>{comment.nickname}</CommentAuthor>
-                  </CommentAuthorInfo>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
+          <MeetMeta>
+            <WorkoutType $type={meet.workout_type}>
+              {getWorkoutTypeLabel(meet.workout_type)}
+            </WorkoutType>
+            <Location>{meet.location}</Location>
+            <AuthorInfo>
+              {renderProfileImage(meet.profile_image, meet.nickname)}
+              <span>{meet.nickname}</span>
+              {isCurrentUser(meet.userId) && (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <EditText onClick={handleEditMeet}>수정하기</EditText>
+                  <EditText
+                    onClick={handleDeleteMeet}
+                    style={{ color: "#e74c3c" }}
                   >
-                    <CommentDate>{formatDate(comment.createdAt)}</CommentDate>
-                    {isCurrentUser(comment.userId) && (
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <EditText onClick={() => handleEditComment(comment)}>
-                          수정하기
-                        </EditText>
-                        <EditText
-                          onClick={() => handleDeleteComment(comment._id)}
-                          style={{ color: "#e74c3c" }}
-                        >
-                          삭제하기
-                        </EditText>
-                      </div>
+                    삭제하기
+                  </EditText>
+                </div>
+              )}
+            </AuthorInfo>
+            <DateText>{formatDate(meet.createdAt)}</DateText>
+          </MeetMeta>
+        </MeetHeader>
+
+        {isEditingMeet ? (
+          <EditForm onSubmit={handleSaveMeet}>
+            <EditInput
+              type="text"
+              value={editMeetTitle}
+              onChange={(e) => setEditMeetTitle(e.target.value)}
+              placeholder="제목을 입력해주세요"
+              disabled={isUpdating}
+            />
+            <EditTextarea
+              value={editMeetDescription}
+              onChange={(e) => setEditMeetDescription(e.target.value)}
+              placeholder="내용을 입력해주세요"
+              disabled={isUpdating}
+            />
+            <ImageUpload
+              images={editImages}
+              onImagesChange={handleEditImagesChange}
+              onNewImagesChange={handleEditNewImagesChange}
+              onExistingImagesChange={handleEditExistingImagesChange}
+              onPreviewImagesChange={(previewUrls) => {
+                // 미리보기 URL들은 별도로 관리 (서버 전송 안함)
+              }}
+              maxImages={10}
+              disabled={isUpdating}
+            />
+            <EditActions>
+              <CancelButton
+                type="button"
+                onClick={handleCancelEditMeet}
+                disabled={isUpdating}
+              >
+                취소
+              </CancelButton>
+              <SaveButton
+                type="submit"
+                disabled={
+                  !editMeetTitle.trim() ||
+                  !editMeetDescription.trim() ||
+                  isUpdating
+                }
+              >
+                {isUpdating ? "저장 중..." : "저장"}
+              </SaveButton>
+            </EditActions>
+          </EditForm>
+        ) : (
+          <MeetDescription>{meet.description}</MeetDescription>
+        )}
+
+        {!isEditingMeet && meet.images && meet.images.length > 0 && (
+          <ImagesSection>
+            <SectionTitle>📷 첨부 이미지 ({meet.images.length}개)</SectionTitle>
+            <ImagesGrid>
+              {meet.images.map((image, index) => (
+                <ImageItem key={`image-${image}-${index}`}>
+                  <Image
+                    src={image}
+                    alt={`첨부 이미지 ${index + 1}`}
+                    onClick={() => window.open(image, "_blank")}
+                  />
+                </ImageItem>
+              ))}
+            </ImagesGrid>
+          </ImagesSection>
+        )}
+
+        <ActionSection>
+          <JoinButton
+            variant="primary"
+            onClick={handleJoinClick}
+            disabled={isLoading}
+            $isJoined={isJoined}
+          >
+            {isLoading ? "처리 중..." : isJoined ? "참여 취소" : "참여하기"}
+          </JoinButton>
+        </ActionSection>
+
+        <ParticipantsSection>
+          <SectionTitle>👥 참여자 ({meet.crews?.length || 0}명)</SectionTitle>
+          <ParticipantsList>
+            {meet.crews && meet.crews.length > 0
+              ? meet.crews.map((crew, index) => (
+                  <Participant key={`${crew.userId}-${index}`}>
+                    {crew.profile_image ? (
+                      <ParticipantProfileImage
+                        src={crew.profile_image}
+                        alt={crew.nickname}
+                      />
+                    ) : (
+                      <ParticipantDefaultProfileIcon>
+                        {crew.nickname.charAt(0).toUpperCase()}
+                      </ParticipantDefaultProfileIcon>
                     )}
-                  </div>
-                </CommentHeader>
-                {editingCommentId === comment._id ? (
-                  <EditForm onSubmit={handleSaveComment}>
-                    <EditTextarea
-                      value={editCommentContent}
-                      onChange={(e) => setEditCommentContent(e.target.value)}
-                      placeholder="댓글을 입력해주세요"
-                      disabled={isUpdating}
-                    />
-                    <EditActions>
-                      <CancelButton
-                        type="button"
-                        onClick={handleCancelEditComment}
+                    <span>{crew.nickname}</span>
+                  </Participant>
+                ))
+              : null}
+          </ParticipantsList>
+        </ParticipantsSection>
+
+        <CommentsSection>
+          <SectionTitle>💬 댓글 ({meet.comments?.length || 0}개)</SectionTitle>
+
+          <CommentForm onSubmit={handleCommentSubmit}>
+            <CommentInput
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="댓글을 입력해주세요..."
+              disabled={isSubmittingComment}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!commentText.trim() || isSubmittingComment}
+            >
+              {isSubmittingComment ? "등록 중..." : "등록"}
+            </Button>
+          </CommentForm>
+
+          <CommentsList>
+            {meet.comments && meet.comments.length > 0 ? (
+              meet.comments.map((comment, index) => (
+                <CommentItem
+                  key={comment._id || `comment-${comment.userId}-${index}`}
+                >
+                  <CommentHeader>
+                    <CommentAuthorInfo>
+                      {renderProfileImage(
+                        comment.profile_image,
+                        comment.nickname,
+                        "small"
+                      )}
+                      <CommentAuthor>{comment.nickname}</CommentAuthor>
+                    </CommentAuthorInfo>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <CommentDate>{formatDate(comment.createdAt)}</CommentDate>
+                      {isCurrentUser(comment.userId) && (
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <EditText onClick={() => handleEditComment(comment)}>
+                            수정하기
+                          </EditText>
+                          <EditText
+                            onClick={() => handleDeleteComment(comment._id)}
+                            style={{ color: "#e74c3c" }}
+                          >
+                            삭제하기
+                          </EditText>
+                        </div>
+                      )}
+                    </div>
+                  </CommentHeader>
+                  {editingCommentId === comment._id ? (
+                    <EditForm onSubmit={handleSaveComment}>
+                      <EditTextarea
+                        value={editCommentContent}
+                        onChange={(e) => setEditCommentContent(e.target.value)}
+                        placeholder="댓글을 입력해주세요"
                         disabled={isUpdating}
-                      >
-                        취소
-                      </CancelButton>
-                      <SaveButton
-                        type="submit"
-                        disabled={!editCommentContent.trim() || isUpdating}
-                      >
-                        {isUpdating ? "저장 중..." : "저장"}
-                      </SaveButton>
-                    </EditActions>
-                  </EditForm>
-                ) : (
-                  <CommentContent>{comment.content}</CommentContent>
-                )}
-              </CommentItem>
-            ))
-          ) : (
-            <EmptyState>
-              <EmptyIcon>💬</EmptyIcon>
-              <EmptyText>
-                아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
-              </EmptyText>
-            </EmptyState>
-          )}
-        </CommentsList>
-      </CommentsSection>
-    </ModalContent>
+                      />
+                      <EditActions>
+                        <CancelButton
+                          type="button"
+                          onClick={handleCancelEditComment}
+                          disabled={isUpdating}
+                        >
+                          취소
+                        </CancelButton>
+                        <SaveButton
+                          type="submit"
+                          disabled={!editCommentContent.trim() || isUpdating}
+                        >
+                          {isUpdating ? "저장 중..." : "저장"}
+                        </SaveButton>
+                      </EditActions>
+                    </EditForm>
+                  ) : (
+                    <CommentContent>{comment.content}</CommentContent>
+                  )}
+                </CommentItem>
+              ))
+            ) : (
+              <EmptyState>
+                <EmptyIcon>💬</EmptyIcon>
+                <EmptyText>
+                  아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
+                </EmptyText>
+              </EmptyState>
+            )}
+          </CommentsList>
+        </CommentsSection>
+      </ModalContent>
+    </Modal>
   );
 };
 

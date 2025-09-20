@@ -407,8 +407,6 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
         total_calories: getTotalCalories(),
       };
 
-      console.log("저장할 데이터:", logData);
-
       // 스토어의 addDietLog 액션 호출
       await addDietLog(logData);
 
@@ -530,13 +528,6 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
                 food_amount: food.amount,
               }));
 
-              console.log(`기존 ${mealType} 식사에 음식 추가:`, {
-                dietLogId: editingDietLog._id,
-                mealId,
-                newFoodData,
-                total_calories: getTotalCalories(),
-              });
-
               await addFoodToMeal(
                 editingDietLog._id,
                 mealId,
@@ -570,22 +561,15 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
           meals: meals,
         };
 
-        console.log("기존 식사 수정 데이터:", updateData);
         await updateDietLog(editingDietLog._id, updateData);
       }
 
       // 새 식사 추가가 있는 경우
       for (const [mealType, foods] of Object.entries(newMeals)) {
-        const newMealTotalCalories = foods.reduce((sum, food) => {
-          const calories = getFoodCalories(food.food_name);
-          return sum + Math.round((calories * food.food_amount) / 100);
-        }, 0);
-
-        console.log(`새 ${mealType} 식사 추가:`, {
-          mealType,
-          foods,
-          newMealTotalCalories,
-        });
+        // const newMealTotalCalories = foods.reduce((sum, food) => {
+        //   const calories = getFoodCalories(food.food_name);
+        //   return sum + Math.round((calories * food.food_amount) / 100);
+        // }, 0);
 
         await addMealToDietLog(
           editingDietLog._id,
@@ -603,7 +587,6 @@ const DietLogModal: React.FC<DietLogModalProps> = ({ onSuccess }) => {
       if (onSuccess) {
         onSuccess();
       }
-      console.log("식단일지 수정/추가 성공");
     } catch (error) {
       console.error("식단일지 수정/추가 실패:", error);
       alert("식단일지 수정/추가에 실패했습니다. 다시 시도해주세요.");
