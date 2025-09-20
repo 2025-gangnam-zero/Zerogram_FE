@@ -254,8 +254,7 @@ export const useMeetStore = create<MeetStoreState & MeetStoreActions>(
           profile_image: rawMeet.profile_image,
         };
 
-        console.log("게시글 수정 응답:", response.data);
-        console.log("수정된 게시글:", updatedMeet);
+        // 게시글 수정 완료
 
         set((state) => ({
           meets: state.meets.map((meet) =>
@@ -330,8 +329,7 @@ export const useMeetStore = create<MeetStoreState & MeetStoreActions>(
           profile_image: rawComment.profile_image,
         };
 
-        console.log("댓글 생성 응답:", response.data);
-        console.log("생성된 댓글:", newComment);
+        // 댓글 생성 완료
 
         set((state) => ({
           meets: state.meets.map((meet) =>
@@ -384,8 +382,7 @@ export const useMeetStore = create<MeetStoreState & MeetStoreActions>(
           profile_image: rawComment.profile_image,
         };
 
-        console.log("댓글 수정 응답:", response.data);
-        console.log("업데이트된 댓글:", updatedComment);
+        // 댓글 수정 완료
 
         set((state) => {
           const newState = {
@@ -411,7 +408,7 @@ export const useMeetStore = create<MeetStoreState & MeetStoreActions>(
             isSubmitting: false,
           };
 
-          console.log("댓글 수정 후 상태:", newState.currentMeet?.comments);
+          // 댓글 수정 후 상태 업데이트 완료
           return newState;
         });
       } catch (error) {

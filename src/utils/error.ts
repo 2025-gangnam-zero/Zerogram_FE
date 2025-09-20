@@ -3,14 +3,7 @@ import { AxiosError } from "axios";
 
 // API 에러 메시지 생성
 export const getApiErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) {
-    // 이미 처리된 에러 메시지가 있다면 그대로 반환
-    if (error.message && !error.message.includes("알 수 없는 오류")) {
-      return error.message;
-    }
-  }
-
-  // Axios 에러인 경우
+  // Axios 에러인 경우 먼저 처리
   if (error && typeof error === "object" && "response" in error) {
     const axiosError = error as AxiosError;
     const status = axiosError.response?.status;
@@ -38,12 +31,24 @@ export const getApiErrorMessage = (error: unknown): string => {
     }
   }
 
+  // 일반 Error인 경우 (이미 처리된 에러 메시지가 있다면 그대로 반환)
+  if (error instanceof Error) {
+    if (error.message && !error.message.includes("알 수 없는 오류")) {
+      return error.message;
+    }
+  }
+
   return ERROR_MESSAGES.API.UNKNOWN;
 };
 
 // 에러 로깅
 export const logError = (context: string, error: unknown): void => {
-  console.error(`[${context}] Error:`, error);
+  // 개발 환경에서만 상세 에러 로깅, 프로덕션에서는 변환된 메시지만 로깅
+  if (process.env.NODE_ENV === "development") {
+    console.error(`[${context}] Error:`, error);
+  } else {
+    console.error(`[${context}] Error:`, getApiErrorMessage(error));
+  }
 };
 
 // 에러 알림 표시

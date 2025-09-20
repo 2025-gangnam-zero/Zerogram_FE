@@ -264,20 +264,9 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
 
       // WorkoutLogPage와 동일한 방식으로 현재 월 설정 및 데이터 로드
       setCurrentMonth: async (year: number, month: number) => {
-        const { currentYear, currentMonth, monthlyLogs } = get();
+        // const { currentYear, currentMonth, monthlyLogs } = get();
 
-        // 임시로 API 호출 강제 실행 (디버깅용)
-        console.log(
-          `${year}년 ${month}월 데이터 강제 로드 (${monthlyLogs.length}개)`
-        );
-
-        console.log(`${year}년 ${month}월 데이터 로드 시작:`, {
-          currentYear,
-          currentMonth,
-          monthlyLogsCount: monthlyLogs.length,
-          requestedYear: year,
-          requestedMonth: month,
-        });
+        // 현재 월 설정 및 데이터 로드
 
         set({
           currentYear: year,
@@ -287,20 +276,10 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         });
 
         try {
-          console.log(
-            `API 호출 시작: getDietLogsByMonthApi(${year}, ${month})`
-          );
           const response = await getDietLogsByMonthApi(year, month);
-          console.log(`API 호출 완료:`, response);
-          console.log(
-            `API 응답 데이터 상세:`,
-            JSON.stringify(response, null, 2)
-          );
 
           // API 응답에서 데이터 추출 및 변환
           let logsArray: DietLogResponse[] = [];
-          console.log("API 응답 데이터 타입:", typeof response.data);
-          console.log("API 응답 데이터 구조:", response.data);
 
           if (
             response.data &&
@@ -344,9 +323,9 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
               };
             });
 
-            console.log("변환된 데이터:", logsArray);
+            // 데이터 변환 완료
           } else {
-            console.log("예상하지 못한 데이터 구조:", response.data);
+            // 예상하지 못한 데이터 구조
           }
 
           // null이나 undefined 값 제거
@@ -357,9 +336,7 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
             isLoading: false,
           });
 
-          console.log(
-            `${year}년 ${month}월 식단 일지 ${filteredLogs.length}개 로드됨`
-          );
+          // 식단 일지 로드 완료
         } catch (error) {
           const errorMessage =
             error instanceof Error
@@ -689,14 +666,6 @@ export const useDietStore = create<DietStoreState & DietStoreActions>()(
         if (state && typeof state.selectedDate === "string") {
           state.selectedDate = new Date(state.selectedDate);
         }
-
-        console.log("dietStore 데이터 복원:", {
-          selectedDate: state?.selectedDate,
-          monthlyLogs: state?.monthlyLogs,
-          monthlyLogsCount: state?.monthlyLogs?.length || 0,
-          currentYear: state?.currentYear,
-          currentMonth: state?.currentMonth,
-        });
       },
     }
   )

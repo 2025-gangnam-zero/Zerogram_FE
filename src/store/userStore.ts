@@ -128,18 +128,15 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
         // localStorage에서 세션 ID를 가져왔으면 즉시 Zustand 스토어에 동기화
         const storeSessionId = get().sessionId;
         if (sessionId !== storeSessionId) {
-          console.log("localStorage에서 세션 ID 동기화:", sessionId);
           set({ sessionId });
         }
       }
 
-      console.log("사용자 정보 조회 시작, 세션 ID:", sessionId);
       set({ isLoading: true, error: null });
 
       const response = await getUserInfoApi();
       const userData = response.data.user;
 
-      console.log("사용자 정보 조회 성공:", userData);
       set({
         isLoading: false,
         id: userData._id,

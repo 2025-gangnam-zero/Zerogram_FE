@@ -269,13 +269,18 @@ const LoginPage: React.FC = () => {
         alert("로그인 정보를 가져올 수 없습니다.");
       }
     } catch (error) {
-      showErrorAlert(
-        `로그인 실패: ${
-          error instanceof Error
-            ? error.message
-            : "알 수 없는 오류가 발생했습니다."
-        }`
-      );
+      // 로그인 실패 시 에러 메시지 처리
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다.";
+
+      // 401 에러인 경우 더 친근한 메시지로 변경
+      if (errorMessage.includes("이메일과 비밀번호를 다시 확인해주세요")) {
+        showErrorAlert("이메일과 비밀번호를 다시 확인해주세요!");
+      } else {
+        showErrorAlert(`로그인 실패: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }

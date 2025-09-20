@@ -17,11 +17,9 @@ export const getDietLogsByMonthApi = async (
   month: number
 ): Promise<ApiResponse<DietLogResponse[]>> => {
   try {
-    console.log(`월별 식단일지 요청: ${year}년 ${month}월`);
     const response = await authApi.get(
       `/users/me/diets?year=${year}&month=${month}`
     );
-    console.log("월별 백엔드 응답 데이터:", response.data);
     return response.data;
   } catch (error) {
     logError("getDietLogsByMonthApi", error);
@@ -238,8 +236,6 @@ export const addMealToDietLogApi = async (
     console.log("새 식사 추가 API 응답:", response.data);
     return response.data;
   } catch (error) {
-    console.error("새 식사 추가 API 에러 상세:", error);
-
     logError("addMealToDietLogApi", error);
     throw new Error(getApiErrorMessage(error));
   }
@@ -277,14 +273,6 @@ export const addFoodToMealApi = async (
     console.log("음식 추가 API 응답:", response.data);
     return response.data;
   } catch (error) {
-    console.error("음식 추가 API 에러 상세:", error);
-    console.error("요청 데이터:", {
-      dietLogId,
-      mealId,
-      foods,
-      total_calories,
-    });
-    console.error("에러 응답:", (error as any).response?.data);
     logError("addFoodToMealApi", error);
     throw new Error(getApiErrorMessage(error));
   }

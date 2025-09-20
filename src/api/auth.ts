@@ -21,13 +21,9 @@ authApi.interceptors.request.use(
   (config) => {
     // 세션ID가 있다면 헤더에 추가
     const sessionId = localStorage.getItem(AUTH_CONSTANTS.SESSION_ID_KEY);
-    console.log("API 요청 인터셉터 - 세션 ID:", sessionId, "URL:", config.url);
 
     if (sessionId) {
       config.headers["x-session-id"] = sessionId;
-      console.log("Authorization 헤더 설정:", `Bearer ${sessionId}`);
-    } else {
-      console.log("세션 ID가 없어 Authorization 헤더를 설정하지 않음");
     }
     return config;
   },
