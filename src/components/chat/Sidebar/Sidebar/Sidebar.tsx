@@ -3,10 +3,10 @@ import styles from "./Sidebar.module.css";
 import {
   SidebarTabs,
   SidebarTabKey,
-  SidebarListItemData,
   SidebarList,
   SearchBar,
 } from "../../../chat";
+import { SidebarListItemData } from "../../../../types";
 
 // 위 SidebarListItemData 타입에 맞춘 예시(mock) 데이터
 

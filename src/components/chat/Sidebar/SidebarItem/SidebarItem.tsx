@@ -2,18 +2,9 @@ import { Link } from "react-router-dom";
 import styles from "./SidebarItem.module.css";
 import { Users, Globe, Clock } from "lucide-react";
 import { formatTimeKo } from "../../../../utils";
+import { SidebarListItemData } from "../../../../types";
 
 export type SidebarVariant = "mine" | "public";
-
-export type SidebarListItemData = {
-  id: string;
-  roomName: string;
-  imageUrl?: string;
-  memberCount?: number;
-  lastMessage?: string; // mine 전용
-  lastMessageAt?: string; // mine 전용 (ISO or 포맷 문자열)
-  unreadCount?: number; // mine 전용
-};
 
 type Props = {
   item: SidebarListItemData;
