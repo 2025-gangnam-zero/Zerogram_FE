@@ -89,7 +89,6 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
 
       // 이미 같은 년/월의 데이터가 있으면 fetch하지 않음
       if (lastFetchedYear === year && lastFetchedMonth === month) {
-        console.log(`${year}년 ${month}월 데이터가 이미 있음`);
         set({ currentYear: year, currentMonth: month });
         return;
       }

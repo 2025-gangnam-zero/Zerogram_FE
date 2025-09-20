@@ -562,7 +562,6 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
                     variant="outline"
                     size="small"
                     onClick={() => {
-                      console.log("편집 모드 활성화:", detail._id);
                       setEditingDetailId(detail._id);
                     }}
                   >
@@ -1198,7 +1197,6 @@ const WorkoutDetailModal: React.FC<WorkoutDetailModalProps> = ({
           <Button
             variant="outline"
             onClick={() => {
-              console.log("새로 추가 모드 활성화");
               setIsAddingNew(true);
             }}
             disabled={isAddingNew || editingDetailId !== null}

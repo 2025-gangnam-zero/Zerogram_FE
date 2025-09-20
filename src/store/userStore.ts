@@ -79,28 +79,23 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
     try {
       // 이미 로딩 중이면 중복 호출 방지
       if (get().isLoading) {
-        console.log("이미 사용자 정보를 가져오는 중입니다.");
         return;
       }
 
       // 이미 사용자 정보가 있으면 중복 호출 방지
       if (get().nickname && get().id) {
-        console.log("이미 사용자 정보가 있습니다:", get().nickname);
         return;
       }
 
       // 세션 ID 확인 (localStorage 우선, Zustand 스토어 차선)
       let sessionId = localStorage.getItem(AUTH_CONSTANTS.SESSION_ID_KEY);
-      console.log("fetchUserInfo 시작 - localStorage 세션 ID:", sessionId);
 
       if (!sessionId) {
         // localStorage에 없으면 Zustand 스토어에서 확인
         const storeSessionId = get().sessionId;
-        console.log("fetchUserInfo - Zustand 스토어 세션 ID:", storeSessionId);
 
         if (storeSessionId) {
           sessionId = storeSessionId;
-          console.log("Zustand 스토어에서 세션 ID 사용:", sessionId);
         } else {
           // authStore에서도 확인
           try {
@@ -113,7 +108,6 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
               );
               if (authSessionId) {
                 sessionId = authSessionId;
-                console.log("authStore에서 세션 ID 동기화:", sessionId);
               }
             }
           } catch (error) {

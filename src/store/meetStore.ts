@@ -206,9 +206,6 @@ export const useMeetStore = create<MeetStoreState & MeetStoreActions>(
           profile_image: rawMeet.profile_image,
         };
 
-        console.log("게시글 생성 응답:", response.data);
-        console.log("생성된 게시글:", newMeet);
-
         set((state) => ({
           meets: [newMeet, ...state.meets],
           isSubmitting: false,

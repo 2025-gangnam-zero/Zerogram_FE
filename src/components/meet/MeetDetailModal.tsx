@@ -739,7 +739,6 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
             onExistingImagesChange={handleEditExistingImagesChange}
             onPreviewImagesChange={(previewUrls) => {
               // 미리보기 URL들은 별도로 관리 (서버 전송 안함)
-              console.log("미리보기 이미지들:", previewUrls);
             }}
             maxImages={10}
             disabled={isUpdating}

@@ -48,7 +48,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         try {
           // 백엔드에 로그아웃 요청
           await logoutApi();
-          console.log("백엔드 로그아웃 요청 성공");
         } catch (error) {
           console.error("백엔드 로그아웃 요청 실패:", error);
           // 백엔드 요청이 실패해도 로컬 상태는 정리
@@ -144,7 +143,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             const { clearUser } =
               require("./userStore").useUserStore.getState();
             clearUser();
-            console.log("authStore에서 userStore 정리 완료");
           } catch (error) {
             console.warn("userStore 정리 실패:", error);
           }

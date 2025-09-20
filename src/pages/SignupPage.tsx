@@ -168,7 +168,6 @@ const SignupPage: React.FC = () => {
 
   const handleGoogleSignup = () => {
     // TODO: 구글 OAuth 로그인 구현
-    console.log("구글 회원가입");
   };
 
   const handleKakaoSignup = () => {
@@ -176,7 +175,6 @@ const SignupPage: React.FC = () => {
       OAUTH_CONFIG.KAKAO;
     const kakaoAuthUrl = `${AUTH_URL}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&state=${STATE}`;
     window.location.href = kakaoAuthUrl;
-    console.log("카카오 회원가입");
   };
 
   return (
