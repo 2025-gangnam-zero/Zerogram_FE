@@ -14,6 +14,7 @@ import MeetDetailModal from "../components/meet/MeetDetailModal";
 import { DietLogResponse } from "../types/diet";
 import { WorkoutStatePopulated } from "../types";
 import { Meet } from "../types/meet";
+import { useNavigate } from "react-router-dom";
 
 const HomeContainer = styled.div`
   padding: 20px;
@@ -194,6 +195,8 @@ const HomePage: React.FC = () => {
     setSelectedMeet(null);
   };
 
+  const navigate = useNavigate();
+
   return (
     <HomeContainer>
       <PageTitle>🏠 홈</PageTitle>
@@ -201,7 +204,9 @@ const HomePage: React.FC = () => {
       <GridContainer>
         {/* 최근 식단일지 */}
         <Section>
-          <SectionTitle>🍽️ 최근 식단일지</SectionTitle>
+          <SectionTitle onClick={() => navigate("/diet-log")}>
+            🍽️ 최근 식단일지
+          </SectionTitle>
           <CardsContainer>
             {isDietStoreModalOpen ? (
               <LoadingState>데이터를 불러오는 중...</LoadingState>
@@ -221,7 +226,9 @@ const HomePage: React.FC = () => {
 
         {/* 최근 운동일지 */}
         <Section>
-          <SectionTitle>💪 최근 운동일지</SectionTitle>
+          <SectionTitle onClick={() => navigate("/workout")}>
+            💪 최근 운동일지
+          </SectionTitle>
           <CardsContainer>
             {recentWorkouts.length > 0 ? (
               recentWorkouts.map((workout) => (
@@ -239,7 +246,9 @@ const HomePage: React.FC = () => {
 
         {/* 최근 모집게시판 */}
         <Section>
-          <SectionTitle>👥 최근 모집게시판</SectionTitle>
+          <SectionTitle onClick={() => navigate("/meet")}>
+            👥 최근 모집게시판
+          </SectionTitle>
           <CardsContainer>
             {isMeetLoading ? (
               <LoadingState>데이터를 불러오는 중...</LoadingState>
