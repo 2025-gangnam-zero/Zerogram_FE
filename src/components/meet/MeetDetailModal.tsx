@@ -557,13 +557,7 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
 
     setIsUpdating(true);
     try {
-      console.log("게시글 수정 데이터:", {
-        title: editMeetTitle.trim(),
-        description: editMeetDescription.trim(),
-        images: editImages, // 유지할 이미지들
-        newImages: editNewImages, // 새로 추가할 이미지들
-        existingImages: editExistingImages, // 삭제할 이미지들
-      });
+      // 게시글 수정 데이터 준비 완료
 
       await onUpdateMeet?.(meet._id, {
         title: editMeetTitle.trim(),
@@ -628,12 +622,7 @@ const MeetDetailModal: React.FC<MeetDetailModalProps> = ({
       );
       setEditExistingImages(deletedImages);
 
-      console.log("이미지 변경:", {
-        원본이미지: meet.images,
-        선택된이미지: newImages,
-        실제이미지: actualImages,
-        삭제할이미지: deletedImages,
-      });
+      // 이미지 변경 처리 완료
     }
   };
 

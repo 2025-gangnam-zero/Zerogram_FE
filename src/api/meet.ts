@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_CONFIG } from "../constants";
 import { Meet, Comment, MeetFormData } from "../types/meet";
+import { getApiErrorMessage, logError } from "../utils";
 
 // API 응답 타입 정의
 interface ApiResponse<T> {
@@ -61,8 +62,8 @@ export const getMeetListApi = async (params: {
     });
     return response.data;
   } catch (error) {
-    console.error("모집글 목록 조회 실패:", error);
-    throw error;
+    logError("getMeetsApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -76,8 +77,8 @@ export const getMeetApi = async (
     });
     return response.data;
   } catch (error) {
-    console.error("모집글 상세 조회 실패:", error);
-    throw error;
+    logError("getMeetByIdApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -104,8 +105,8 @@ export const createMeetApi = async (
     });
     return response.data;
   } catch (error) {
-    console.error("모집글 생성 실패:", error);
-    throw error;
+    logError("createMeetApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -150,8 +151,8 @@ export const updateMeetApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("모집글 수정 실패:", error);
-    throw error;
+    logError("updateMeetApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -168,8 +169,8 @@ export const deleteMeetApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("모집글 삭제 실패:", error);
-    throw error;
+    logError("deleteMeetApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -186,8 +187,8 @@ export const createCommentApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("댓글 생성 실패:", error);
-    throw error;
+    logError("createCommentApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -205,8 +206,8 @@ export const updateCommentApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("댓글 수정 실패:", error);
-    throw error;
+    logError("updateCommentApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -222,8 +223,8 @@ export const deleteCommentApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("댓글 삭제 실패:", error);
-    throw error;
+    logError("deleteCommentApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };
 
@@ -239,7 +240,7 @@ export const toggleCrewApi = async (
     );
     return response.data;
   } catch (error) {
-    console.error("참여자 토글 실패:", error);
-    throw error;
+    logError("toggleCrewApi", error);
+    throw new Error(getApiErrorMessage(error));
   }
 };

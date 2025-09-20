@@ -280,11 +280,9 @@ export const getWorkoutsByMonthApi = async (
   month: number
 ): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
   try {
-    console.log(`월별 운동일지 요청: ${year}년 ${month}월`);
     const response = await authApi.get(
       `/users/me/workouts?year=${year}&month=${month}`
     );
-    console.log("월별 백엔드 응답 데이터:", response.data);
     return response.data;
   } catch (error) {
     logError("getWorkoutsByMonthApi", error);

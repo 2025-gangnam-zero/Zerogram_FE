@@ -263,21 +263,14 @@ const DietLogPage: React.FC = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
-    console.log("DietLogPage 초기 로드:", { year, month });
+    // 초기 로드
     setCurrentMonth(year, month);
   }, [setCurrentMonth]);
 
   // 선택된 날짜의 식단일지 필터링 (WorkoutLogPage와 동일한 방식)
   const selectedDateDietLog = getDietLogByDate(selectedDate);
 
-  // 디버깅: selectedDateDietLog 데이터 구조 확인
-  console.log("selectedDateDietLog:", selectedDateDietLog);
-  if (selectedDateDietLog) {
-    console.log(
-      "selectedDateDietLog 상세:",
-      JSON.stringify(selectedDateDietLog, null, 2)
-    );
-  }
+  // 선택된 날짜의 식단일지 확인
 
   // 달력에서 월 변경 시 새로운 데이터 로드 (WorkoutLogPage와 동일한 방식)
   const handleActiveStartDateChange = ({

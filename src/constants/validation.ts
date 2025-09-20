@@ -5,8 +5,8 @@ export const VALIDATION_RULES = {
     MESSAGE: "올바른 이메일 형식을 입력해주세요",
   },
   PASSWORD: {
-    MIN_LENGTH: 8,
-    MESSAGE: "비밀번호는 8자 이상이어야 합니다",
+    MIN_LENGTH: 6,
+    MESSAGE: "비밀번호는 6자 이상이어야 합니다",
   },
   NICKNAME: {
     MIN_LENGTH: 2,
@@ -28,7 +28,7 @@ export const ERROR_MESSAGES = {
   },
   API: {
     BAD_REQUEST: "잘못된 요청입니다. 입력 정보를 확인해주세요.",
-    UNAUTHORIZED: "인증이 필요합니다. 다시 로그인해주세요.",
+    UNAUTHORIZED: "이메일과 비밀번호를 다시 확인해주세요!",
     FORBIDDEN: "접근 권한이 없습니다.",
     NOT_FOUND: "요청한 정보를 찾을 수 없습니다.",
     CONFLICT: "이미 존재하는 정보입니다.",
