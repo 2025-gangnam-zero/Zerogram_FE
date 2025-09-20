@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import { ChatMessage } from "../../types";
 
 let socket: Socket | null = null;
 
@@ -67,3 +68,29 @@ export const getSocket = () => {
 export const updateSessionId = (next?: string | null) => {
   if (!socket) return;
 };
+
+export function joinRoom(roomId: string) {
+  getSocket().emit("room:join", { roomId });
+}
+
+export function leaveRoom(roomId: string) {
+  getSocket().emit("room:leave", { roomId });
+}
+
+export function sendMessage(payload: { roomId: string; text: string }) {
+  return new Promise<{
+    ok: boolean;
+    serverId?: string;
+    createdAt?: string;
+    error?: string;
+  }>((resolve) => {
+    getSocket().emit("message:send", payload, (ack: any) => resolve(ack));
+  });
+}
+
+// 수신 편의: 구독/해제 함수 반환
+export function onNewMessage(handler: (m: ChatMessage) => void) {
+  const s = getSocket();
+  s.on("message:new", handler);
+  return () => s.off("message:new", handler);
+}
