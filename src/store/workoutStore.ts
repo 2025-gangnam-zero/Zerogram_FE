@@ -89,7 +89,6 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
 
       // 이미 같은 년/월의 데이터가 있으면 fetch하지 않음
       if (lastFetchedYear === year && lastFetchedMonth === month) {
-        console.log(`${year}년 ${month}월 데이터가 이미 있음`);
         set({ currentYear: year, currentMonth: month });
         return;
       }
@@ -128,9 +127,7 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
           lastFetchedMonth: month,
         });
 
-        console.log(
-          `${year}년 ${month}월 운동일지 ${workoutsArray.length}개 로드됨`
-        );
+        // 운동일지 로드 완료
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -149,8 +146,6 @@ export const useWorkoutStore = create<WorkoutStoreState & WorkoutStoreActions>(
     getWorkoutsByDate: (date: Date) => {
       const { workouts } = get();
       const targetDateStr = formatDateToLocal(date);
-
-      console.log(`선택된 날짜: ${targetDateStr}`);
 
       return workouts.filter((workout) => {
         // 백엔드에서 제공하는 date 필드 사용 (우선)

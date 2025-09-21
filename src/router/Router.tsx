@@ -11,7 +11,7 @@ import SignupPage from "../pages/SignupPage";
 import MyPage from "../pages/MyPage";
 import WorkoutLogPage from "../pages/WorkoutLogPage";
 import DietLogPage from "../pages/DietLogPage";
-
+import MeetPage from "../pages/MeetPage";
 import { useAuthStore } from "../store/authStore";
 import { ChatIndex, ChatPage } from "../pages/chat";
 import { ChatSection } from "../components/chat/ChatSection";
@@ -53,7 +53,7 @@ export default function Router() {
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/workout" element={<WorkoutLogPage />} />
             <Route path="/diet-log" element={<DietLogPage />} />
-
+            <Route path="/meet" element={<MeetPage />} />
             <Route path="/chat" element={<ChatPage />}>
               <Route index element={<ChatIndex />} />
               <Route path=":roomid" element={<ChatSection />} />

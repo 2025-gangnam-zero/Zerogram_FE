@@ -33,7 +33,6 @@ export const createWorkoutApi = async (
     if (selectedDate) {
       const dateString = formatDateForAPI(selectedDate);
       url += `?date=${dateString}`;
-      console.log(`운동일지 생성 요청 - 선택된 날짜: ${dateString}`);
     }
 
     const response = await authApi.post(url, workoutData);
@@ -50,7 +49,6 @@ export const getUserWorkoutsApi = async (): Promise<
 > => {
   try {
     const response = await authApi.get("/users/me/workouts");
-    console.log("백엔드 응답 데이터:", response.data); // 디버깅용
     return response.data;
   } catch (error) {
     logError("getUserWorkoutsApi", error);
@@ -63,8 +61,6 @@ export const getWorkoutsByDateApi = async (
   date: string
 ): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
   try {
-    console.log("요청된 날짜:", date); // 디버깅용
-
     const response = await getUserWorkoutsApi();
 
     // 응답 데이터가 배열인지 확인
@@ -86,24 +82,16 @@ export const getWorkoutsByDateApi = async (
       }
     }
 
-    console.log("추출된 운동일지 배열:", workoutsArray); // 디버깅용
-
     // 날짜별 필터링
     const filteredWorkouts = workoutsArray.filter((workout) => {
       const workoutDate = new Date(workout.createdAt)
         .toISOString()
         .split("T")[0];
 
-      console.log(
-        `운동일지 날짜: ${workoutDate}, 요청 날짜: ${date}, 일치: ${
-          workoutDate === date
-        }`
-      ); // 디버깅용
+      // 디버깅용
 
       return workoutDate === date;
     });
-
-    console.log("필터링 결과:", filteredWorkouts); // 디버깅용
 
     return {
       success: true,
@@ -280,11 +268,9 @@ export const getWorkoutsByMonthApi = async (
   month: number
 ): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
   try {
-    console.log(`월별 운동일지 요청: ${year}년 ${month}월`);
     const response = await authApi.get(
       `/users/me/workouts?year=${year}&month=${month}`
     );
-    console.log("월별 백엔드 응답 데이터:", response.data);
     return response.data;
   } catch (error) {
     logError("getWorkoutsByMonthApi", error);

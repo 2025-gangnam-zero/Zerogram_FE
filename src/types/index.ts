@@ -3,4 +3,5 @@ export * from "./user";
 export * from "./workout";
 export * from "./common";
 export * from "./diet";
+export * from "./meet";
 export * from "./chat";

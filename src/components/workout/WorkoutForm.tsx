@@ -158,6 +158,21 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // selectedDate가 변경될 때마다 폼 데이터 초기화
+  React.useEffect(() => {
+    setWorkoutSessions([
+      {
+        id: Date.now().toString(),
+        workout_name: "running",
+        duration: 0,
+        calories: 0,
+        feedback: "",
+        distance: 0,
+        avg_pace: "",
+      },
+    ]);
+  }, [selectedDate]);
+
   // 새 운동 세션 추가
   const addWorkoutSession = () => {
     setWorkoutSessions([
@@ -366,9 +381,6 @@ const WorkoutForm: React.FC<WorkoutFormProps> = ({
     try {
       // 선택된 날짜와 함께 API 호출
       await createWorkoutApi({ details: workoutDetails }, selectedDate);
-      console.log(
-        `운동일지 생성 완료 - 날짜: ${selectedDate.toLocaleDateString()}`
-      );
       onSuccess();
     } catch (error) {
       console.error("운동일지 생성 실패:", error);
