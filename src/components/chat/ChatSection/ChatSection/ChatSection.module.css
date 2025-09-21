@@ -4,3 +4,7 @@
   height: 100%;
   min-height: 0;
 }
+
+.dropHost {
+  position: relative; /* ✅ DragAndDrop 오버레이 기준 */
+}

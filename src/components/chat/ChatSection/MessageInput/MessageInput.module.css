@@ -1,10 +1,12 @@
 .wrapper {
   border-top: 1px solid #e5e7eb;
+}
+
+.inputRow {
   padding: 12px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
-  /* position: fixed/sticky 불필요 — 항상 하단 행 */
 }
 
 .textarea {

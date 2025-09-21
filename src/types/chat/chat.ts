@@ -1,3 +1,11 @@
+export type PreviewItem = {
+  id: string;
+  url: string;
+  name: string;
+  kind: "image" | "video" | "other";
+  file: File;
+};
+
 export type ChatUser = {
   userId: string;
   nickname: string;

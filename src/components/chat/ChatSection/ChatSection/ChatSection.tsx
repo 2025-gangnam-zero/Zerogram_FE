@@ -1,9 +1,14 @@
 // src/components/chat/ChatSection/ChatSection.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChatSection.module.css";
-import { ChatHeader, MessageInput, MessageList } from "../../../chat";
+import {
+  ChatHeader,
+  DragAndDrop,
+  MessageInput,
+  MessageList,
+} from "../../../chat";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChatMessage } from "../../../../types";
+import { ChatMessage, PreviewItem } from "../../../../types";
 import {
   eventBus,
   joinRoom,
@@ -21,12 +26,16 @@ import {
 export const ChatSection = () => {
   const navigate = useNavigate();
   const { roomid } = useParams();
+
+  const previewHostRef = useRef<HTMLDivElement | null>(null);
+  // ✅ 원본 파일 보관소: id -> File
+  const filesRef = useRef<Map<string, File>>(new Map());
+
   const [room, setRoom] = useState<any>(null); // room 안에 roomName/notice/myRole 포함
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
-
-  // ✅ 공지 "표시 여부"는 로컬 상태로만 관리 (서버 상태와 분리)
-  const [noticeVisible, setNoticeVisible] = useState<boolean>(false);
+  const [noticeVisible, setNoticeVisible] = useState<boolean>(false); // 공지 로컬 표시
+  const [previews, setPreviews] = useState<PreviewItem[]>([]); // 미리보기(렌더 전용)
 
   // 방 정보 로드
   useEffect(() => {
@@ -97,13 +106,73 @@ export const ChatSection = () => {
     };
   }, [roomid]);
 
-  // 전송
+  // ✅ 파일 → 프리뷰 삽입 + filesRef에 원본 File 저장
+  const addFilesToPreview = (files: File[]) => {
+    const kindOf = (f: File): PreviewItem["kind"] => {
+      if (f.type.startsWith("image/")) return "image";
+      if (f.type === "video/mp4") return "video";
+      return "other";
+    };
+
+    setPreviews((prev) => {
+      const remain = Math.max(0, 4 - prev.length);
+      if (remain <= 0) return prev;
+
+      const sliced = files.slice(0, remain);
+      const created: PreviewItem[] = sliced.map((f) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        // 원본 파일은 렌더 상태에 넣지 않고 ref 맵에 보관
+        filesRef.current.set(id, f);
+
+        return {
+          id,
+          url: URL.createObjectURL(f),
+          name: f.name,
+          kind: kindOf(f),
+          file: f,
+        };
+      });
+
+      return [...prev, ...created];
+    });
+  };
+
+  // ✅ 프리뷰 제거 시: ObjectURL 해제 + filesRef에서 원본 제거
+  const removePreview = (id: string) => {
+    setPreviews((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((p) => p.id !== id);
+    });
+    filesRef.current.delete(id);
+  };
+
+  // 전송(여기서는 텍스트만 소켓, 파일은 서버 업로드 후 메타만 전송 권장)
   const handleSend = async (text: string) => {
     if (!roomid) return;
     try {
       setSending(true);
-      const ack = await sendMessage({ roomId: roomid, text });
+
+      // ✅ 미리보기 순서대로 원본 파일 수집 (이후 서버 HTTP 업로드에 사용)
+      const filesToUpload: File[] = previews
+        .map((p) => filesRef.current.get(p.id))
+        .filter((f): f is File => !!f);
+
+      // TODO:
+      // 1) filesToUpload를 서버 HTTP 업로드 API로 전송 → attachments 메타 수신
+      // const { attachments } = await uploadFilesApi(filesToUpload);
+      // 2) 소켓으로 텍스트 + attachments만 전송
+      const ack = await sendMessage({
+        roomId: roomid,
+        text,
+        // attachments,
+      });
       if (!ack.ok) console.error("send failed:", ack.error);
+
+      // 성공 시 정리
+      previews.forEach((p) => URL.revokeObjectURL(p.url));
+      setPreviews([]);
+      filesRef.current.clear();
     } finally {
       setSending(false);
     }
@@ -151,31 +220,56 @@ export const ChatSection = () => {
     [room?.roomName, roomid]
   );
 
+  // 언마운트 시 ObjectURL/파일 정리
+  useEffect(() => {
+    return () => {
+      previews.forEach((p) => URL.revokeObjectURL(p.url));
+      filesRef.current.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 렌더링에 사용할 값
   const showNotice = noticeVisible; // ← 로컬 표시 상태
   const noticeText = room?.notice?.text ?? ""; // ← 서버에 저장된 텍스트
   const canManageNotice = ["owner", "admin"].includes(room?.myRole);
 
   return (
-    <section className={styles.section}>
-      <ChatHeader
-        roomId={roomid!}
-        title={title}
-        noticeEnabled={showNotice}
-        onToggleNotice={handleToggleNotice} // 로컬 토글만
-        canManageNotice={canManageNotice}
-        notice={room?.notice ?? null}
-        onNoticeUpdated={handleNoticeUpdated}
-        onLeaveRoom={handleLeaveRoom}
-      />
+    <DragAndDrop
+      onDropFiles={addFilesToPreview}
+      accept={["image/*", "video/mp4"]}
+      showOverlay
+      className={styles.dropHost}
+      // 필요 시 ignoreRef={previewHostRef} 등을 넘겨 내부 DnD 제외 가능
+    >
+      <section className={styles.section}>
+        <ChatHeader
+          roomId={roomid!}
+          title={title}
+          noticeEnabled={showNotice}
+          onToggleNotice={handleToggleNotice} // 로컬 토글만
+          canManageNotice={canManageNotice}
+          notice={room?.notice ?? null}
+          onNoticeUpdated={handleNoticeUpdated}
+          onLeaveRoom={handleLeaveRoom}
+        />
 
-      <MessageList
-        showNotice={showNotice}
-        noticeText={noticeText}
-        messages={messages}
-      />
+        <MessageList
+          showNotice={showNotice}
+          noticeText={noticeText}
+          messages={messages}
+        />
 
-      <MessageInput onSend={handleSend} disabled={sending} />
-    </section>
+        <div ref={previewHostRef}>
+          <MessageInput
+            onSend={handleSend}
+            disabled={sending}
+            previews={previews}
+            onRemovePreview={removePreview}
+            onReorder={setPreviews}
+          />
+        </div>
+      </section>
+    </DragAndDrop>
   );
 };
