@@ -5,3 +5,4 @@ export * from "./MessageItem";
 export * from "./MessageList";
 export * from "./MoreMenu";
 export * from "./NoticeBanner";
+export * from "./NoticeManageModal";

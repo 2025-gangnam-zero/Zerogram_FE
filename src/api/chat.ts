@@ -59,6 +59,19 @@ export const updateRoomNoticeApi = async (
   }
 };
 
+// 공지 삭제 (owner/admin)
+export const deleteRoomNoticeApi = async (
+  roomId: string
+): Promise<ApiResponse<{ notice: RoomNotice | null }>> => {
+  try {
+    const res = await authApi.delete(`/rooms/${roomId}/notice`);
+    return res.data;
+  } catch (error) {
+    logError("deleteRoomNoticeApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
 // ===== Membership / Read =====
 
 // 멤버 목록

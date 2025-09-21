@@ -1,0 +1,153 @@
+/* src/components/chat/ChatHeader/NoticeManageModal.module.css */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45); /* 약한 딤 */
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  backdrop-filter: saturate(110%) blur(2px);
+}
+
+.modal {
+  width: min(560px, 92vw);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  animation: scaleIn 140ms ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: translateY(4px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827; /* gray-900 */
+}
+
+.body {
+  padding: 16px 20px 8px;
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.rowColumn {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.label {
+  font-size: 13px;
+  color: #374151; /* gray-700 */
+  padding-top: 6px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 96px;
+  max-height: 50vh;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  outline: none;
+  background: #fff;
+}
+
+.textarea:focus {
+  border-color: #93c5fd; /* blue-300 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* ring */
+}
+
+.footer {
+  padding: 14px 20px 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid #f3f4f6; /* gray-100 */
+}
+
+/* 버튼 베이스 */
+.footer button {
+  appearance: none;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.06s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 취소 */
+.cancelBtn {
+  background: #f3f4f6; /* gray-100 */
+  color: #374151; /* gray-700 */
+}
+.cancelBtn:hover:not(:disabled) {
+  background: #e5e7eb; /* gray-200 */
+}
+
+/* 삭제 (위험) */
+.deleteBtn {
+  background: #fee2e2; /* red-100 */
+  color: #b91c1c; /* red-700 */
+}
+.deleteBtn:hover:not(:disabled) {
+  background: #fecaca; /* red-200 */
+}
+
+/* 저장 (강조) */
+.saveBtn {
+  background: #2563eb; /* blue-600 */
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+.saveBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.32);
+}
+
+/* 모바일 대응 */
+@media (max-width: 420px) {
+  .row,
+  .rowColumn {
+    grid-template-columns: 1fr;
+  }
+  .label {
+    padding-top: 0;
+  }
+}
