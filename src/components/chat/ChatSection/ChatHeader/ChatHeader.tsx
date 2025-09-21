@@ -3,6 +3,7 @@ import { useState } from "react";
 import styles from "./ChatHeader.module.css";
 import type { RoomNotice } from "../../../../types";
 import { NoticeManageModal } from "../NoticeManageModal";
+import { MoreMenu } from "../MoreMenu";
 
 type Props = {
   roomId: string;
@@ -14,6 +15,7 @@ type Props = {
   canManageNotice?: boolean; // owner/admin이면 true
   notice?: RoomNotice | null;
   onNoticeUpdated?: (next: RoomNotice | null) => void; // 저장/삭제 후 호출
+  onLeaveRoom?: () => void;
 };
 
 export const ChatHeader = ({
@@ -24,6 +26,7 @@ export const ChatHeader = ({
   canManageNotice = false,
   notice = null,
   onNoticeUpdated,
+  onLeaveRoom,
 }: Props) => {
   const [open, setOpen] = useState(false);
 
@@ -68,6 +71,11 @@ export const ChatHeader = ({
             )}
           </>
         )}
+        <MoreMenu
+          onAction={(a) => {
+            if (a === "leave") onLeaveRoom?.();
+          }}
+        />
       </div>
     </header>
   );

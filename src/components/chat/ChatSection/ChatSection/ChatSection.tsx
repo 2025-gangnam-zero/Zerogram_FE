@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./ChatSection.module.css";
 import { ChatHeader, MessageInput, MessageList } from "../../../chat";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ChatMessage } from "../../../../types";
 import {
+  eventBus,
   joinRoom,
-  leaveRoom,
+  leaveRoom as leaveSocketRoom,
   onNewMessage,
   sendMessage,
 } from "../../../../utils";
@@ -14,10 +15,11 @@ import {
   commitReadApi,
   getMessagesApi,
   getRoomApi,
-  // ⚠️ 공지 표시 토글은 서버 호출 금지 → updateRoomNoticeApi 제거
+  leaveRoomApi,
 } from "../../../../api/chat";
 
 export const ChatSection = () => {
+  const navigate = useNavigate();
   const { roomid } = useParams();
   const [room, setRoom] = useState<any>(null); // room 안에 roomName/notice/myRole 포함
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -91,7 +93,7 @@ export const ChatSection = () => {
 
     return () => {
       off();
-      leaveRoom(roomid);
+      leaveSocketRoom(roomid);
     };
   }, [roomid]);
 
@@ -129,6 +131,21 @@ export const ChatSection = () => {
     });
   };
 
+  const handleLeaveRoom = async () => {
+    if (!roomid) return;
+    if (!window.confirm("이 방을 나가시겠어요?")) return;
+
+    try {
+      await leaveRoomApi(roomid); // ✅ 서버에 탈퇴 요청
+      leaveSocketRoom(roomid); // ✅ 소켓 룸 이탈
+      eventBus.emit("rooms:refresh");
+      navigate("/chat"); // ✅ 목록 화면 등으로 이동
+    } catch (e) {
+      console.error("[ChatSection] leaveRoomApi failed:", e);
+      alert("나가기에 실패했습니다.");
+    }
+  };
+
   const title = useMemo(
     () => room?.roomName || `방 ${roomid ?? ""}`,
     [room?.roomName, roomid]
@@ -149,6 +166,7 @@ export const ChatSection = () => {
         canManageNotice={canManageNotice}
         notice={room?.notice ?? null}
         onNoticeUpdated={handleNoticeUpdated}
+        onLeaveRoom={handleLeaveRoom}
       />
 
       <MessageList
