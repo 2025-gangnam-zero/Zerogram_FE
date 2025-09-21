@@ -1,7 +1,8 @@
 import { ChatMessage, ChatMessageDTO } from "../../types";
 
 export const toChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
-  id: dto.serverId,
+  id: dto.id,
+  serverId: dto.serverId,
   roomId: dto.roomId,
   authorId: dto.authorId,
   author: dto.author,

@@ -14,6 +14,7 @@ export type Attachment = {
 };
 
 export type ChatMessageDTO = {
+  id: string;
   serverId: string;
   roomId: string;
   authorId: string;
@@ -26,7 +27,8 @@ export type ChatMessageDTO = {
 };
 
 export type ChatMessage = {
-  id: string; // = serverId 매핑
+  id: string; // messageId
+  serverId: string;
   roomId: string;
   authorId: string;
   author: ChatUser;
