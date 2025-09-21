@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./SidebarItem.module.css";
-import { Users, Globe, Clock } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 import { formatTimeKo } from "../../../../utils";
 import { SidebarListItemData } from "../../../../types";
 
@@ -9,10 +9,9 @@ export type SidebarVariant = "mine" | "public";
 type Props = {
   item: SidebarListItemData;
   selected?: boolean;
-  variant: SidebarVariant;
 };
 
-export const SidebarItem = ({ item, selected = false, variant }: Props) => {
+export const SidebarItem = ({ item, selected = false }: Props) => {
   const {
     id,
     roomName,
@@ -49,17 +48,10 @@ export const SidebarItem = ({ item, selected = false, variant }: Props) => {
                   {memberCount}
                 </span>
               )}
-
-              {variant === "public" && (
-                <span className={styles.publicBadge}>
-                  <Globe className={styles.badgeIcon} aria-hidden />
-                  공개
-                </span>
-              )}
             </div>
 
             {/* mine일 때만 시간(우측) */}
-            {variant === "mine" && lastMessageAt && (
+            {lastMessageAt && (
               <span className={styles.topTime} title={lastMessageAt}>
                 <Clock className={styles.timeIcon} aria-hidden />
                 {formatTimeKo(lastMessageAt)}
@@ -68,7 +60,7 @@ export const SidebarItem = ({ item, selected = false, variant }: Props) => {
           </div>
 
           {/* 중앙: 마지막 메시지(좌) — 읽지않음(우) */}
-          {variant === "mine" && (
+          {
             <div className={styles.metaRow}>
               <span className={styles.lastMsg} title={lastMessage}>
                 {lastMessage ?? ""}
@@ -77,7 +69,7 @@ export const SidebarItem = ({ item, selected = false, variant }: Props) => {
                 <span className={styles.unread}>{unreadCount}</span>
               )}
             </div>
-          )}
+          }
           {/* ⬇️ 하단 statsRow는 제거(이제 상단으로 올렸기 때문) */}
         </div>
       </Link>

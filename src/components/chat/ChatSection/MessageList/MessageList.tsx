@@ -7,7 +7,6 @@ type Props = {
   showNotice?: boolean;
   noticeText?: string;
   messages: ChatMessage[];
-  currentUserId: string;
 };
 
 export const MessageList = ({ showNotice, noticeText, messages }: Props) => {
