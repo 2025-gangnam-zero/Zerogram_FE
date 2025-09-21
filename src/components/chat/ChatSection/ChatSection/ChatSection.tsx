@@ -4,10 +4,14 @@ import { ChatHeader, MessageInput, MessageList } from "../../../chat";
 import { useParams } from "react-router-dom";
 import { chatMessagesByRoomId, CURRENT_USER } from "../../../../data/chat";
 import { ChatMessage } from "../../../../types";
-import { joinRoom, leaveRoom, onNewMessage, sendMessage } from "../../../../utils";
+import {
+  joinRoom,
+  leaveRoom,
+  onNewMessage,
+  sendMessage,
+} from "../../../../utils";
 
 // 👇 소켓 유틸 가져오기
-
 
 export const ChatSection = () => {
   const { roomid } = useParams();
@@ -79,7 +83,7 @@ export const ChatSection = () => {
         showNotice={noticeOn}
         noticeText={noticeText}
         messages={messages}
-        currentUserId={CURRENT_USER.id}
+        currentUserId={CURRENT_USER.userId}
       />
 
       <MessageInput onSend={handleSend} disabled={sending} />

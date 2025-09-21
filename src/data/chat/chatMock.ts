@@ -2,9 +2,9 @@ import type { ChatMessage, ChatUser } from "../../types";
 
 // 현재 로그인 사용자 (예시)
 export const CURRENT_USER: ChatUser = {
-  id: "u-001",
-  name: "나",
-  // avatarUrl: ""  // 필요 시 추가
+  userId: "u-001",
+  nickname: "나",
+  // profile_image: ""  // 필요 시 추가
 };
 
 /**
@@ -20,9 +20,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "내일 7시에 만나요!",
       createdAt: "2025-09-18T19:05:00+09:00",
       author: {
-        id: "u-010",
-        name: "트레이너 J",
-        avatarUrl: "https://placehold.co/40x40?text=J",
+        userId: "u-010",
+        nickname: "트레이너 J",
+        profile_image: "https://placehold.co/40x40?text=J",
       },
       meta: { readCount: 2 },
     },
@@ -40,9 +40,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "네! 워밍업 10분 먼저 할게요.",
       createdAt: "2025-09-18T19:08:00+09:00",
       author: {
-        id: "u-011",
-        name: "민지",
-        avatarUrl: "https://placehold.co/40x40?text=M",
+        userId: "u-011",
+        nickname: "민지",
+        profile_image: "https://placehold.co/40x40?text=M",
       },
       meta: { readCount: 2 },
     },
@@ -55,9 +55,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "이번 주 한강 5km 러닝 어떠세요?",
       createdAt: "2025-09-17T21:10:00+09:00",
       author: {
-        id: "u-020",
-        name: "김러너",
-        avatarUrl: "https://placehold.co/40x40?text=R",
+        userId: "u-020",
+        nickname: "김러너",
+        profile_image: "https://placehold.co/40x40?text=R",
       },
       meta: { readCount: 2 },
     },
@@ -75,9 +75,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "좋아요. 잠실대교 남단 집결!",
       createdAt: "2025-09-17T21:15:00+09:00",
       author: {
-        id: "u-021",
-        name: "호준",
-        avatarUrl: "https://placehold.co/40x40?text=H",
+        userId: "u-021",
+        nickname: "호준",
+        profile_image: "https://placehold.co/40x40?text=H",
       },
       meta: { readCount: 0 },
     },
@@ -90,9 +90,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "오늘 등 운동 순서: 렛풀다운 → 바벨로우 → 시티드로우",
       createdAt: "2025-09-16T18:30:00+09:00",
       author: {
-        id: "u-030",
-        name: "코치 P",
-        avatarUrl: "https://placehold.co/40x40?text=P",
+        userId: "u-030",
+        nickname: "코치 P",
+        profile_image: "https://placehold.co/40x40?text=P",
       },
     },
     {
@@ -109,9 +109,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "각 4세트, 12-10-8-6 반복으로 진행해요.",
       createdAt: "2025-09-16T18:33:00+09:00",
       author: {
-        id: "u-030",
-        name: "코치 P",
-        avatarUrl: "https://placehold.co/40x40?text=P",
+        userId: "u-030",
+        nickname: "코치 P",
+        profile_image: "https://placehold.co/40x40?text=P",
       },
     },
   ],
@@ -124,9 +124,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "주말 번개 러닝 모집합니다. 페이스 6’00”",
       createdAt: "2025-09-15T09:10:00+09:00",
       author: {
-        id: "u-201",
-        name: "서울 러너스 운영자",
-        avatarUrl: "https://placehold.co/40x40?text=SR",
+        userId: "u-201",
+        nickname: "서울 러너스 운영자",
+        profile_image: "https://placehold.co/40x40?text=SR",
       },
     },
     {
@@ -135,9 +135,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "신청은 여기 댓글로 남겨주세요!",
       createdAt: "2025-09-15T09:12:00+09:00",
       author: {
-        id: "u-201",
-        name: "서울 러너스 운영자",
-        avatarUrl: "https://placehold.co/40x40?text=SR",
+        userId: "u-201",
+        nickname: "서울 러너스 운영자",
+        profile_image: "https://placehold.co/40x40?text=SR",
       },
     },
     {
@@ -156,9 +156,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "오늘의 홈트: 스쿼트 20×3, 플랭크 45초×3",
       createdAt: "2025-09-14T08:00:00+09:00",
       author: {
-        id: "u-202",
-        name: "홈트봇",
-        avatarUrl: "https://placehold.co/40x40?text=HT",
+        userId: "u-202",
+        nickname: "홈트봇",
+        profile_image: "https://placehold.co/40x40?text=HT",
       },
     },
     {
@@ -167,9 +167,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "초보는 세트당 15회로 조절해도 좋아요.",
       createdAt: "2025-09-14T08:02:00+09:00",
       author: {
-        id: "u-202",
-        name: "홈트봇",
-        avatarUrl: "https://placehold.co/40x40?text=HT",
+        userId: "u-202",
+        nickname: "홈트봇",
+        profile_image: "https://placehold.co/40x40?text=HT",
       },
     },
     {
@@ -188,9 +188,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "이번 주말 북한강 라이드 코스 공유합니다.",
       createdAt: "2025-09-13T11:05:00+09:00",
       author: {
-        id: "u-203",
-        name: "로드킹",
-        avatarUrl: "https://placehold.co/40x40?text=BI",
+        userId: "u-203",
+        nickname: "로드킹",
+        profile_image: "https://placehold.co/40x40?text=BI",
       },
     },
     {
@@ -199,9 +199,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "고도 600m, 총 70km 예정입니다.",
       createdAt: "2025-09-13T11:07:00+09:00",
       author: {
-        id: "u-203",
-        name: "로드킹",
-        avatarUrl: "https://placehold.co/40x40?text=BI",
+        userId: "u-203",
+        nickname: "로드킹",
+        profile_image: "https://placehold.co/40x40?text=BI",
       },
     },
     {
@@ -220,9 +220,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "고단백 저지방 식단 레시피 공유해요: 닭가슴살 스테이크 + 샐러드",
       createdAt: "2025-09-12T12:20:00+09:00",
       author: {
-        id: "u-204",
-        name: "다이어트셰프",
-        avatarUrl: "https://placehold.co/40x40?text=FO",
+        userId: "u-204",
+        nickname: "다이어트셰프",
+        profile_image: "https://placehold.co/40x40?text=FO",
       },
     },
     {
@@ -231,9 +231,9 @@ export const chatMessagesByRoomId: Record<string, ChatMessage[]> = {
       text: "소스는 요거트+레몬즙이면 맛있습니다!",
       createdAt: "2025-09-12T12:23:00+09:00",
       author: {
-        id: "u-204",
-        name: "다이어트셰프",
-        avatarUrl: "https://placehold.co/40x40?text=FO",
+        userId: "u-204",
+        nickname: "다이어트셰프",
+        profile_image: "https://placehold.co/40x40?text=FO",
       },
     },
     {

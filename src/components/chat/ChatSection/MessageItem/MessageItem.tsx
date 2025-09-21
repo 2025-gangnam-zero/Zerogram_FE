@@ -12,6 +12,8 @@ export const MessageItem = ({ message }: Props) => {
   const { isLoggedIn, checkAuthStatus } = useAuthStore();
   const { id: userId, fetchUserInfo } = useUserStore();
 
+  console.log(message);
+
   useEffect(() => {
     const actualIsLoggedIn = checkAuthStatus();
 
@@ -24,7 +26,7 @@ export const MessageItem = ({ message }: Props) => {
 
   const { text, createdAt, author, meta } = message;
 
-  const isMe = author.id === userId;
+  const isMe = author.userId === userId;
   const time = formatTimeKo(createdAt);
 
   if (isMe) {
@@ -47,17 +49,19 @@ export const MessageItem = ({ message }: Props) => {
   return (
     <div className={`${styles.item} ${styles.other}`}>
       <div className={styles.avatarWrap}>
-        {author.avatarUrl ? (
-          <img className={styles.avatar} src={author.avatarUrl} alt="" />
+        {author.profile_image ? (
+          <img className={styles.avatar} src={author.profile_image} alt="" />
         ) : (
           <div className={styles.avatarFallback}>
-            {(author.name?.[0] ?? "?").toUpperCase()}
+            {(author.nickname?.[0] ?? "?").toUpperCase()}
           </div>
         )}
       </div>
 
       <div className={styles.content}>
-        {author.name && <div className={styles.sender}>{author.name}</div>}
+        {author.nickname && (
+          <div className={styles.sender}>{author.nickname}</div>
+        )}
         <div className={styles.row}>
           {/* 말풍선(좌) */}
           <div className={`${styles.bubble} ${styles.otherBubble}`}>{text}</div>

@@ -1,7 +1,7 @@
 export type ChatUser = {
-  id: string;
-  name?: string;
-  avatarUrl?: string;
+  userId: string;
+  nickname: string;
+  profile_image?: string;
 };
 
 export type ChatMessage = {
