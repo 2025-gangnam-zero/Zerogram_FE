@@ -4,15 +4,35 @@ export type ChatUser = {
   profile_image?: string;
 };
 
-export type ChatMessage = {
-  id: string;
-  roomId: string;
-  text: string;
-  createdAt: string;
-  author: ChatUser;
-  meta?: {
-    readCount?: number; // 내 메시지일 때 읽음 수 등
-  };
+export type Attachment = {
+  fileUrl: string;
+  fileName?: string;
+  contentType?: string;
+  size?: number;
+  width?: number;
+  height?: number;
 };
 
-export type Attchement = {};
+export type ChatMessageDTO = {
+  serverId: string;
+  roomId: string;
+  authorId: string;
+  author: ChatUser;
+  text?: string;
+  attachments?: Attachment[];
+  seq: number;
+  createdAtIso: string; // ISO 문자열
+  meta?: { readCount?: number };
+};
+
+export type ChatMessage = {
+  id: string; // = serverId 매핑
+  roomId: string;
+  authorId: string;
+  author: ChatUser;
+  text?: string;
+  attachments?: Attachment[];
+  seq: number;
+  createdAt: string; // = createdAtIso 매핑
+  meta?: { readCount?: number };
+};
