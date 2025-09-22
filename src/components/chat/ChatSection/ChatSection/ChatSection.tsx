@@ -27,6 +27,7 @@ export const ChatSection = () => {
   const navigate = useNavigate();
   const { roomid } = useParams();
 
+  const urlsRef = useRef<Set<string>>(new Set());
   const previewHostRef = useRef<HTMLDivElement | null>(null);
   // ✅ 원본 파일 보관소: id -> File
   const filesRef = useRef<Map<string, File>>(new Map());
@@ -106,6 +107,15 @@ export const ChatSection = () => {
     };
   }, [roomid]);
 
+  // 언마운트 cleanup 수정 (최신 URL 전부 정리)
+  useEffect(() => {
+    return () => {
+      urlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      urlsRef.current.clear();
+      filesRef.current.clear();
+    };
+  }, []);
+
   // ✅ 파일 → 프리뷰 삽입 + filesRef에 원본 File 저장
   const addFilesToPreview = (files: File[]) => {
     const kindOf = (f: File): PreviewItem["kind"] => {
@@ -121,16 +131,9 @@ export const ChatSection = () => {
       const sliced = files.slice(0, remain);
       const created: PreviewItem[] = sliced.map((f) => {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        // 원본 파일은 렌더 상태에 넣지 않고 ref 맵에 보관
-        filesRef.current.set(id, f);
-
-        return {
-          id,
-          url: URL.createObjectURL(f),
-          name: f.name,
-          kind: kindOf(f),
-          file: f,
-        };
+        const url = URL.createObjectURL(f);
+        urlsRef.current.add(url);
+        return { id, url, name: f.name, kind: kindOf(f), file: f };
       });
 
       return [...prev, ...created];
@@ -141,7 +144,10 @@ export const ChatSection = () => {
   const removePreview = (id: string) => {
     setPreviews((prev) => {
       const target = prev.find((p) => p.id === id);
-      if (target) URL.revokeObjectURL(target.url);
+      if (target) {
+        URL.revokeObjectURL(target.url);
+        urlsRef.current.delete(target.url);
+      }
       return prev.filter((p) => p.id !== id);
     });
     filesRef.current.delete(id);
@@ -153,24 +159,18 @@ export const ChatSection = () => {
     try {
       setSending(true);
 
-      // ✅ 미리보기 순서대로 원본 파일 수집 (이후 서버 HTTP 업로드에 사용)
-      const filesToUpload: File[] = previews
-        .map((p) => filesRef.current.get(p.id))
-        .filter((f): f is File => !!f);
-
-      // TODO:
-      // 1) filesToUpload를 서버 HTTP 업로드 API로 전송 → attachments 메타 수신
-      // const { attachments } = await uploadFilesApi(filesToUpload);
-      // 2) 소켓으로 텍스트 + attachments만 전송
-      const ack = await sendMessage({
-        roomId: roomid,
+      // TODO
+      const ack = await sendMessage(roomid, {
         text,
-        // attachments,
+        previews,
       });
       if (!ack.ok) console.error("send failed:", ack.error);
 
       // 성공 시 정리
-      previews.forEach((p) => URL.revokeObjectURL(p.url));
+      previews.forEach((p) => {
+        URL.revokeObjectURL(p.url);
+        urlsRef.current.delete(p.url);
+      });
       setPreviews([]);
       filesRef.current.clear();
     } finally {

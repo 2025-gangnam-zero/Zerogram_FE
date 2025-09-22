@@ -32,15 +32,17 @@ export const MessageInput = ({
 
   const submit = () => {
     const text = value.trim();
-    if (!text) return;
-    onSend(text);
+
+    // ✅ 변경: 텍스트가 없더라도 미리보기(첨부)가 있으면 전송 허용
+    if (text.length === 0 && previews.length === 0) return;
+
+    onSend(text); // 빈 문자열이어도 넘겨도 됨 (상위에서 previews와 함께 전송)
     setValue("");
-    onReorder([]);
+    onReorder([]); // 첨부 비우기
+
     // 높이 리셋
     const el = taRef.current;
-    if (el) {
-      el.style.height = "auto";
-    }
+    if (el) el.style.height = "auto";
   };
 
   return (
