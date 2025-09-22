@@ -1,49 +1,64 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import styles from "./Sidebar.module.css";
 import { SidebarList, SearchBar } from "../../../chat";
-import { SidebarListItemData } from "../../../../types";
+import { ChatMessage, SidebarListItemData } from "../../../../types";
 import { getMyRoomsApi } from "../../../../api/chat";
-import { eventBus } from "../../../../utils";
+import {
+  applyIncomingMessageToRooms,
+  eventBus,
+  onNewMessage,
+  joinRoom, // ✅ socket 유틸에 이미 있음 (Model Set Context #36)
+} from "../../../../utils";
 
 export const Sidebar = () => {
   const [query, setQuery] = useState("");
   const [mineRooms, setMineRooms] = useState<SidebarListItemData[]>([]);
+  const joinedRef = useRef<Set<string>>(new Set()); // ✅ 이미 조인한 방 기록
 
-  const refetch = async () => {
+  const joinAllMyRooms = useCallback((rooms: SidebarListItemData[]) => {
+    for (const r of rooms) {
+      if (!joinedRef.current.has(r.id)) {
+        joinRoom(r.id);
+        joinedRef.current.add(r.id);
+      }
+    }
+  }, []);
+
+  const refetch = useCallback(async () => {
     try {
       const res = await getMyRoomsApi({ limit: 50 });
       const items = res?.data?.items ?? [];
       setMineRooms(items);
+      joinAllMyRooms(items); // ✅ 목록 갱신 후 전체 조인
     } catch (e) {
       console.error("[Sidebar] getMyRoomsApi failed:", e);
     }
-  };
+  }, [joinAllMyRooms]);
 
-  // 최초 로드
+  // 최초 1회 로드
   useEffect(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
-  // ✅ 사이드바 목록 새로고침 트리거 구독
+  // rooms:refresh 이벤트 구독
   useEffect(() => {
     const off = eventBus.on("rooms:refresh", () => refetch());
     return () => off();
-  }, []);
+  }, [refetch]);
 
-  // 최초 로드: 내 방 목록
+  // 새 메시지 수신 → 목록 갱신
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await getMyRoomsApi({ limit: 50 });
-        const items = res?.data?.items ?? [];
-
-        console.log(items);
-
-        setMineRooms(items);
-      } catch (e) {
-        console.error("[Sidebar] getMyRoomsApi failed:", e);
+    const off = onNewMessage((msg: ChatMessage) => {
+      // 만약 아직 조인 안 된 방에서 온 메시지라면 조인(예외 안전)
+      if (!joinedRef.current.has(msg.roomId)) {
+        joinRoom(msg.roomId);
+        joinedRef.current.add(msg.roomId);
       }
-    })();
+      setMineRooms((prev) => applyIncomingMessageToRooms(prev, msg));
+    });
+    return () => {
+      typeof off === "function" && off();
+    };
   }, []);
 
   const filtered = useMemo(() => {
