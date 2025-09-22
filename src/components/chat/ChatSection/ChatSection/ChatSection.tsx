@@ -116,6 +116,12 @@ export const ChatSection = () => {
     };
   }, []);
 
+  // ✅ 이 방을 보는 순간, 사이드바에게 "이 방 읽음 처리" 신호
+  useEffect(() => {
+    if (!roomid) return;
+    eventBus.emit("rooms:clearUnread", roomid);
+  }, [roomid]);
+
   // ✅ 파일 → 프리뷰 삽입 + filesRef에 원본 File 저장
   const addFilesToPreview = (files: File[]) => {
     const kindOf = (f: File): PreviewItem["kind"] => {

@@ -7,13 +7,20 @@ import {
   applyIncomingMessageToRooms,
   eventBus,
   onNewMessage,
-  joinRoom, // ✅ socket 유틸에 이미 있음 (Model Set Context #36)
+  joinRoom,
+  bumpUnreadAndSort,
+  clearUnread, // ✅ socket 유틸에 이미 있음 (Model Set Context #36)
 } from "../../../../utils";
+import { useParams } from "react-router-dom";
+import { useUserStore } from "../../../../store";
 
 export const Sidebar = () => {
   const [query, setQuery] = useState("");
   const [mineRooms, setMineRooms] = useState<SidebarListItemData[]>([]);
   const joinedRef = useRef<Set<string>>(new Set()); // ✅ 이미 조인한 방 기록
+
+  const { roomid: currentRoomId } = useParams(); // 현재 보고 있는 방
+  const myUserId = useUserStore((s) => s.id)!; // 프로젝트에 맞게 가져오세요
 
   const joinAllMyRooms = useCallback((rooms: SidebarListItemData[]) => {
     for (const r of rooms) {
@@ -60,6 +67,28 @@ export const Sidebar = () => {
       typeof off === "function" && off();
     };
   }, []);
+
+  useEffect(() => {
+    const off = eventBus.on("rooms:clearUnread", (roomId: string) => {
+      setMineRooms((prev) => clearUnread(prev, roomId));
+    });
+    return () => off();
+  }, []);
+
+  // ✅ 새 메시지 → 정렬 + 조건부 unread++
+  useEffect(() => {
+    const off = onNewMessage((msg: ChatMessage) => {
+      setMineRooms((prev) =>
+        bumpUnreadAndSort(prev, msg, {
+          currentRoomId, // useParams()에서 얻은 현재 방 id (이미 있으시면 그대로)
+          myUserId, // 내 사용자 id (스토어 등에서 가져오던 그대로)
+        })
+      );
+    });
+    return () => {
+      typeof off === "function" && off();
+    };
+  }, [currentRoomId, myUserId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
