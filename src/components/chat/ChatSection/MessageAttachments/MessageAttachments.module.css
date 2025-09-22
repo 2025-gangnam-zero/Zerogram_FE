@@ -1,0 +1,13 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 좌/우 정렬에 따라 내부 콘텐츠 시작점만 바꿔줌 */
+.me {
+  align-items: flex-end;
+}
+.other {
+  align-items: flex-start;
+}

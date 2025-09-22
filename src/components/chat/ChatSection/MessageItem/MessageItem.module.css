@@ -125,3 +125,11 @@
 .metaColOther {
   align-items: flex-start;
 }
+
+/* 말풍선과 첨부를 세로로 쌓는 래퍼 */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* 말풍선 ↕ 첨부 간격 */
+  max-width: min(72%, 560px); /* 버블과 동일 폭 제한 */
+}
