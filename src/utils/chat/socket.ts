@@ -8,9 +8,11 @@ export type CreateSocketOptions = {
   sessionId?: string | null;
 };
 
+type JoinResult = { ok: boolean; reason?: string };
+
 export const createSocket = ({ sessionId }: CreateSocketOptions = {}) => {
   if (socket) return socket;
-               
+
   const url = process.env.REACT_APP_SOCKET_URL as string;
   const path = process.env.REACT_APP_SOCKET_PATH || "/socket.io";
   const namespace = process.env.REACT_APP_SOCKET_NAMESPACE || "/";
@@ -70,8 +72,41 @@ export const updateSessionId = (next?: string | null) => {
   if (!socket) return;
 };
 
-export function joinRoom(roomId: string) {
-  getSocket().emit("room:join", { roomId });
+export async function joinRoom(
+  roomId: string,
+  maxRetries = 3
+): Promise<JoinResult> {
+  const socket = getSocket();
+  const chan = roomId; // ❗ 서버가 'room:<id>'를 쓰면 여기서 매핑하세요: const chan = `room:${roomId}`;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const res = await new Promise<JoinResult>((resolve) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          resolve({ ok: false, reason: "timeout" });
+        }
+      }, 3500);
+
+      socket.emit(
+        "room:join",
+        { roomId: chan },
+        (ack?: { ok?: boolean; error?: string }) => {
+          if (settled) return;
+          clearTimeout(timer);
+          settled = true;
+          if (ack?.ok) resolve({ ok: true });
+          else resolve({ ok: false, reason: ack?.error || "no-ack" });
+        }
+      );
+    });
+
+    if (res.ok) return res;
+    // 지수 백오프
+    await new Promise((r) => setTimeout(r, 300 * attempt));
+  }
+  return { ok: false, reason: "retry-exceeded" };
 }
 
 export function leaveRoom(roomId: string) {
