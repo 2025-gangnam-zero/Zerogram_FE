@@ -23,7 +23,13 @@ export const SidebarItem = ({ item, selected = false }: Props) => {
   } = item;
 
   return (
-    <li className={`${styles.item} ${selected ? styles.selected : ""}`}>
+    <li
+      className={[
+        styles.item,
+        selected ? styles.selected : "",
+        !!unreadCount && unreadCount > 0 && !selected ? styles.hasUnread : "",
+      ].join(" ")}
+    >
       <Link to={`/chat/${id}`} className={styles.link}>
         <div className={styles.avatarWrap}>
           {imageUrl ? (
