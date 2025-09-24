@@ -15,11 +15,13 @@ export const createSocket = ({ sessionId }: CreateSocketOptions = {}) => {
 
   let url = process.env.REACT_APP_SOCKET_URL as string;
 
-  // HTTPS 환경에서는 WSS 프로토콜 사용, HTTP 환경에서는 WS 프로토콜 사용
+  // 프로토콜 부분을 제거하고 현재 페이지의 프로토콜에 맞게 WebSocket 프로토콜 설정
+  const urlWithoutProtocol = url.replace(/^(https?|wss?):\/\//, "");
+
   if (window.location.protocol === "https:") {
-    url = url.replace(/^http:/, "https:").replace(/^https:/, "wss:");
+    url = `wss://${urlWithoutProtocol}`;
   } else {
-    url = url.replace(/^https:/, "http:").replace(/^http:/, "ws:");
+    url = `ws://${urlWithoutProtocol}`;
   }
 
   const path = process.env.REACT_APP_SOCKET_PATH || "/socket.io";
