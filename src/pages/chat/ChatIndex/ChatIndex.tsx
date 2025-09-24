@@ -1,5 +1,4 @@
 import { SocketStatus } from "../../../components/chat";
-import styles from "./ChatIndex.module.css";
 
 export const ChatIndex = () => {
   return (

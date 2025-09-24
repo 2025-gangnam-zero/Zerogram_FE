@@ -35,7 +35,7 @@ export const NoticeManageModal = ({
     try {
       setBusy(true);
       // 생성/수정 겸용
-      const res = await updateRoomNoticeApi(roomId, { text, enabled });
+      await updateRoomNoticeApi(roomId, { text, enabled });
       // 서버 응답 포맷에 따라 최신 notice가 함께 오지 않는다면
       // 저장 후 클라에서 즉시 반영:
       const next: RoomNotice | null = enabled

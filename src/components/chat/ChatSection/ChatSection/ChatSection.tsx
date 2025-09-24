@@ -109,10 +109,13 @@ export const ChatSection = () => {
 
   // 언마운트 cleanup 수정 (최신 URL 전부 정리)
   useEffect(() => {
+    const urls = urlsRef.current;
+    const files = filesRef.current;
+
     return () => {
-      urlsRef.current.forEach((u) => URL.revokeObjectURL(u));
-      urlsRef.current.clear();
-      filesRef.current.clear();
+      urls.forEach((u) => URL.revokeObjectURL(u));
+      urls.clear();
+      files.clear();
     };
   }, []);
 
@@ -228,9 +231,11 @@ export const ChatSection = () => {
 
   // 언마운트 시 ObjectURL/파일 정리
   useEffect(() => {
+    const files = filesRef.current;
+
     return () => {
       previews.forEach((p) => URL.revokeObjectURL(p.url));
-      filesRef.current.clear();
+      files.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

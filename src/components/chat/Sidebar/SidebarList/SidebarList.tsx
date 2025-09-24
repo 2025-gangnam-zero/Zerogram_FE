@@ -11,7 +11,7 @@ export const SidebarList = ({ items }: Props) => {
   const { roomid } = useParams();
   return (
     <div className={styles.wrap}>
-      <ul className={styles.list} role="list">
+      <ul className={styles.list}>
         {items.map((it) => (
           <SidebarItem key={it.id} item={it} selected={roomid === it.id} />
         ))}

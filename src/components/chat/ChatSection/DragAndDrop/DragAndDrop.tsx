@@ -12,9 +12,6 @@ type Props = {
   ignoreRef?: React.RefObject<HTMLElement>;
 };
 
-const isFileDrag = (e: React.DragEvent) =>
-  Array.from(e.dataTransfer?.types ?? []).includes("Files");
-
 export const DragAndDrop = ({
   children,
   onDropFiles,
@@ -25,17 +22,6 @@ export const DragAndDrop = ({
   ignoreRef,
 }: Props) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const [dragging, setDragging] = useState(false);
-
-  const inIgnoreArea = (e: React.DragEvent) =>
-    !!ignoreRef?.current && ignoreRef.current.contains(e.target as Node);
-
-  const matchesAccept = (f: File) => {
-    if (!accept || accept.length === 0) return true;
-    return accept.some((m) =>
-      m.endsWith("/*") ? f.type.startsWith(m.slice(0, -1)) : f.type === m
-    );
-  };
 
   const [fileDrag, setFileDrag] = useState(false);
 
@@ -82,7 +68,7 @@ export const DragAndDrop = ({
       onDrop={onDrop}
     >
       {children}
-      {showOverlay && dragging && (
+      {showOverlay && fileDrag && (
         <div className={styles.overlay} /* pointer-events: none 이어야 함 */>
           <div className={styles.box}>여기에 파일을 놓으면 첨부됩니다</div>
         </div>

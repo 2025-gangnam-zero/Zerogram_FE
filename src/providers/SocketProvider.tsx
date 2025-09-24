@@ -11,7 +11,7 @@ export const SocketProvider = ({ sessionId, children }: Props) => {
   useMemo(() => {
     createSocket({ sessionId });
     // autoConnect=true 이므로 생성 즉시 연결 시도
-  }, []);
+  }, [sessionId]);
 
   // sessionId 변경 시 auth 업데이트 (필요 시 재연결은 socket.io가 처리)
   useEffect(() => {
