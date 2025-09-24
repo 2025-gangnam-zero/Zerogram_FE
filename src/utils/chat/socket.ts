@@ -13,7 +13,15 @@ type JoinResult = { ok: boolean; reason?: string };
 export const createSocket = ({ sessionId }: CreateSocketOptions = {}) => {
   if (socket) return socket;
 
-  const url = process.env.REACT_APP_SOCKET_URL as string;
+  let url = process.env.REACT_APP_SOCKET_URL as string;
+
+  // HTTPS 환경에서는 WSS 프로토콜 사용, HTTP 환경에서는 WS 프로토콜 사용
+  if (window.location.protocol === "https:") {
+    url = url.replace(/^http:/, "https:").replace(/^https:/, "wss:");
+  } else {
+    url = url.replace(/^https:/, "http:").replace(/^http:/, "ws:");
+  }
+
   const path = process.env.REACT_APP_SOCKET_PATH || "/socket.io";
   const namespace = process.env.REACT_APP_SOCKET_NAMESPACE || "/";
 
