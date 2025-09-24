@@ -248,11 +248,16 @@ const Header: React.FC = () => {
     navigate("/meet");
   };
 
+  const handleChatClick = () => {
+    navigate("/chat");
+  };
+
   // 추후 확장될 네비게이션 메뉴들
   const navigationItems = [
     { path: "/workout", label: "운동일지", onClick: handleWorkoutClick },
     { path: "/diet-log", label: "식단일지", onClick: handleDietClick },
     { path: "/meet", label: "모집게시판", onClick: handleMeetClick },
+    { path: "/chat", label: "채팅", onClick: handleChatClick },
   ];
 
   return (
