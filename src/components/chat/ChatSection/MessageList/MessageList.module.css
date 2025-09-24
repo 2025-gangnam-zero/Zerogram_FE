@@ -1,0 +1,6 @@
+.container {
+  flex: 1 1 auto; /* 가운데 영역 확장 */
+  min-height: 0; /* ⬅️ 중요 */
+  overflow: auto; /* ⬅️ 여기만 스크롤 */
+  padding: 12px 16px;
+}

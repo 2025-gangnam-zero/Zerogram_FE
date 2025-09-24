@@ -1,0 +1,10 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.listArea {
+  flex: 1;
+  min-height: 0; /* 목록이 스크롤을 가져가도록 */
+}

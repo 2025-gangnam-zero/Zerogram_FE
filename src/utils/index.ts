@@ -4,3 +4,4 @@ export * from "./auth";
 export * from "./error";
 export * from "./string";
 export * from "./oauth";
+export * from "./chat";

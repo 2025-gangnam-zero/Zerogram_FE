@@ -1,0 +1,39 @@
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.title {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 우측 도구 영역 */
+.tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 텍스트형 토글 버튼 */
+.noticeToggle {
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+}
+.noticeToggle:hover {
+  text-decoration: underline;
+}
+.noticeOn {
+  color: #4f46e5;
+} /* 활성 시 색상 (원하는 컬러로 조정) */

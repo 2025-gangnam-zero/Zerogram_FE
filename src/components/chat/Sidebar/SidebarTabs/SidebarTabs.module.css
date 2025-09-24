@@ -1,0 +1,41 @@
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: #f9fafb;
+}
+
+.active {
+  background: #f3f4f6; /* 사용자의 선호: 내 말풍선 계열 회색 */
+  border-color: #d1d5db;
+}
+
+.badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 18px;
+  background: #f97316; /* 오렌지톤 배지 */
+  color: #fff;
+}
