@@ -1,25 +1,17 @@
-.chatLayout {
+/* src/pages/chat/ChatPage/ChatPage.module.css */
+.page {
+  height: 100%;
+}
+.grid {
   display: grid;
   grid-template-columns: 320px 1fr;
-  /* height는 인라인 style에서 지정 */
-  min-height: 0; /* 자식이 스크롤 가질 수 있게 */
+  height: 100%;
 }
-
 .sidebarArea {
-  border-right: 1px solid #e5e7eb;
-  min-width: 0;
-  overflow: hidden;
+  overflow: auto;
 }
-
 .mainArea {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* 라우터/섹션이 바로 들어오면 여기서도 스크롤 위임 */
-.mainArea > * {
-  flex: 1;
-  min-height: 0;
 }

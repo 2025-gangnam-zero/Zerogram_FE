@@ -8,3 +8,8 @@
   flex: 1;
   min-height: 0; /* 목록이 스크롤을 가져가도록 */
 }
+
+.asDrawer {
+  /* 드로어 패널 내부 여백/스크롤 보정이 필요할 때만 사용 */
+  padding-top: 8px;
+}
