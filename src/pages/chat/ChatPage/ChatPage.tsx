@@ -10,12 +10,10 @@ import { ChatMobileTopBar, Drawer } from "../../../components/chat";
 export const ChatPage = () => {
   const isNarrow = useIsNarrow(CHAT_BREAKPOINT);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!isNarrow) {
       setDrawerOpen(false);
-      setSearchOpen(false);
     }
   }, [isNarrow]);
 
@@ -24,10 +22,7 @@ export const ChatPage = () => {
       {isNarrow ? (
         <>
           {/* ✅ ChatHeader 위에 모바일 톱바 */}
-          <ChatMobileTopBar
-            onOpenDrawer={() => setDrawerOpen(true)}
-            onOpenSearch={() => setSearchOpen(true)}
-          />
+          <ChatMobileTopBar onOpenDrawer={() => setDrawerOpen(true)} />
 
           {/* 메인(기존 ChatHeader/Notice/MessageList/MessageInput은 Outlet 안에서 그대로) */}
           <div className={styles.mainArea}>
@@ -46,9 +41,6 @@ export const ChatPage = () => {
               onCloseDrawer={() => setDrawerOpen(false)}
             />
           </Drawer>
-
-          {/* 검색 버튼 → ChatSearch 시트 */}
-          <ChatSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
         </>
       ) : (
         // > 600px: 기존 2-페인 유지

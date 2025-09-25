@@ -56,7 +56,18 @@ export const Drawer = ({ open, ariaLabel, onClose, children }: Props) => {
 
   // 첫 포커스
   useEffect(() => {
-    if (open) panelRef.current?.focus();
+    if (!open) return;
+    // 패널 자체 포커스
+    panelRef.current?.focus();
+    // 🔽 검색 인풋 자동 포커스 시도
+    const id = requestAnimationFrame(() => {
+      const input = panelRef.current?.querySelector<HTMLInputElement>(
+        'input[role="searchbox"], input[type="search"], input[type="text"]'
+      );
+      input?.focus();
+      input?.select?.();
+    });
+    return () => cancelAnimationFrame(id);
   }, [open]);
 
   if (!open) return null;
