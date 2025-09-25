@@ -21,6 +21,7 @@ type Props = {
   asDrawer?: boolean;
   /** 항목 선택 시 드로어를 닫기 위해 상위에서 전달 */
   onCloseDrawer?: () => void;
+  standalone?: boolean;
 };
 
 export const Sidebar = ({
@@ -28,6 +29,7 @@ export const Sidebar = ({
   variant,
   asDrawer,
   onCloseDrawer,
+  standalone,
 }: Props) => {
   const [query, setQuery] = useState("");
   const [mineRooms, setMineRooms] = useState<SidebarListItemData[]>(items);
@@ -140,7 +142,13 @@ export const Sidebar = ({
   };
 
   return (
-    <div className={`${styles.sidebar} ${asDrawer ? styles.asDrawer : ""}`}>
+    <div
+      className={[
+        styles.sidebar,
+        asDrawer ? styles.asDrawer : "",
+        standalone ? styles.standalone : "", // ✅
+      ].join(" ")}
+    >
       <SearchBar onChange={setQuery} onSubmit={setQuery} />
       <div className={styles.listArea}>
         <SidebarList

@@ -13,3 +13,9 @@
   /* 드로어 패널 내부 여백/스크롤 보정이 필요할 때만 사용 */
   padding-top: 8px;
 }
+
+.standalone {
+  /* 모바일 본문 전용: 화면을 꽉 채우고 여백만 다듬기 */
+  height: 100%;
+  padding: 8px 8px 12px;
+}
