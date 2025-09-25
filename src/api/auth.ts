@@ -92,7 +92,7 @@ export const logoutApi = async (): Promise<ApiResponse> => {
 
 export const unsubscribeApi = async (): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete("/users/me");
+    const response = await authApi.delete("/api/users/me");
     return response.data;
   } catch (error) {
     logError("unsubscribeApi", error);
@@ -103,7 +103,7 @@ export const unsubscribeApi = async (): Promise<ApiResponse> => {
 // 사용자 정보 조회 API 함수
 export const getUserInfoApi = async (): Promise<ApiResponse<{ user: any }>> => {
   try {
-    const response = await authApi.get("/users/me");
+    const response = await authApi.get("/api/users/me");
     return response.data;
   } catch (error) {
     logError("getUserInfoApi", error);
@@ -121,7 +121,7 @@ export const updateUserInfoApi = async (
         ? { headers: { "Content-Type": "multipart/form-data" } }
         : {};
 
-    const response = await authApi.patch("/users/me", userData, config);
+    const response = await authApi.patch("/api/users/me", userData, config);
     return response.data;
   } catch (error) {
     logError("updateUserInfoApi", error);
@@ -132,7 +132,7 @@ export const updateUserInfoApi = async (
 // 프로필 사진 초기화 API 함수
 export const resetProfileImageApi = async (): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete("/users/me/profile-image");
+    const response = await authApi.delete("/api/users/me/profile-image");
     return response.data;
   } catch (error) {
     throw new Error(getApiErrorMessage(error));

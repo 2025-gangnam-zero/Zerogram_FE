@@ -108,7 +108,7 @@ export const getWorkoutByIdApi = async (
   workoutId: string
 ): Promise<ApiResponse<WorkoutStatePopulated>> => {
   try {
-    const response = await authApi.get(`/users/me/workouts/${workoutId}`);
+    const response = await authApi.get(`/api/users/me/workouts/${workoutId}`);
     return response.data;
   } catch (error) {
     logError("getWorkoutByIdApi", error);
@@ -121,7 +121,9 @@ export const deleteWorkoutApi = async (
   workoutId: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete(`/users/me/workouts/${workoutId}`);
+    const response = await authApi.delete(
+      `/api/users/me/workouts/${workoutId}`
+    );
     return response.data;
   } catch (error) {
     logError("deleteWorkoutApi", error);
@@ -135,7 +137,7 @@ export const addWorkoutDetailApi = async (
   detailData: CreateWorkoutDetailRequest
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
-    const response = await authApi.post(`/users/me/workouts/${workoutId}`, {
+    const response = await authApi.post(`/api/users/me/workouts/${workoutId}`, {
       details: [detailData],
     });
     return response.data;
@@ -152,7 +154,7 @@ export const getWorkoutDetailApi = async (
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
     const response = await authApi.get(
-      `/users/me/workouts/${workoutId}/detail/${detailId}`
+      `/api/users/me/workouts/${workoutId}/detail/${detailId}`
     );
     return response.data;
   } catch (error) {
@@ -169,7 +171,7 @@ export const addFitnessDetailApi = async (
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
     const response = await authApi.post(
-      `/users/me/workouts/${workoutId}/details/${detailId}`,
+      `/api/users/me/workouts/${workoutId}/details/${detailId}`,
       { fitnessDetails: detailData.fitnessDetails }
     );
     return response.data;
@@ -185,7 +187,7 @@ export const deleteWorkoutDetailApi = async (
   detailId: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete(`/users/me/details/${detailId}`);
+    const response = await authApi.delete(`/api/users/me/details/${detailId}`);
     return response.data;
   } catch (error) {
     logError("deleteWorkoutDetailApi", error);
@@ -199,7 +201,7 @@ export const deleteFitnessDetailApi = async (
 ): Promise<ApiResponse> => {
   try {
     const response = await authApi.delete(
-      `/users/me/fitnessdetails/${fitnessDetailId}`
+      `/api/users/me/fitnessdetails/${fitnessDetailId}`
     );
     return response.data;
   } catch (error) {
@@ -215,9 +217,12 @@ export const updateWorkoutApi = async (
   workoutData: UpdateWorkoutRequest
 ): Promise<ApiResponse<WorkoutState>> => {
   try {
-    const response = await authApi.patch(`/users/me/workouts/${workoutId}`, {
-      workout: workoutData,
-    });
+    const response = await authApi.patch(
+      `/api/users/me/workouts/${workoutId}`,
+      {
+        workout: workoutData,
+      }
+    );
     return response.data;
   } catch (error) {
     logError("updateWorkoutApi", error);
@@ -233,7 +238,7 @@ export const updateWorkoutDetailApi = async (
 ): Promise<ApiResponse<WorkoutDetailType>> => {
   try {
     const response = await authApi.patch(
-      `/users/me/workouts/${workoutId}/details/${workoutDetailId}`,
+      `/api/users/me/workouts/${workoutId}/details/${workoutDetailId}`,
       { detail: detailData }
     );
     return response.data;
@@ -252,7 +257,7 @@ export const updateFitnessDetailApi = async (
 ): Promise<ApiResponse<FitnessDetailState>> => {
   try {
     const response = await authApi.patch(
-      `/users/me/workouts/${workoutId}/details/${workoutDetailId}/fitnessdetails/${fitnessDetailId}`,
+      `/api/users/me/workouts/${workoutId}/details/${workoutDetailId}/fitnessdetails/${fitnessDetailId}`,
       { fitnessDetail: fitnessData }
     );
     return response.data;
@@ -269,7 +274,7 @@ export const getWorkoutsByMonthApi = async (
 ): Promise<ApiResponse<WorkoutStatePopulated[]>> => {
   try {
     const response = await authApi.get(
-      `/users/me/workouts?year=${year}&month=${month}`
+      `/api/users/me/workouts?year=${year}&month=${month}`
     );
     return response.data;
   } catch (error) {

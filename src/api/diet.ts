@@ -115,7 +115,7 @@ export const getUserDietLogsApi = async (): Promise<
   ApiResponse<DietLogResponse[]>
 > => {
   try {
-    const response = await authApi.get("/users/me/diets");
+    const response = await authApi.get("/api/users/me/diets");
     return response.data;
   } catch (error) {
     logError("getUserDietLogsApi", error);
@@ -172,7 +172,7 @@ export const getDietLogByIdApi = async (
   dietLogId: string
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    const response = await authApi.get(`/users/me/diets/${dietLogId}`);
+    const response = await authApi.get(`/api/users/me/diets/${dietLogId}`);
     return response.data;
   } catch (error) {
     logError("getDietLogByIdApi", error);
@@ -186,7 +186,7 @@ export const updateDietLogApi = async (
   dietData: DietUpdateData
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    const response = await authApi.patch(`/users/me/diets/${dietLogId}`, {
+    const response = await authApi.patch(`/api/users/me/diets/${dietLogId}`, {
       diet: dietData,
     });
     return response.data;
@@ -219,7 +219,7 @@ export const addMealToDietLogApi = async (
     };
 
     const response = await authApi.post(
-      `/users/me/diets/${dietLogId}`,
+      `/api/users/me/diets/${dietLogId}`,
       requestData
     );
 
@@ -248,7 +248,7 @@ export const addFoodToMealApi = async (
     };
 
     const response = await authApi.post(
-      `/users/me/diets/${dietLogId}/meals/${mealId}`,
+      `/api/users/me/diets/${dietLogId}/meals/${mealId}`,
       requestData
     );
 
@@ -264,7 +264,7 @@ export const deleteDietLogApi = async (
   dietLogId: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.delete(`/users/me/diets/${dietLogId}`);
+    const response = await authApi.delete(`/api/users/me/diets/${dietLogId}`);
     return response.data;
   } catch (error) {
     logError("deleteDietLogApi", error);
@@ -279,7 +279,7 @@ export const deleteMealApi = async (
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
     const response = await authApi.delete(
-      `/users/me/diets/${dietLogId}/meals/${mealId}`
+      `/api/users/me/diets/${dietLogId}/meals/${mealId}`
     );
     return response.data;
   } catch (error) {
@@ -296,7 +296,7 @@ export const deleteFoodApi = async (
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
     const response = await authApi.delete(
-      `/users/me/diets/${dietLogId}/meals/${mealId}/foods/${foodId}`
+      `/api/users/me/diets/${dietLogId}/meals/${mealId}/foods/${foodId}`
     );
     return response.data;
   } catch (error) {
@@ -318,7 +318,7 @@ export const getDietStatsApi = async (
   }>
 > => {
   try {
-    const response = await authApi.get("/users/me/diets/stats", {
+    const response = await authApi.get("/api/users/me/diets/stats", {
       params: {
         year,
         month,
