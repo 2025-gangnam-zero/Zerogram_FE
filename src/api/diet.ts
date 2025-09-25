@@ -18,7 +18,7 @@ export const getDietLogsByMonthApi = async (
 ): Promise<ApiResponse<DietLogResponse[]>> => {
   try {
     const response = await authApi.get(
-      `/users/me/diets?year=${year}&month=${month}`
+      `/api/users/me/diets?year=${year}&month=${month}`
     );
     return response.data;
   } catch (error) {
@@ -33,7 +33,7 @@ export const createDietLogApi = async (
   selectedDate?: Date
 ): Promise<ApiResponse<DietLogResponse>> => {
   try {
-    let url = "/users/me/diets";
+    let url = "/api/users/me/diets";
 
     // 선택된 날짜가 있으면 쿼리 파라미터로 추가
     if (selectedDate) {

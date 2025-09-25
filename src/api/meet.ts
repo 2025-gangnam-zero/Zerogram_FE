@@ -56,7 +56,7 @@ export const getMeetListApi = async (params: {
   q?: string;
 }): Promise<ApiResponse<MeetListResponse>> => {
   try {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/meets`, {
+    const response = await axios.get(`${API_CONFIG.BASE_URL}/api/meets`, {
       params,
       headers: getHeaders(),
     });
@@ -72,9 +72,12 @@ export const getMeetApi = async (
   meetId: string
 ): Promise<ApiResponse<MeetResponse>> => {
   try {
-    const response = await axios.get(`${API_CONFIG.BASE_URL}/meets/${meetId}`, {
-      headers: getHeaders(),
-    });
+    const response = await axios.get(
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return response.data;
   } catch (error) {
     logError("getMeetByIdApi", error);
@@ -100,9 +103,13 @@ export const createMeetApi = async (
       });
     }
 
-    const response = await axios.post(`${API_CONFIG.BASE_URL}/meets`, data, {
-      headers: getFormDataHeaders(),
-    });
+    const response = await axios.post(
+      `${API_CONFIG.BASE_URL}/api/meets`,
+      data,
+      {
+        headers: getFormDataHeaders(),
+      }
+    );
     return response.data;
   } catch (error) {
     logError("createMeetApi", error);
@@ -143,7 +150,7 @@ export const updateMeetApi = async (
     }
 
     const response = await axios.patch(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}`,
       data,
       {
         headers: getFormDataHeaders(),
@@ -162,7 +169,7 @@ export const deleteMeetApi = async (
 ): Promise<ApiResponse<null>> => {
   try {
     const response = await axios.delete(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}`,
       {
         headers: getHeaders(),
       }
@@ -181,7 +188,7 @@ export const createCommentApi = async (
 ): Promise<ApiResponse<CommentResponse>> => {
   try {
     const response = await axios.post(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}/comments`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}/comments`,
       { content },
       { headers: getHeaders() }
     );
@@ -200,7 +207,7 @@ export const updateCommentApi = async (
 ): Promise<ApiResponse<CommentResponse>> => {
   try {
     const response = await axios.patch(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}/comments/${commentId}`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}/comments/${commentId}`,
       { content },
       { headers: getHeaders() }
     );
@@ -218,7 +225,7 @@ export const deleteCommentApi = async (
 ): Promise<ApiResponse<null>> => {
   try {
     const response = await axios.delete(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}/comments/${commentId}`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}/comments/${commentId}`,
       { headers: getHeaders() }
     );
     return response.data;
@@ -234,7 +241,7 @@ export const toggleCrewApi = async (
 ): Promise<ApiResponse<CrewResponse | null>> => {
   try {
     const response = await axios.post(
-      `${API_CONFIG.BASE_URL}/meets/${meetId}/crews`,
+      `${API_CONFIG.BASE_URL}/api/meets/${meetId}/crews`,
       {},
       { headers: getHeaders() }
     );

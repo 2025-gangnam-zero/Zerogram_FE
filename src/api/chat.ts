@@ -9,7 +9,7 @@ export const getMyRoomsApi = async (params?: {
   q?: string; // 검색어
 }): Promise<ApiResponse<{ items: any[]; nextCursor?: string | null }>> => {
   try {
-    const res = await authApi.get("/rooms/mine", { params });
+    const res = await authApi.get("/api/rooms/mine", { params });
     return res.data;
   } catch (error) {
     logError("getMyRoomsApi", error);
@@ -22,7 +22,7 @@ export const getRoomApi = async (
   roomId: string
 ): Promise<ApiResponse<{ room: any }>> => {
   try {
-    const res = await authApi.get(`/rooms/${roomId}`);
+    const res = await authApi.get(`/api/rooms/${roomId}`);
     return res.data;
   } catch (error) {
     logError("getRoomApi", error);
@@ -37,7 +37,7 @@ export const getRoomNoticeApi = async (
   roomId: string
 ): Promise<ApiResponse<{ notice: RoomNotice | null }>> => {
   try {
-    const res = await authApi.get(`/rooms/${roomId}/notice`);
+    const res = await authApi.get(`/api/rooms/${roomId}/notice`);
     return res.data;
   } catch (error) {
     logError("getRoomNoticeApi", error);
@@ -51,7 +51,7 @@ export const updateRoomNoticeApi = async (
   payload: { text?: string; enabled?: boolean }
 ): Promise<ApiResponse<{ ok: boolean }>> => {
   try {
-    const res = await authApi.put(`/rooms/${roomId}/notice`, payload);
+    const res = await authApi.put(`/api/rooms/${roomId}/notice`, payload);
     return res.data;
   } catch (error) {
     logError("updateRoomNoticeApi", error);
@@ -64,7 +64,7 @@ export const deleteRoomNoticeApi = async (
   roomId: string
 ): Promise<ApiResponse<{ notice: RoomNotice | null }>> => {
   try {
-    const res = await authApi.delete(`/rooms/${roomId}/notice`);
+    const res = await authApi.delete(`/api/rooms/${roomId}/notice`);
     return res.data;
   } catch (error) {
     logError("deleteRoomNoticeApi", error);
@@ -80,7 +80,7 @@ export const listRoomMembersApi = async (
   params?: { limit?: number; cursor?: string | null }
 ): Promise<ApiResponse<{ items: any[]; nextCursor?: string | null }>> => {
   try {
-    const res = await authApi.get(`/rooms/${roomId}/members`, { params });
+    const res = await authApi.get(`/api/rooms/${roomId}/members`, { params });
     return res.data;
   } catch (error) {
     logError("listRoomMembersApi", error);
@@ -93,7 +93,7 @@ export const leaveRoomApi = async (
   roomId: string
 ): Promise<ApiResponse<{ ok: boolean }>> => {
   try {
-    const res = await authApi.post(`/rooms/${roomId}/leave`);
+    const res = await authApi.post(`/api/rooms/${roomId}/leave`);
     return res.data;
   } catch (error) {
     logError("leaveRoomApi", error);
@@ -107,7 +107,7 @@ export const commitReadApi = async (
   payload: { lastReadMessageId?: string; lastReadSeq?: number }
 ): Promise<ApiResponse<{ lastReadSeq: number }>> => {
   try {
-    const res = await authApi.post(`/rooms/${roomId}/read`, payload);
+    const res = await authApi.post(`/api/rooms/${roomId}/read`, payload);
     return res.data;
   } catch (error) {
     logError("commitReadApi", error);
@@ -120,7 +120,7 @@ export const getUnreadCountApi = async (
   roomId: string
 ): Promise<ApiResponse<{ unreadCount: number }>> => {
   try {
-    const res = await authApi.get(`/rooms/${roomId}/unread-count`);
+    const res = await authApi.get(`/api/rooms/${roomId}/unread-count`);
     return res.data;
   } catch (error) {
     logError("getUnreadCountApi", error);
@@ -136,7 +136,7 @@ export const getMessagesApi = async (
   params?: { beforeId?: string; beforeSeq?: number; limit?: number }
 ): Promise<ApiResponse<{ items: ChatMessage[] }>> => {
   try {
-    const res = await authApi.get(`/rooms/${roomId}/messages`, { params });
+    const res = await authApi.get(`/api/rooms/${roomId}/messages`, { params });
 
     // 서버: { items: ChatMessageDTO[] }
     const dtoItems: ChatMessageDTO[] =
@@ -160,7 +160,9 @@ export const deleteMessageApi = async (
   messageId: string
 ): Promise<ApiResponse<{ ok: boolean }>> => {
   try {
-    const res = await authApi.delete(`/rooms/${roomId}/messages/${messageId}`);
+    const res = await authApi.delete(
+      `/api/rooms/${roomId}/messages/${messageId}`
+    );
     return res.data;
   } catch (error) {
     logError("deleteMessageApi", error);

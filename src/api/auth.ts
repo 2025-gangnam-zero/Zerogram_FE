@@ -58,7 +58,7 @@ export const signupApi = async (
   userData: Omit<SignupFormData, "confirmPassword">
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.post("/auth/signup", userData);
+    const response = await authApi.post("/api/auth/signup", userData);
     return response.data;
   } catch (error) {
     logError("signupApi", error);
@@ -71,7 +71,7 @@ export const loginApi = async (
   credentials: LoginFormData
 ): Promise<ApiResponse<LoginResponse>> => {
   try {
-    const response = await authApi.post("/auth/login", credentials);
+    const response = await authApi.post("/api/auth/login", credentials);
     return response.data;
   } catch (error) {
     logError("loginApi", error);
@@ -82,7 +82,7 @@ export const loginApi = async (
 // 로그아웃 API 함수
 export const logoutApi = async (): Promise<ApiResponse> => {
   try {
-    const response = await authApi.post("/auth/logout");
+    const response = await authApi.post("/api/auth/logout");
     return response.data;
   } catch (error) {
     logError("logoutApi", error);
@@ -144,7 +144,9 @@ export const verifyCurrentPasswordApi = async (
   password: string
 ): Promise<ApiResponse> => {
   try {
-    const response = await authApi.post("/auth/verify-password", { password });
+    const response = await authApi.post("/api/auth/verify-password", {
+      password,
+    });
     return response.data;
   } catch (error) {
     logError("verifyCurrentPasswordApi", error);

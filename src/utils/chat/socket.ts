@@ -24,7 +24,7 @@ export const createSocket = ({ sessionId }: CreateSocketOptions = {}) => {
     url = `ws://${urlWithoutProtocol}`;
   }
 
-  const path = process.env.REACT_APP_SOCKET_PATH;
+  const path = process.env.REACT_APP_SOCKET_PATH || "/ws";
   const namespace = process.env.REACT_APP_SOCKET_NAMESPACE || "/";
 
   const autoConnect =

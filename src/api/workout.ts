@@ -27,7 +27,7 @@ export const createWorkoutApi = async (
   selectedDate?: Date
 ): Promise<ApiResponse<WorkoutState>> => {
   try {
-    let url = "/users/me/workouts";
+    let url = "/api/users/me/workouts";
 
     // 선택된 날짜가 있으면 쿼리 파라미터로 추가
     if (selectedDate) {
@@ -48,7 +48,7 @@ export const getUserWorkoutsApi = async (): Promise<
   ApiResponse<WorkoutStatePopulated[]>
 > => {
   try {
-    const response = await authApi.get("/users/me/workouts");
+    const response = await authApi.get("/api/users/me/workouts");
     return response.data;
   } catch (error) {
     logError("getUserWorkoutsApi", error);
