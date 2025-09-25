@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AUTH_CONSTANTS } from "../constants";
-import { clearAuthData } from "../utils";
+import { clearAuthData, hardLogoutCleanup, updateSessionId } from "../utils";
 import { logoutApi } from "../api/auth";
 import { unsubscribeApi } from "../api/auth";
 
@@ -39,6 +39,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           const { setSessionId } =
             require("./userStore").useUserStore.getState();
           setSessionId(sessionId);
+          updateSessionId(sessionId);
         } catch (error) {
           console.warn("userStore 동기화 실패:", error);
         }
@@ -61,6 +62,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           isLoggedIn: false,
           sessionId: null,
         });
+
+        hardLogoutCleanup();
 
         // userStore도 초기화
         try {

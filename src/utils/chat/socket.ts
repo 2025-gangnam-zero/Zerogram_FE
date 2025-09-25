@@ -80,6 +80,9 @@ export const getSocket = () => {
 
 export const updateSessionId = (next?: string | null) => {
   if (!socket) return;
+  (socket as any).auth = { sessionId: next ?? null }; // 1) 새 인증값 반영
+  if (socket.connected) socket.disconnect(); // 2) 연결 중이면 끊고
+  socket.connect(); // 3) 항상 connect로 새 세션으로 재연결
 };
 
 export async function joinRoom(
@@ -180,4 +183,12 @@ export function onNewMessage(handler: (m: ChatMessage) => void) {
   const s = getSocket();
   s.on("message:new", handler);
   return () => s.off("message:new", handler);
+}
+
+/* 로그아웃 시 정리용 */
+export function hardLogoutCleanup() {
+  if (!socket) return;
+  socket.removeAllListeners();
+  socket.disconnect(); // 수동 종료 상태
+  // joinedRef.clear() 등 클라이언트 상태 초기화는 각 스토어에서 별도 처리
 }
