@@ -39,4 +39,4 @@ jobs:
           aws-region: ap-northeast-2
 
       - name: Deploy to S3
-        run: aws s3 sync build/ s3://zerogram-static-bucket --delete --exclude "profiles/*"
+        run: aws s3 sync build/ s3://zerogram-static-bucket --delete --exclude "profiles/*" --exclude "chat/*"
