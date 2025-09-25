@@ -17,12 +17,12 @@
   border: 0;
   padding: 0;
   margin: 0;
-  top: 70px;
+  top: 118px;
 }
 
 .panel {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0) + 70px);
+  top: calc(env(safe-area-inset-top, 0) + 118px);
   bottom: 0;
   left: 0;
   width: min(92vw, 360px);

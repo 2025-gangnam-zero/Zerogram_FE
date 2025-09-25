@@ -1,5 +1,5 @@
 import styles from "./ChatMobileTopBar.module.css";
-import { Menu, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 
 type Props = {
   onOpenDrawer: () => void;

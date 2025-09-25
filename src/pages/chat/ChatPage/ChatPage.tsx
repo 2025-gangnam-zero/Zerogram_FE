@@ -25,7 +25,7 @@ export const ChatPage = () => {
       {isNarrow ? (
         <>
           {/* ✅ ChatHeader 위에 모바일 톱바 */}
-          <ChatMobileTopBar onOpenDrawer={() => setDrawerOpen(true)} />
+          <ChatMobileTopBar onOpenDrawer={() => setDrawerOpen(!drawerOpen)} />
           {/* 메인(기존 ChatHeader/Notice/MessageList/MessageInput은 Outlet 안에서 그대로) */}
           <div className={styles.mainArea}>
             <Outlet />
