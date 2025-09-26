@@ -10,6 +10,7 @@ import {
   hasFormErrors,
   showErrorAlert,
   showSuccessAlert,
+  generateGoogleOAuthURL,
 } from "../utils";
 import { SignupFormData, FormErrors } from "../types";
 
@@ -167,7 +168,17 @@ const SignupPage: React.FC = () => {
   };
 
   const handleGoogleSignup = () => {
-    // TODO: 구글 OAuth 로그인 구현
+    try {
+      const googleAuthUrl = generateGoogleOAuthURL();
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      console.error("Google OAuth URL 생성 실패:", error);
+      showErrorAlert(
+        error instanceof Error
+          ? error.message
+          : "Google 로그인을 시작할 수 없습니다."
+      );
+    }
   };
 
   const handleKakaoSignup = () => {
