@@ -16,22 +16,46 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   cursor: pointer;
 }
+.iconWrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
 .fabIcon {
   width: 22px;
   height: 22px;
+  display: block;
 }
+
+/* 아이콘+배지 */
 .badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 20px;
-  height: 20px;
+  top: -8px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 6px;
   background: #ef4444;
   color: #fff;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #111827; /* FAB 배경과 동일, 시인성 향상 */
+}
+
+/* 숫자 전용 칩 (큰 수 전용) */
+.countChip {
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -1,4 +1,3 @@
-// src/features/chat-notify/ChatNotifyProvider.tsx
 import {
   createContext,
   useContext,
@@ -20,8 +19,8 @@ export type ChatNotifItem = {
   roomId: string;
   roomName?: string;
   lastMessage?: string;
-  lastMessageAt?: string;
-  unread: number;
+  lastMessageAt?: string; // ISO
+  unread: number; // 0 또는 1 (클램프)
 };
 
 type Ctx = {
@@ -39,6 +38,15 @@ export const useChatNotify = () => {
   return ctx;
 };
 
+// ----- Helpers -----
+const rid = (id: unknown) => (typeof id === "string" ? id : String(id));
+const clampUnread1 = (n: unknown) => (typeof n === "number" && n > 0 ? 1 : 0);
+const isNewer = (nextIso?: string, prevIso?: string) => {
+  if (!nextIso) return false;
+  if (!prevIso) return true;
+  return +new Date(nextIso) > +new Date(prevIso);
+};
+
 export const ChatNotifyProvider = ({
   children,
 }: {
@@ -46,7 +54,7 @@ export const ChatNotifyProvider = ({
 }) => {
   const [map, setMap] = useState<Map<string, ChatNotifItem>>(new Map());
 
-  // ✅ roomId → roomName 캐시
+  // roomId → roomName 캐시
   const roomNameMap = useRef<Map<string, string>>(new Map());
   const fetchingRef = useRef<boolean>(false);
 
@@ -62,18 +70,18 @@ export const ChatNotifyProvider = ({
       const res = await getMyRoomsApi({ limit: 100 });
       const items: SidebarListItemData[] = res?.data?.items ?? [];
       for (const it of items) {
-        if (it?.id && it?.roomName) roomNameMap.current.set(it.id, it.roomName);
+        if (it?.id && it?.roomName)
+          roomNameMap.current.set(rid(it.id), it.roomName);
       }
       // 알림 목록에도 roomName 보강
       setMap((prev) => {
         const next = new Map(prev);
-        roomNameMap.current.forEach((n, rid) => {
-          const it = next.get(rid);
+        roomNameMap.current.forEach((n, key) => {
+          const it = next.get(key);
           if (it && !it.roomName) {
-            next.set(rid, { ...it, roomName: n });
+            next.set(key, { ...it, roomName: n });
           }
         });
-
         return next;
       });
     } catch (e) {
@@ -99,54 +107,56 @@ export const ChatNotifyProvider = ({
   // 현재 활성 방 추적 + 진입 시 해당 방 unread 0 처리
   useEffect(() => {
     const m = location.pathname.match(/^\/chat\/([^/]+)/);
-    activeRoomIdRef.current = m?.[1];
+    activeRoomIdRef.current = m?.[1] ? rid(m[1]) : undefined;
+
     if (m?.[1]) {
+      const key = rid(m[1]);
       setMap((prev) => {
         const next = new Map(prev);
-        const item = next.get(m[1]!);
-        if (item && item.unread > 0) next.set(m[1]!, { ...item, unread: 0 });
+        const item = next.get(key);
+        if (item && item.unread > 0) next.set(key, { ...item, unread: 0 });
         return next;
       });
     }
   }, [location.pathname, params.roomid]);
 
-  // 새 메시지 구독
+  // 새 메시지 구독: 보고 있는 방은 제외, 같은 방의 새 메시지는 항상 unread=1, 스냅샷은 최신으로 교체
   useEffect(() => {
     const off = onNewMessage((msg: any) => {
+      const key = rid(msg.roomId);
       const active = activeRoomIdRef.current;
-      if (active === msg.roomId) return; // 보고 있는 방은 카운트 X
+      if (active === key) return; // 보고 있는 방은 카운트 X (0 유지)
 
-      // ✅ roomName 캐시 조회 (없으면 나중에 비동기로 메움)
-      const cachedName = roomNameMap.current.get(msg.roomId);
+      const cachedName = roomNameMap.current.get(key);
 
       setMap((prev) => {
         const next = new Map(prev);
-        const cur = next.get(msg.roomId) ?? {
-          roomId: msg.roomId,
-          roomName: cachedName, // 없으면 undefined (표시는 패널에서 안전 처리)
+        const cur = next.get(key) ?? {
+          roomId: key,
+          roomName: cachedName,
           lastMessage: "",
           lastMessageAt: "",
           unread: 0,
         };
-        next.set(msg.roomId, {
+
+        next.set(key, {
           ...cur,
-          roomName: cachedName ?? cur.roomName, // 캐시 있으면 반영
+          roomName: cachedName ?? cur.roomName,
           lastMessage: msg.text ?? cur.lastMessage,
           lastMessageAt: msg.createdAt ?? cur.lastMessageAt,
-          unread: (cur.unread ?? 0) + 1,
+          unread: 1, // ★ 같은 방에서 몇 개를 받아도 1
         });
         return next;
       });
 
-      // 캐시에 없으면 백그라운드로 한 번 캐시 적재 시도
       if (!cachedName) void hydrateRooms();
     });
     return () => {
-      typeof off === "function" && off();
+      if (typeof off === "function") off();
     };
   }, []);
 
-  // ① 최초/로그인 후 초기 동기화 (서버 계산값 기준)
+  // ① 최초/로그인 후 초기 동기화 (서버 계산값 기준) — unread을 0/1로 클램프하여 저장
   useEffect(() => {
     (async () => {
       try {
@@ -155,14 +165,15 @@ export const ChatNotifyProvider = ({
         setMap(() => {
           const next = new Map<string, ChatNotifItem>();
           for (const it of items) {
-            next.set(it.roomId, {
-              roomId: it.roomId,
+            const key = rid(it.roomId);
+            next.set(key, {
+              roomId: key,
               roomName: it.roomName,
               lastMessage: it.lastMessage,
               lastMessageAt: it.lastMessageAt,
-              unread: it.unread ?? 0,
+              unread: clampUnread1(it.unread), // ★ 클램프
             });
-            if (it.roomName) roomNameMap.current.set(it.roomId, it.roomName);
+            if (it.roomName) roomNameMap.current.set(key, it.roomName);
           }
           return next;
         });
@@ -172,25 +183,29 @@ export const ChatNotifyProvider = ({
     })();
   }, []);
 
-  // ② 실시간 알림 구독 → 방 단위 1개로 최신치 갱신
+  // ② 실시간 알림 구독 → 방 단위 1개로 최신치 갱신(서버 값이 더 최신일 때만 교체), unread는 0/1 클램프
   useEffect(() => {
     const off = onNotifyUpdate((n) => {
+      const key = rid(n.roomId);
       const active = activeRoomIdRef.current;
-      // 보고 있는 방이면 서버가 unread:0을 푸시해오거나, 여기서 0으로 강제
-      const unread = active === n.roomId ? 0 : n.unread ?? 0;
-
-      // 캐시된 roomName 보강
-      const cachedName = roomNameMap.current.get(n.roomId) ?? n.roomName;
-      if (cachedName) roomNameMap.current.set(n.roomId, cachedName);
+      const unread = active === key ? 0 : clampUnread1(n.unread);
+      const cachedName = roomNameMap.current.get(key) ?? n.roomName;
+      if (cachedName) roomNameMap.current.set(key, cachedName);
 
       setMap((prev) => {
-        const cur = prev.get(n.roomId) ?? { roomId: n.roomId, unread: 0 };
+        const cur = prev.get(key) ?? { roomId: key, unread: 0 };
         const next = new Map(prev);
-        next.set(n.roomId, {
+        const newer = isNewer(n.lastMessageAt, cur.lastMessageAt);
+
+        next.set(key, {
           ...cur,
           roomName: cachedName ?? cur.roomName,
-          lastMessage: n.lastMessage ?? cur.lastMessage,
-          lastMessageAt: n.lastMessageAt ?? cur.lastMessageAt,
+          lastMessage: newer
+            ? n.lastMessage ?? cur.lastMessage
+            : cur.lastMessage,
+          lastMessageAt: newer
+            ? n.lastMessageAt ?? cur.lastMessageAt
+            : cur.lastMessageAt,
           unread,
         });
         return next;
@@ -202,16 +217,16 @@ export const ChatNotifyProvider = ({
   }, []);
 
   const markRoomRead = async (roomId: string) => {
+    const key = rid(roomId);
     setMap((prev) => {
       const next = new Map(prev);
-      const item = next.get(roomId);
-      if (item) next.set(roomId, { ...item, unread: 0 });
+      const item = next.get(key);
+      if (item) next.set(key, { ...item, unread: 0 });
       return next;
     });
 
-    // 서버 커밋 → 서버가 notify:update { unread:0 } 재푸시(중복 OK)
     try {
-      await markRoomReadApi(roomId);
+      await markRoomReadApi(key);
     } catch (e) {
       console.error(e);
     }
@@ -219,21 +234,17 @@ export const ChatNotifyProvider = ({
 
   const clearAll = () => setMap(new Map());
 
+  // items 계산: 원본 변형 없이 캐시 기반으로 roomName만 보강 후 최신순 정렬
   const items = useMemo(() => {
-    const arr = Array.from(map.values());
-    // 최신순 정렬
+    const arr = Array.from(map.values()).map((it) => {
+      const name = it.roomName ?? roomNameMap.current.get(it.roomId);
+      return name ? { ...it, roomName: name } : it;
+    });
     arr.sort((a, b) => {
       const ta = a.lastMessageAt ? +new Date(a.lastMessageAt) : 0;
       const tb = b.lastMessageAt ? +new Date(b.lastMessageAt) : 0;
       return tb - ta;
     });
-    // ✅ roomName 보강(최신 캐시 반영)
-    for (const it of arr) {
-      if (!it.roomName) {
-        const n = roomNameMap.current.get(it.roomId);
-        if (n) it.roomName = n;
-      }
-    }
     return arr;
   }, [map]);
 
