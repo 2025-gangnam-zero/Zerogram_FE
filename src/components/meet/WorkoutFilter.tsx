@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { Trophy, Dumbbell, Activity } from "lucide-react";
 import { WorkoutType } from "../../types/workout";
 import { UI_CONSTANTS } from "../../constants";
 
@@ -55,8 +56,13 @@ const OptionLabel = styled.span`
   font-weight: 500;
 `;
 
-const OptionIcon = styled.span`
-  font-size: 1.1rem;
+const OptionIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
 `;
 
 const WorkoutFilter: React.FC<WorkoutFilterProps> = ({
@@ -64,9 +70,9 @@ const WorkoutFilter: React.FC<WorkoutFilterProps> = ({
   onTypeChange,
 }) => {
   const workoutOptions = [
-    { value: "all", label: "전체", icon: "🏆" },
-    { value: "fitness", label: "헬스", icon: "💪" },
-    { value: "running", label: "러닝", icon: "🏃‍♀️" },
+    { value: "all", label: "전체", icon: Trophy },
+    { value: "fitness", label: "헬스", icon: Dumbbell },
+    { value: "running", label: "러닝", icon: Activity },
   ] as const;
 
   return (
@@ -82,7 +88,9 @@ const WorkoutFilter: React.FC<WorkoutFilterProps> = ({
               checked={selectedType === option.value}
               onChange={() => onTypeChange(option.value as WorkoutType | "all")}
             />
-            <OptionIcon>{option.icon}</OptionIcon>
+            <OptionIcon>
+              <option.icon size={18} />
+            </OptionIcon>
             <OptionLabel>{option.label}</OptionLabel>
           </FilterOption>
         ))}
