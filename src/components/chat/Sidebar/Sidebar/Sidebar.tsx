@@ -141,6 +141,7 @@ export const Sidebar = ({
     onCloseDrawer?.();
   };
 
+  console.log(asDrawer);
   return (
     <div
       className={[

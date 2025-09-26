@@ -1,7 +1,11 @@
 .chatLayout {
+  max-width: 1200px;
   display: grid;
   grid-template-columns: 320px 1fr; /* height는 인라인 style에서 지정 */
   min-height: 0; /* 자식이 스크롤 가질 수 있게 */
+  margin: 0 auto;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .sidebarArea {
   border-right: 1px solid #e5e7eb;

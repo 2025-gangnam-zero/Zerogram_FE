@@ -13,6 +13,8 @@ export const ChatPage = () => {
       setDrawerOpen(false);
     }
   }, [isNarrow]);
+
+  console.log(isNarrow);
   return (
     <section
       className={styles.chatLayout}
@@ -38,7 +40,7 @@ export const ChatPage = () => {
           >
             <Sidebar
               variant="mine"
-              asDrawer
+              asDrawer={isNarrow}
               onCloseDrawer={() => setDrawerOpen(false)}
             />
           </Drawer>
@@ -48,7 +50,7 @@ export const ChatPage = () => {
           <aside className={styles.sidebarArea}>
             <Sidebar
               variant="mine"
-              asDrawer
+              asDrawer={isNarrow}
               onCloseDrawer={() => setDrawerOpen(false)}
             />
           </aside>
