@@ -161,7 +161,7 @@ export const ChatNotifyProvider = ({
     (async () => {
       try {
         const res = await getNotificationsApi();
-        const items = res?.data?.data?.items ?? [];
+        const items = res?.data?.items ?? [];
         setMap(() => {
           const next = new Map<string, ChatNotifItem>();
           for (const it of items) {
@@ -249,7 +249,7 @@ export const ChatNotifyProvider = ({
   }, [map]);
 
   const unreadTotal = useMemo(
-    () => items.reduce((acc, it) => acc + (it.unread ?? 0), 0),
+    () => items.reduce((acc, it) => acc + (Number(it.unread) > 0 ? 1 : 0), 0),
     [items]
   );
 

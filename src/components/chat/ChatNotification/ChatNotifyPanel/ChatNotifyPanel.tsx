@@ -13,6 +13,8 @@ type Props = {
 
 export const ChatNotifyPanel = ({ open, onClose, anchorRect }: Props) => {
   const { items, markRoomRead } = useChatNotify();
+
+  const unreadItems = items.filter((it) => Number(it.unread > 0));
   const target = document.getElementById("overlay-root") ?? document.body;
   if (!open || !anchorRect) return null;
 
@@ -51,11 +53,11 @@ export const ChatNotifyPanel = ({ open, onClose, anchorRect }: Props) => {
         </div>
 
         <ul className={styles.popoverList}>
-          {items.length === 0 && (
+          {unreadItems.length === 0 && (
             <li className={styles.empty}>읽지 않은 알림이 없습니다.</li>
           )}
 
-          {items.map((it) => (
+          {unreadItems.map((it) => (
             <li key={it.roomId} className={styles.row}>
               <Link
                 to={`/chat/${it.roomId}`}

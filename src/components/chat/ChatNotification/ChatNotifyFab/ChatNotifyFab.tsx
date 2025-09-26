@@ -34,6 +34,8 @@ export const ChatNotifyFab = () => {
     };
   }, [open]);
 
+  console.log("총 unread", unreadTotal);
+
   // 채팅 페이지이거나 알림이 없으면 표시하지 않음
   if (pathname.startsWith("/chat") || unreadTotal === 0) return null;
 
