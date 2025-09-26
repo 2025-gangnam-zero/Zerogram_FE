@@ -38,6 +38,29 @@ export const ChatSection = () => {
   const [noticeVisible, setNoticeVisible] = useState<boolean>(false); // 공지 로컬 표시
   const [previews, setPreviews] = useState<PreviewItem[]>([]); // 미리보기(렌더 전용)
 
+  // === 읽음 커밋 관리용 참조 & 디바운스 ===
+  const commitTimerRef = useRef<number | null>(null);
+  const lastSeenSeqRef = useRef<number | null>(null);
+  const lastSeenMsgIdRef = useRef<string | null>(null);
+
+  const scheduleCommitRead = (rid: string) => {
+    if (commitTimerRef.current) window.clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = window.setTimeout(async () => {
+      commitTimerRef.current = null;
+      if (!lastSeenSeqRef.current || !lastSeenMsgIdRef.current) return;
+      try {
+        await commitReadApi(rid, {
+          lastReadSeq: lastSeenSeqRef.current,
+          lastReadMessageId: lastSeenMsgIdRef.current,
+        });
+        // 전역 동기화: 사이드바/패널/FAB 등에서 해당 방 배지 0 유지
+        eventBus.emit("rooms:clearUnread", rid);
+      } catch (e) {
+        console.warn("[ChatSection] commitRead (debounced) failed:", e);
+      }
+    }, 200);
+  };
+
   // 방 정보 로드
   useEffect(() => {
     if (!roomid) {
@@ -73,16 +96,24 @@ export const ChatSection = () => {
         const ordered = [...items].reverse(); // 화면용 오래→새로
         setMessages(ordered);
 
-        const last = items[0]; // 서버가 최신 desc라고 가정
+        const last = items[0]; // 서버가 최신 DESC라고 가정
         if (last) {
+          // ↳ 참조값 저장 후 커밋(서버 상태와 동기화)
+          lastSeenSeqRef.current = last.seq ?? null;
+          lastSeenMsgIdRef.current = last.id ?? null;
           try {
             await commitReadApi(roomid, {
               lastReadMessageId: last.id,
               lastReadSeq: last.seq,
             });
+            eventBus.emit("rooms:clearUnread", roomid);
           } catch (e) {
             console.warn("[ChatSection] commitRead failed:", e);
           }
+        } else {
+          // 메시지가 없으면 참조 초기화
+          lastSeenSeqRef.current = null;
+          lastSeenMsgIdRef.current = null;
         }
       } catch (e) {
         console.error("[ChatSection] getMessagesApi failed:", e);
@@ -99,11 +130,23 @@ export const ChatSection = () => {
     const off = onNewMessage((msg) => {
       if (msg.roomId !== roomid) return;
       setMessages((prev) => [...prev, msg]);
+
+      // ✅ 현재 방에서 도착한 새 메시지는 즉시 "본 것"으로 간주 → 커밋 스케줄
+      lastSeenSeqRef.current = msg.seq ?? lastSeenSeqRef.current;
+      lastSeenMsgIdRef.current = msg.id ?? lastSeenMsgIdRef.current;
+      scheduleCommitRead(roomid);
     });
 
     return () => {
       off();
       leaveSocketRoom(roomid);
+      if (commitTimerRef.current) {
+        window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
+      // 룸이 바뀔 때 참조 초기화(다음 방에서 새로 세팅)
+      lastSeenSeqRef.current = null;
+      lastSeenMsgIdRef.current = null;
     };
   }, [roomid]);
 
@@ -119,7 +162,7 @@ export const ChatSection = () => {
     };
   }, []);
 
-  // ✅ 이 방을 보는 순간, 사이드바에게 "이 방 읽음 처리" 신호
+  // ✅ 이 방을 보는 순간, 사이드바에게 "이 방 읽음 처리" 신호 (UI 동기화)
   useEffect(() => {
     if (!roomid) return;
     eventBus.emit("rooms:clearUnread", roomid);
@@ -168,12 +211,20 @@ export const ChatSection = () => {
     try {
       setSending(true);
 
-      // TODO
       const ack = await sendMessage(roomid, {
         text,
         previews,
       });
-      if (!ack.ok) console.error("send failed:", ack.error);
+      if (!ack.ok) {
+        console.error("send failed:", ack.error);
+      } else {
+        // ✅ 내가 보낸 메시지도 마지막으로 본 것으로 처리(ACK에 seq/id가 있다면)
+        if (ack.seq && ack.id) {
+          lastSeenSeqRef.current = ack.seq;
+          lastSeenMsgIdRef.current = ack.id;
+          scheduleCommitRead(roomid);
+        }
+      }
 
       // 성공 시 정리
       previews.forEach((p) => {

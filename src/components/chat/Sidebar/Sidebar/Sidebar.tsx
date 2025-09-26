@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import styles from "./Sidebar.module.css";
 import { SidebarList, SearchBar } from "../../../chat";
 import { ChatMessage, SidebarListItemData } from "../../../../types";
-import { getMyRoomsApi } from "../../../../api/chat";
+import { getMyRoomsApi, markRoomReadApi } from "../../../../api/chat";
 import {
   eventBus,
   onNewMessage,
@@ -48,13 +48,22 @@ export const Sidebar = ({
   const currentRoomIdRef = useRef<string | undefined>(
     currentRoomId ?? undefined
   );
+
   const myUserIdRef = useRef<string | undefined>(myUserId);
+
   useEffect(() => {
     currentRoomIdRef.current = currentRoomId ?? undefined;
   }, [currentRoomId]);
+
   useEffect(() => {
     myUserIdRef.current = myUserId ?? undefined;
   }, [myUserId]);
+
+  useEffect(() => {
+    if (!currentRoomId) return;
+    setMineRooms((prev) => clearUnread(prev, currentRoomId));
+    eventBus.emit("rooms:clearUnread", currentRoomId);
+  }, [currentRoomId]);
 
   // 내 모든 방 조인
   const joinAllMyRooms = useCallback((rooms: SidebarListItemData[]) => {
@@ -92,6 +101,7 @@ export const Sidebar = ({
   // 읽음 클리어 이벤트 → 배지 0
   useEffect(() => {
     const off = eventBus.on("rooms:clearUnread", (roomId: string) => {
+      if (!roomId) return;
       setMineRooms((prev) => clearUnread(prev, roomId));
     });
     return () => off();
@@ -136,9 +146,24 @@ export const Sidebar = ({
     return mineRooms.filter((r) => r.roomName.toLowerCase().includes(q));
   }, [query, mineRooms]);
 
-  // 드로어 닫기용
-  const handleSelect = (roomId: string) => {
+  // 변경
+  const handleSelect = async (roomId: string) => {
+    // A) UI 즉시 반영: 배지 0
+    setMineRooms((prev) => clearUnread(prev, roomId));
+
+    // B) 전역 동기화: 다른 패널/ FAB/ 프로바이더 등과 일치
+    eventBus.emit("rooms:clearUnread", roomId);
+
+    // (선택) 드로어 닫기
     onCloseDrawer?.();
+
+    // C) 서버 커밋 (실패해도 UI는 유지; 필요 시 롤백 로직 추가)
+    try {
+      await markRoomReadApi(roomId);
+    } catch (e) {
+      console.error("[Sidebar] markRoomReadApi failed:", e);
+      // 필요하면 여기서 롤백: setMineRooms(prev => bumpUnread(prev, roomId))
+    }
   };
 
   console.log(asDrawer);

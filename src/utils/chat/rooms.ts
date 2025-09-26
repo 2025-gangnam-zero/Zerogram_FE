@@ -107,12 +107,14 @@ export function bumpUnreadAndSort(
 }
 
 /** 방을 열었을 때(읽음 처리) 사이드바 배지 0으로 */
-export function clearUnread(
-  rooms: SidebarListItemData[],
-  roomId: string
-): SidebarListItemData[] {
-  const next = rooms.slice();
-  const i = next.findIndex((r) => r.id === roomId);
-  if (i >= 0) next[i] = { ...next[i], unreadCount: 0 };
-  return next;
-}
+export const clearUnread = (list: SidebarListItemData[], roomId: string) => {
+  if (!roomId) return list; // 방어
+  let changed = false;
+  const next = list.map((it) => {
+    if (it.id !== roomId) return it;
+    if (!it.unreadCount || it.unreadCount === 0) return it;
+    changed = true;
+    return { ...it, unreadCount: 0 };
+  });
+  return changed ? next : list; // 참조 보존 최적화
+};
