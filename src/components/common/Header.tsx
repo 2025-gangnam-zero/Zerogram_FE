@@ -385,26 +385,32 @@ const Header: React.FC = () => {
   };
 
   const handleLogoutClick = async () => {
+    closeMenus(); // 메뉴 상태 초기화
     await logout();
     navigate("/");
   };
 
   const handleMyPageClick = () => {
+    closeMenus(); // 메뉴 상태 초기화
     navigate("/mypage");
   };
 
   const handleWorkoutClick = () => {
+    closeMenus();
     navigate("/workout");
   };
   const handleDietClick = () => {
+    closeMenus();
     navigate("/diet-log");
   };
 
   const handleMeetClick = () => {
+    closeMenus();
     navigate("/meet");
   };
 
   const handleChatClick = () => {
+    closeMenus();
     navigate("/chat");
   };
 
