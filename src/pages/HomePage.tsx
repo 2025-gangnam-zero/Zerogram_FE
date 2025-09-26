@@ -164,21 +164,21 @@ const HomePage: React.FC = () => {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 10);
+    .slice(0, 5);
 
   const recentWorkouts = workouts
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 10);
+    .slice(0, 5);
 
   const recentMeets = meets
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 10);
+    .slice(0, 5);
 
   // 이벤트 핸들러들
   const handleDietLogClick = (dietLog: DietLogResponse) => {
