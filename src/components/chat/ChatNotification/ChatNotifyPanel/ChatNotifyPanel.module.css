@@ -1,0 +1,115 @@
+/* 백드롭 */
+.popoverBackdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent; /* 화면 클릭만 잡고 투명하게 */
+  z-index: 11000;
+}
+
+/* 패널(버튼 위 고정) */
+.popoverPanel {
+  position: fixed;
+  z-index: 11001;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden; /* 둥근 모서리 안쪽으로 클립 */
+  /* width/maxHeight는 인라인 style에서 제어 */
+}
+
+/* 헤더 고정, 내용 스크롤 */
+.popoverHeader {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.popoverList {
+  overflow: auto; /* 내부 스크롤 */
+  padding: 6px 0;
+}
+
+/* 말풍선 꼬리 (선택) */
+.arrow {
+  position: absolute;
+  bottom: -6px; /* 패널 아래쪽에 삼각형을 살짝 내밀기 */
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35); /* 반투명 백그라운드 */
+  z-index: 11000;
+  display: flex;
+  align-items: flex-end; /* 하단 정렬 → 바텀 시트 */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 실제 패널 */
+.panel {
+  width: calc(100% - 24px); /* 좌우 여백 */
+  max-width: 720px; /* 데스크톱에서 너무 넓지 않게 */
+  margin: 0 auto 12px; /* 하단 살짝 띄우기 */
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  max-height: 72vh; /* ✅ 전체 높이 제한 */
+  transform: translateY(12%);
+  transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.open .panel {
+  transform: translateY(0); /* ✅ 열릴 때 위로 슬라이드 */
+}
+
+/* 헤더는 고정, 내용만 스크롤 */
+.sheetHeader {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 목록 영역만 스크롤 */
+.list {
+  overflow: auto; /* ✅ 내부 스크롤 */
+  padding: 8px 0;
+}
+
+/* 취향에 따라 브레이크포인트 */
+@media (min-width: 768px) {
+  .panel {
+    max-width: 640px;
+  }
+}
+@media (min-width: 1200px) {
+  .panel {
+    max-width: 560px;
+  }
+}
