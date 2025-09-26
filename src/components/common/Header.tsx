@@ -193,6 +193,7 @@ const UserMenu = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+  position: relative;
 
   @media (max-width: 768px) {
     gap: 8px;
@@ -282,7 +283,6 @@ const UserMenuButton = styled.button`
   color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
   font-weight: 600;
   transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
-  position: relative;
 
   &:hover {
     background-color: ${UI_CONSTANTS.COLORS.LIGHT};
@@ -385,26 +385,32 @@ const Header: React.FC = () => {
   };
 
   const handleLogoutClick = async () => {
+    closeMenus(); // 메뉴 상태 초기화
     await logout();
     navigate("/");
   };
 
   const handleMyPageClick = () => {
+    closeMenus(); // 메뉴 상태 초기화
     navigate("/mypage");
   };
 
   const handleWorkoutClick = () => {
+    closeMenus();
     navigate("/workout");
   };
   const handleDietClick = () => {
+    closeMenus();
     navigate("/diet-log");
   };
 
   const handleMeetClick = () => {
+    closeMenus();
     navigate("/meet");
   };
 
   const handleChatClick = () => {
+    closeMenus();
     navigate("/chat");
   };
 
@@ -463,17 +469,17 @@ const Header: React.FC = () => {
               <UserMenu>
                 <UserMenuButton onClick={toggleUserMenu}>
                   <User size={20} />
-                  <UserDropdown $isOpen={isUserMenuOpen}>
-                    <DropdownItem onClick={handleMyPageClick}>
-                      <Home size={16} />
-                      마이페이지
-                    </DropdownItem>
-                    <DropdownItem onClick={handleLogoutClick}>
-                      <LogOut size={16} />
-                      로그아웃
-                    </DropdownItem>
-                  </UserDropdown>
                 </UserMenuButton>
+                <UserDropdown $isOpen={isUserMenuOpen}>
+                  <DropdownItem onClick={handleMyPageClick}>
+                    <Home size={16} />
+                    마이페이지
+                  </DropdownItem>
+                  <DropdownItem onClick={handleLogoutClick}>
+                    <LogOut size={16} />
+                    로그아웃
+                  </DropdownItem>
+                </UserDropdown>
                 <MobileMenuButton onClick={toggleMobileMenu}>
                   {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </MobileMenuButton>
