@@ -24,9 +24,9 @@ const PageContainer = styled.div`
 `;
 
 const PageTitle = styled.h1`
-  font-size: 2.5rem;
+  font-size: 32px;
   color: #2c3e50;
-  margin-bottom: 30px;
+  margin-bottom: ${UI_CONSTANTS.SPACING.XL};
   font-weight: 700;
   text-align: center;
 `;

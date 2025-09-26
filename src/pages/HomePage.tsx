@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { Utensils, Dumbbell, Users } from "lucide-react";
 import { useDietStore } from "../store/dietStore";
 import { useWorkoutStore } from "../store/workoutStore";
 import { useMeetStore } from "../store/meetStore";
@@ -29,6 +30,10 @@ const PageTitle = styled.h1`
   margin-bottom: 30px;
   font-weight: 700;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 `;
 
 const GridContainer = styled.div`
@@ -63,6 +68,19 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  transition: color ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+
+  &:hover {
+    color: ${UI_CONSTANTS.COLORS.PRIMARY};
+  }
+`;
+
+const SectionIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
 `;
 
 const CardsContainer = styled.div`
@@ -199,13 +217,16 @@ const HomePage: React.FC = () => {
 
   return (
     <HomeContainer>
-      <PageTitle>🏠 홈</PageTitle>
+      <PageTitle>홈</PageTitle>
 
       <GridContainer>
         {/* 최근 식단일지 */}
         <Section>
           <SectionTitle onClick={() => navigate("/diet-log")}>
-            🍽️ 최근 식단일지
+            <SectionIcon>
+              <Utensils size={20} />
+            </SectionIcon>
+            최근 식단일지
           </SectionTitle>
           <CardsContainer>
             {isDietStoreModalOpen ? (
@@ -227,7 +248,10 @@ const HomePage: React.FC = () => {
         {/* 최근 운동일지 */}
         <Section>
           <SectionTitle onClick={() => navigate("/workout")}>
-            💪 최근 운동일지
+            <SectionIcon>
+              <Dumbbell size={20} />
+            </SectionIcon>
+            최근 운동일지
           </SectionTitle>
           <CardsContainer>
             {recentWorkouts.length > 0 ? (
@@ -247,7 +271,10 @@ const HomePage: React.FC = () => {
         {/* 최근 모집게시판 */}
         <Section>
           <SectionTitle onClick={() => navigate("/meet")}>
-            👥 최근 모집게시판
+            <SectionIcon>
+              <Users size={20} />
+            </SectionIcon>
+            최근 모집게시판
           </SectionTitle>
           <CardsContainer>
             {isMeetLoading ? (

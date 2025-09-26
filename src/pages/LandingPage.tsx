@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { FileText, Users, BarChart3 } from "lucide-react";
 import Button from "../components/common/Button";
 import { UI_CONSTANTS } from "../constants";
 
@@ -107,8 +108,11 @@ const FeatureCard = styled.div`
 `;
 
 const FeatureIcon = styled.div`
-  font-size: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 20px;
+  color: ${UI_CONSTANTS.COLORS.PRIMARY};
 `;
 
 const FeatureTitle = styled.h3`
@@ -246,7 +250,9 @@ const LandingPage: React.FC = () => {
         <SectionTitle>주요 기능</SectionTitle>
         <FeaturesGrid>
           <FeatureCard>
-            <FeatureIcon>📝</FeatureIcon>
+            <FeatureIcon>
+              <FileText size={48} />
+            </FeatureIcon>
             <FeatureTitle>운동 & 식단 일지</FeatureTitle>
             <FeatureDescription>
               체계적인 운동 기록과 칼로리 추적으로 건강한 라이프스타일을
@@ -255,15 +261,19 @@ const LandingPage: React.FC = () => {
           </FeatureCard>
 
           <FeatureCard>
-            <FeatureIcon>🤝</FeatureIcon>
-            <FeatureTitle>운동 메이트 매칭</FeatureTitle>
+            <FeatureIcon>
+              <Users size={48} />
+            </FeatureIcon>
+            <FeatureTitle>운동 메이트</FeatureTitle>
             <FeatureDescription>
               지역별, 종목별 필터링으로 나와 맞는 운동 파트너를 쉽게 찾아보세요
             </FeatureDescription>
           </FeatureCard>
 
           <FeatureCard>
-            <FeatureIcon>📊</FeatureIcon>
+            <FeatureIcon>
+              <BarChart3 size={48} />
+            </FeatureIcon>
             <FeatureTitle>데이터 분석</FeatureTitle>
             <FeatureDescription>
               Chart.js를 활용한 시각적 데이터로 운동 성과와 식단 패턴을 한눈에
@@ -278,7 +288,7 @@ const LandingPage: React.FC = () => {
         <SectionTitle>제공 서비스</SectionTitle>
         <ShowcaseGrid>
           <ServiceCard>
-            <ServiceTitle>💪 운동 일지</ServiceTitle>
+            <ServiceTitle>운동 일지</ServiceTitle>
             <ServiceDescription>
               달력 기반의 직관적인 운동 기록 시스템
             </ServiceDescription>
@@ -290,7 +300,7 @@ const LandingPage: React.FC = () => {
           </ServiceCard>
 
           <ServiceCard>
-            <ServiceTitle>🍎 식단 일지</ServiceTitle>
+            <ServiceTitle>식단 일지</ServiceTitle>
             <ServiceDescription>
               체계적인 칼로리 관리와 식단 추적
             </ServiceDescription>
@@ -302,7 +312,7 @@ const LandingPage: React.FC = () => {
           </ServiceCard>
 
           <ServiceCard>
-            <ServiceTitle>🏃‍♂️ 매칭 시스템</ServiceTitle>
+            <ServiceTitle>모집게시판</ServiceTitle>
             <ServiceDescription>
               운동 파트너 찾기와 그룹 활동 지원
             </ServiceDescription>
@@ -317,34 +327,12 @@ const LandingPage: React.FC = () => {
           </ServiceCard>
 
           <ServiceCard>
-            <ServiceTitle>👤 마이페이지</ServiceTitle>
-            <ServiceDescription>
-              개인 정보 관리와 활동 내역 확인
-            </ServiceDescription>
-            <ServiceFeatures>
-              <ServiceFeature>사용자 정보 조회 및 수정</ServiceFeature>
-              <ServiceFeature>비밀번호 변경</ServiceFeature>
-              <ServiceFeature>활동 기록 관리</ServiceFeature>
-            </ServiceFeatures>
-          </ServiceCard>
-
-          <ServiceCard>
-            <ServiceTitle>🔐 간편 로그인</ServiceTitle>
+            <ServiceTitle>간편 로그인</ServiceTitle>
             <ServiceDescription>다양한 로그인 옵션 제공</ServiceDescription>
             <ServiceFeatures>
               <ServiceFeature>이메일/비밀번호 로그인</ServiceFeature>
               <ServiceFeature>Google OAuth</ServiceFeature>
               <ServiceFeature>카카오 OAuth</ServiceFeature>
-            </ServiceFeatures>
-          </ServiceCard>
-
-          <ServiceCard>
-            <ServiceTitle>🛡️ 안전한 환경</ServiceTitle>
-            <ServiceDescription>신고 시스템과 관리자 관리</ServiceDescription>
-            <ServiceFeatures>
-              <ServiceFeature>부적절한 게시물 신고 기능</ServiceFeature>
-              <ServiceFeature>관리자 모니터링</ServiceFeature>
-              <ServiceFeature>안전한 커뮤니티 운영</ServiceFeature>
             </ServiceFeatures>
           </ServiceCard>
         </ShowcaseGrid>

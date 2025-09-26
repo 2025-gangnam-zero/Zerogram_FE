@@ -282,6 +282,7 @@ const UserMenuButton = styled.button`
   color: ${UI_CONSTANTS.COLORS.TEXT_PRIMARY};
   font-weight: 600;
   transition: all ${UI_CONSTANTS.TRANSITIONS.NORMAL};
+  position: relative;
 
   &:hover {
     background-color: ${UI_CONSTANTS.COLORS.LIGHT};
@@ -462,18 +463,17 @@ const Header: React.FC = () => {
               <UserMenu>
                 <UserMenuButton onClick={toggleUserMenu}>
                   <User size={20} />
-                  <span>마이페이지</span>
+                  <UserDropdown $isOpen={isUserMenuOpen}>
+                    <DropdownItem onClick={handleMyPageClick}>
+                      <Home size={16} />
+                      마이페이지
+                    </DropdownItem>
+                    <DropdownItem onClick={handleLogoutClick}>
+                      <LogOut size={16} />
+                      로그아웃
+                    </DropdownItem>
+                  </UserDropdown>
                 </UserMenuButton>
-                <UserDropdown $isOpen={isUserMenuOpen}>
-                  <DropdownItem onClick={handleMyPageClick}>
-                    <Home size={16} />
-                    마이페이지
-                  </DropdownItem>
-                  <DropdownItem onClick={handleLogoutClick}>
-                    <LogOut size={16} />
-                    로그아웃
-                  </DropdownItem>
-                </UserDropdown>
                 <MobileMenuButton onClick={toggleMobileMenu}>
                   {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </MobileMenuButton>

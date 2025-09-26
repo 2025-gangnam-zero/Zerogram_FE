@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { MapPin, Building, TreePine } from "lucide-react";
 import { Location } from "../../types/meet";
 import { UI_CONSTANTS } from "../../constants";
 
@@ -54,8 +55,13 @@ const OptionLabel = styled.span`
   font-weight: 500;
 `;
 
-const OptionIcon = styled.span`
-  font-size: 1.1rem;
+const OptionIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: ${UI_CONSTANTS.COLORS.TEXT_SECONDARY};
 `;
 
 const LocationFilter: React.FC<LocationFilterProps> = ({
@@ -63,9 +69,9 @@ const LocationFilter: React.FC<LocationFilterProps> = ({
   onLocationChange,
 }) => {
   const locationOptions = [
-    { value: "all", label: "전체 지역", icon: "📍" },
-    { value: "강남구", label: "강남구", icon: "🏢" },
-    { value: "서초구", label: "서초구", icon: "🌳" },
+    { value: "all", label: "전체 지역", icon: MapPin },
+    { value: "강남구", label: "강남구", icon: Building },
+    { value: "서초구", label: "서초구", icon: TreePine },
   ] as const;
 
   return (
@@ -83,7 +89,9 @@ const LocationFilter: React.FC<LocationFilterProps> = ({
                 onLocationChange(option.value as Location | "all")
               }
             />
-            <OptionIcon>{option.icon}</OptionIcon>
+            <OptionIcon>
+              <option.icon size={18} />
+            </OptionIcon>
             <OptionLabel>{option.label}</OptionLabel>
           </FilterOption>
         ))}
