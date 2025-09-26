@@ -8,9 +8,13 @@ import {
   useState,
 } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { getMyRoomsApi } from "../api/chat";
+import {
+  getMyRoomsApi,
+  getNotificationsApi,
+  markRoomReadApi,
+} from "../api/chat";
 import { SidebarListItemData } from "../types";
-import { eventBus, onNewMessage } from "../utils";
+import { eventBus, onNewMessage, onNotifyUpdate } from "../utils";
 
 export type ChatNotifItem = {
   roomId: string;
@@ -142,13 +146,75 @@ export const ChatNotifyProvider = ({
     };
   }, []);
 
-  const markRoomRead = (roomId: string) => {
+  // ① 최초/로그인 후 초기 동기화 (서버 계산값 기준)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getNotificationsApi();
+        const items = res?.data?.data?.items ?? [];
+        setMap(() => {
+          const next = new Map<string, ChatNotifItem>();
+          for (const it of items) {
+            next.set(it.roomId, {
+              roomId: it.roomId,
+              roomName: it.roomName,
+              lastMessage: it.lastMessage,
+              lastMessageAt: it.lastMessageAt,
+              unread: it.unread ?? 0,
+            });
+            if (it.roomName) roomNameMap.current.set(it.roomId, it.roomName);
+          }
+          return next;
+        });
+      } catch (e) {
+        console.error("[ChatNotify] initial sync failed:", e);
+      }
+    })();
+  }, []);
+
+  // ② 실시간 알림 구독 → 방 단위 1개로 최신치 갱신
+  useEffect(() => {
+    const off = onNotifyUpdate((n) => {
+      const active = activeRoomIdRef.current;
+      // 보고 있는 방이면 서버가 unread:0을 푸시해오거나, 여기서 0으로 강제
+      const unread = active === n.roomId ? 0 : n.unread ?? 0;
+
+      // 캐시된 roomName 보강
+      const cachedName = roomNameMap.current.get(n.roomId) ?? n.roomName;
+      if (cachedName) roomNameMap.current.set(n.roomId, cachedName);
+
+      setMap((prev) => {
+        const cur = prev.get(n.roomId) ?? { roomId: n.roomId, unread: 0 };
+        const next = new Map(prev);
+        next.set(n.roomId, {
+          ...cur,
+          roomName: cachedName ?? cur.roomName,
+          lastMessage: n.lastMessage ?? cur.lastMessage,
+          lastMessageAt: n.lastMessageAt ?? cur.lastMessageAt,
+          unread,
+        });
+        return next;
+      });
+    });
+    return () => {
+      if (typeof off === "function") off();
+    };
+  }, []);
+
+  const markRoomRead = async (roomId: string) => {
     setMap((prev) => {
       const next = new Map(prev);
       const item = next.get(roomId);
       if (item) next.set(roomId, { ...item, unread: 0 });
       return next;
     });
+
+    // 서버 커밋 → 서버가 notify:update { unread:0 } 재푸시(중복 OK)
+    try {
+      await markRoomReadApi(roomId);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const clearAll = () => setMap(new Map());

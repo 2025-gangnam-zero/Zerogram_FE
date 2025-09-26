@@ -4,7 +4,7 @@ export const API_CONFIG = {
   BASE_URL:
     process.env.REACT_APP_API_BASE_URL ||
     //  "http://ec2-15-164-151-28.ap-northeast-2.compute.amazonaws.com",
-    "http://10.10.0.89:4000",
+    "http://10.10.0.131:4000",
   TIMEOUT: 10000,
   HEADERS: {
     "Content-Type": "application/json",

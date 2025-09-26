@@ -169,3 +169,26 @@ export const deleteMessageApi = async (
     throw new Error(getApiErrorMessage(error));
   }
 };
+
+// 알림 설정
+export const getNotificationsApi = async () => {
+  try {
+    const res = await authApi.get("/api/notifications");
+
+    return res.data;
+  } catch (error) {
+    logError("getNotificationsApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+export const markRoomReadApi = async (roomId: string) => {
+  try {
+    const res = await authApi.post(`/api/notifications/rooms/${roomId}/read`);
+
+    return res.data;
+  } catch (error) {
+    logError("getNotificationsApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
