@@ -1,25 +1,59 @@
 .chatLayout {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  /* height는 인라인 style에서 지정 */
+  grid-template-columns: 320px 1fr; /* height는 인라인 style에서 지정 */
   min-height: 0; /* 자식이 스크롤 가질 수 있게 */
 }
-
 .sidebarArea {
   border-right: 1px solid #e5e7eb;
   min-width: 0;
   overflow: hidden;
 }
-
 .mainArea {
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-
-/* 라우터/섹션이 바로 들어오면 여기서도 스크롤 위임 */
+} /* 라우터/섹션이 바로 들어오면 여기서도 스크롤 위임 */
 .mainArea > * {
   flex: 1;
   min-height: 0;
+}
+
+/* === 모바일(≤600px) 전용 추가 규칙 === */
+@media (max-width: 600px) {
+  /* 섹션에 data-layout="narrow"가 이미 들어오므로 그 상태만 타겟 */
+  .chatLayout[data-layout="narrow"] {
+    /* 좌측 사이드바 숨겨지므로 1열 그리드로 재구성 */
+    display: grid;
+    grid-template-columns: 1fr;
+    /* 상단 톱바(48px) + 본문(남은 높이) 2행 */
+    grid-template-rows: 48px 1fr;
+    min-height: 0; /* 자식 스크롤 허용 */
+    /* 섹션에 inline overflow:hidden 이 있으므로 스크롤은 자식에 위임됨 */
+  }
+
+  /* 첫 번째 자식(= ChatMobileTopBar 루트)을 상단 행에 고정 */
+  .chatLayout[data-layout="narrow"] > :first-child {
+    grid-row: 1 / 2;
+    grid-column: 1 / 2;
+    position: sticky;
+    top: env(safe-area-inset-top, 0);
+    z-index: 100; /* 헤더/콘텐츠 위에 노출 */
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* 본문(Outlet 래퍼) */
+  .chatLayout[data-layout="narrow"] .mainArea {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+    height: 100%;
+    min-height: 0; /* 내부(ChatSection)로 스크롤이 내려가도록 필수 */
+    /* overflow는 ChatSection 내부(MessageList)에서 처리되게 둠 */
+  }
+
+  /* 좌측 사이드바는 모바일에서 숨김 (드로어로 대체) */
+  .chatLayout[data-layout="narrow"] .sidebarArea {
+    display: none;
+  }
 }

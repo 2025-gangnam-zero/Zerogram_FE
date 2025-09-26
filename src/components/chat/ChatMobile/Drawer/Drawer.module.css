@@ -1,0 +1,45 @@
+.drawer {
+  position: fixed;
+
+  inset: 0;
+  pointer-events: none; /* 열리지 않았을 때 이벤트 차단 */
+  z-index: 70; /* Lightbox 등과 충돌 시 숫자 조정 */
+}
+
+.open {
+  pointer-events: auto;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  top: 118px;
+}
+
+.panel {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0) + 118px);
+  bottom: 0;
+  left: 0;
+  width: min(92vw, 360px);
+  max-width: 420px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  outline: none;
+  transform: translateX(-100%);
+  transition: transform 240ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.open .panel {
+  transform: translateX(0);
+}
+
+.fromLeft {
+  /* 방향 변형 시 클래스 확장 자리 */
+}

@@ -9,19 +9,36 @@ import {
   joinRoom,
   bumpUnreadAndSort,
   clearUnread,
-  getSocket, // ⬅️ socket 싱글톤 (utils에 있다고 가정)
+  getSocket,
 } from "../../../../utils";
 import { useParams } from "react-router-dom";
 import { useUserStore } from "../../../../store";
 
-export const Sidebar = () => {
+type Props = {
+  items?: SidebarListItemData[];
+  variant: "mine" | "public";
+  /** 드로어 컨테이너 내에서 표시할 때 스타일/동작 변형 */
+  asDrawer?: boolean;
+  /** 항목 선택 시 드로어를 닫기 위해 상위에서 전달 */
+  onCloseDrawer?: () => void;
+  standalone?: boolean;
+};
+
+export const Sidebar = ({
+  items = [],
+  variant,
+  asDrawer,
+  onCloseDrawer,
+  standalone,
+}: Props) => {
   const [query, setQuery] = useState("");
-  const [mineRooms, setMineRooms] = useState<SidebarListItemData[]>([]);
+  const [mineRooms, setMineRooms] = useState<SidebarListItemData[]>(items);
 
   // 이미 조인한 방 기록(중복 조인 방지)
   const joinedRef = useRef<Set<string>>(new Set());
   // 최신 rooms를 재연결 시 사용하기 위한 ref
   const roomsRef = useRef<SidebarListItemData[]>([]);
+  roomsRef.current = mineRooms;
 
   // 현재 방/내 사용자
   const { roomid: currentRoomId } = useParams();
@@ -45,7 +62,6 @@ export const Sidebar = () => {
       if (!joinedRef.current.has(r.id)) {
         joinRoom(r.id);
         joinedRef.current.add(r.id);
-        // console.log("[JOIN]", r.id);
       }
     }
   }, []);
@@ -56,7 +72,6 @@ export const Sidebar = () => {
       const res = await getMyRoomsApi({ limit: 50 });
       const items: SidebarListItemData[] = res?.data?.items ?? [];
       setMineRooms(items);
-      roomsRef.current = items;
       joinAllMyRooms(items);
     } catch (e) {
       console.error("[Sidebar] getMyRoomsApi failed:", e);
@@ -85,15 +100,12 @@ export const Sidebar = () => {
   // 새 메시지 구독(단일 바인딩) → 정렬 + 조건부 unread++
   useEffect(() => {
     const off = onNewMessage((msg: ChatMessage) => {
-      // 혹시 조인 안 된 방에서 온 메시지면 즉시 조인(예외 안전)
       if (!joinedRef.current.has(msg.roomId)) {
         joinRoom(msg.roomId);
         joinedRef.current.add(msg.roomId);
       }
-
       const curRoom = currentRoomIdRef.current;
       const me = myUserIdRef.current;
-
       setMineRooms((prev) =>
         bumpUnreadAndSort(prev, msg, { currentRoomId: curRoom, myUserId: me })
       );
@@ -107,14 +119,10 @@ export const Sidebar = () => {
   useEffect(() => {
     const socket = getSocket?.();
     if (!socket) return;
-
     const onConnect = () => joinAllMyRooms(roomsRef.current);
     const onReconnect = () => joinAllMyRooms(roomsRef.current);
-
     socket.on("connect", onConnect);
-    // socket.io v4: Manager 이벤트로 재연결 감지
     socket.io?.on("reconnect", onReconnect);
-
     return () => {
       socket.off("connect", onConnect);
       socket.io?.off("reconnect", onReconnect);
@@ -128,11 +136,26 @@ export const Sidebar = () => {
     return mineRooms.filter((r) => r.roomName.toLowerCase().includes(q));
   }, [query, mineRooms]);
 
+  // 드로어 닫기용
+  const handleSelect = (roomId: string) => {
+    onCloseDrawer?.();
+  };
+
   return (
-    <div className={styles.sidebar}>
+    <div
+      className={[
+        styles.sidebar,
+        asDrawer ? styles.asDrawer : "",
+        standalone ? styles.standalone : "", // ✅
+      ].join(" ")}
+    >
       <SearchBar onChange={setQuery} onSubmit={setQuery} />
       <div className={styles.listArea}>
-        <SidebarList items={filtered} />
+        <SidebarList
+          items={filtered}
+          variant={variant}
+          onSelectRoom={handleSelect}
+        />
       </div>
     </div>
   );

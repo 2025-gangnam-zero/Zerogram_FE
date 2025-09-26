@@ -9,9 +9,16 @@ export type SidebarVariant = "mine" | "public";
 type Props = {
   item: SidebarListItemData;
   selected?: boolean;
+  variant: "mine" | "public";
+  onSelect?: (roomId: string) => void; // ✅ 추가: 드로어 닫기 신호
 };
 
-export const SidebarItem = ({ item, selected = false }: Props) => {
+export const SidebarItem = ({
+  item,
+  selected = false,
+  variant,
+  onSelect,
+}: Props) => {
   const {
     id,
     roomName,
@@ -30,7 +37,11 @@ export const SidebarItem = ({ item, selected = false }: Props) => {
         !!unreadCount && unreadCount > 0 && !selected ? styles.hasUnread : "",
       ].join(" ")}
     >
-      <Link to={`/chat/${id}`} className={styles.link}>
+      <Link
+        to={`/chat/${id}`}
+        className={styles.link}
+        onClick={() => onSelect?.(id)} // ✅ 방 클릭 시 드로어 닫기 상위 신호
+      >
         <div className={styles.avatarWrap}>
           {imageUrl ? (
             <img className={styles.avatar} src={imageUrl} alt="" />
@@ -56,7 +67,7 @@ export const SidebarItem = ({ item, selected = false }: Props) => {
               )}
             </div>
 
-            {/* mine일 때만 시간(우측) */}
+            {/* (주석과 표시 조건을 맞추려면 variant 체크를 추가하세요) */}
             {lastMessageAt && (
               <span className={styles.topTime} title={lastMessageAt}>
                 <Clock className={styles.timeIcon} aria-hidden />
@@ -66,17 +77,14 @@ export const SidebarItem = ({ item, selected = false }: Props) => {
           </div>
 
           {/* 중앙: 마지막 메시지(좌) — 읽지않음(우) */}
-          {
-            <div className={styles.metaRow}>
-              <span className={styles.lastMsg} title={lastMessage}>
-                {lastMessage ?? ""}
-              </span>
-              {!!unreadCount && unreadCount > 0 && (
-                <span className={styles.unread}>{unreadCount}</span>
-              )}
-            </div>
-          }
-          {/* ⬇️ 하단 statsRow는 제거(이제 상단으로 올렸기 때문) */}
+          <div className={styles.metaRow}>
+            <span className={styles.lastMsg} title={lastMessage}>
+              {lastMessage ?? ""}
+            </span>
+            {!!unreadCount && unreadCount > 0 && (
+              <span className={styles.unread}>{unreadCount}</span>
+            )}
+          </div>
         </div>
       </Link>
     </li>
