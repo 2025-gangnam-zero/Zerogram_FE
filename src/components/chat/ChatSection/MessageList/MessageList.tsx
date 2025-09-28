@@ -7,7 +7,6 @@ type Props = {
   showNotice?: boolean;
   noticeText?: string;
   messages: ChatMessage[];
-  // ⬇️ 추가
   onReachTop?: () => void;
   loadingOlder?: boolean;
   hasMore?: boolean;

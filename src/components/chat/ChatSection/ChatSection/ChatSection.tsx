@@ -1,3 +1,4 @@
+// src/components/chat/ChatSection/ChatSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChatSection.module.css";
 import {
@@ -45,7 +46,7 @@ export const ChatSection = () => {
   const lastSeenSeqRef = useRef<number | null>(null);
   const lastSeenMsgIdRef = useRef<string | null>(null);
 
-  // ⬇️ 무한 스크롤(상단 프리펜드)용 상태
+  // 무한 스크롤(상단 프리펜드)용 상태
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursorSeq, setCursorSeq] = useState<number | null>(null); // 가장 오래된 메시지의 seq
@@ -100,10 +101,10 @@ export const ChatSection = () => {
     }
     (async () => {
       try {
-        // 서버는 최신 DESC를 준다고 가정 → 화면용으로 reverse 하여 오래→새로
+        // 서버는 최신 DESC를 준다고 가정 → 화면용으로 오름차순 정규화
         const res = await getMessagesApi(roomid, { limit: PAGE_SIZE });
         const items: ChatMessage[] = res?.data?.items ?? [];
-        const orderedAsc = normalizeAscending(items); // 안전 정렬
+        const orderedAsc = normalizeAscending(items);
         setMessages(orderedAsc);
 
         // hasMore: 최초 페이지가 꽉 차면 더 있음
@@ -114,7 +115,7 @@ export const ChatSection = () => {
           orderedAsc.length ? (orderedAsc[0] as any).seq ?? null : null
         );
 
-        // 읽음 커밋: 최신 메시지로
+        // 읽음 커밋: 최신 메시지 기준
         const newest = orderedAsc[orderedAsc.length - 1];
         if (newest) {
           lastSeenSeqRef.current = (newest as any).seq ?? null;
@@ -150,10 +151,7 @@ export const ChatSection = () => {
       if (msg.roomId !== roomid) return;
 
       // 화면 하단에 append (오래→새로 순서 유지)
-      setMessages((prev) => {
-        // (선택) 중복 방지 로직이 필요하면 여기에서 serverId/id로 guard 가능
-        return [...prev, msg];
-      });
+      setMessages((prev) => [...prev, msg]);
 
       // 수신 메시지를 본 것으로 간주 → 디바운스 커밋
       lastSeenSeqRef.current = (msg as any).seq ?? lastSeenSeqRef.current;
@@ -173,7 +171,7 @@ export const ChatSection = () => {
     };
   }, [roomid]);
 
-  // 언마운트: ObjectURL & 파일 정리
+  // ===== 언마운트: ObjectURL & 파일 정리 (유일한 cleanup) =====
   useEffect(() => {
     const urls = urlsRef.current;
     const files = filesRef.current;
@@ -296,7 +294,7 @@ export const ChatSection = () => {
     try {
       const res = await getMessagesApi(roomid, {
         limit: PAGE_SIZE,
-        beforeSeq: cursorSeq, // ⬅️ 커서 기반 조회
+        beforeSeq: cursorSeq, // 커서 기반 조회
       });
       const items: ChatMessage[] = res?.data?.items ?? [];
       const olderAsc = normalizeAscending(items);
@@ -320,15 +318,6 @@ export const ChatSection = () => {
     () => room?.roomName || `방 ${roomid ?? ""}`,
     [room?.roomName, roomid]
   );
-
-  // 언마운트 시 프리뷰 정리(보조)
-  useEffect(() => {
-    return () => {
-      previews.forEach((p) => URL.revokeObjectURL(p.url));
-      filesRef.current.clear();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // 렌더 값
   const showNotice = noticeVisible;
@@ -358,7 +347,6 @@ export const ChatSection = () => {
           showNotice={showNotice}
           noticeText={noticeText}
           messages={messages}
-          // ⬇️ 무한 스크롤용 추가 prop
           onReachTop={onReachTop}
           loadingOlder={loadingOlder}
           hasMore={hasMore}
