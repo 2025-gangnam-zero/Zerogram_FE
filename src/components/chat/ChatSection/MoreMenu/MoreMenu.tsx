@@ -16,9 +16,9 @@ type Props = {
 };
 
 const DEFAULT_ITEMS: MenuItem[] = [
-  { key: "info", label: "방 정보" },
-  { key: "invite", label: "멤버 초대" },
-  { key: "mute", label: "알림 끄기" },
+  // { key: "info", label: "방 정보" },
+  // { key: "invite", label: "멤버 초대" },
+  // { key: "mute", label: "알림 끄기" },
   { key: "leave", label: "나가기", danger: true },
 ];
 
@@ -90,7 +90,18 @@ export function MoreMenu({
           className={styles.menu}
           role="menu"
         >
-          {items.slice(0, 3).map((it) => (
+          {items.map((it) => (
+            <button
+              key={it.key}
+              className={`${styles.menuItem} ${it.danger ? styles.danger : ""}`}
+              role="menuitem"
+              onClick={() => handle(it.key)}
+            >
+              {renderIcon(it.key)} {it.label}
+            </button>
+          ))}
+          {/* 목록 추가 시 변경할 것  */}
+          {/* {items.slice(0, 3).map((it) => (
             <button
               key={it.key}
               className={styles.menuItem}
@@ -110,7 +121,7 @@ export function MoreMenu({
             >
               {renderIcon(it.key)} {it.label}
             </button>
-          ))}
+          ))} */}
         </div>
       )}
     </div>
