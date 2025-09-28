@@ -5,7 +5,7 @@ import {
   DragAndDrop,
   MessageInput,
   MessageList,
-  MessageListHandle,
+  MessageListHandle, // ✅ 타입 가져오기
 } from "../../../chat";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChatMessage, PreviewItem } from "../../../../types";
@@ -13,7 +13,7 @@ import {
   eventBus,
   joinRoom,
   leaveRoom as leaveSocketRoom,
-  normalizeAscending, // ✅ utils에서 가져오는 정렬 함수 사용
+  normalizeAscending,
   onNewMessage,
   sendMessage,
 } from "../../../../utils";
@@ -157,6 +157,7 @@ export const ChatSection = () => {
       lastSeenSeqRef.current = (msg as any).seq ?? lastSeenSeqRef.current;
       lastSeenMsgIdRef.current = (msg as any).id ?? lastSeenMsgIdRef.current;
       scheduleCommitRead(roomid);
+      // 자동 스크롤은 MessageList 내부 로직이 "바닥 근처일 때만" 수행
     });
 
     return () => {
@@ -239,6 +240,8 @@ export const ChatSection = () => {
           lastSeenMsgIdRef.current = ack.id;
           scheduleCommitRead(roomid);
         }
+        // ✅ 내가 보낸 메시지는 하단 고정(사용자 기대치)
+        listRef.current?.scrollToBottom();
       }
 
       previews.forEach((p) => {

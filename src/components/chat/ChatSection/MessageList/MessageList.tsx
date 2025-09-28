@@ -12,6 +12,10 @@ export type MessageListHandle = {
   ) => void;
   /** 프리펜드로 messages.length 증가 시 다음 자동 바닥 스크롤 1회 무시 */
   suppressNextAutoScroll: () => void;
+  /** 현재 바닥 근처인지 여부 반환 */
+  isNearBottom: () => boolean;
+  /** 강제로 하단으로 스크롤 */
+  scrollToBottom: () => void;
 };
 
 type Props = {
@@ -103,7 +107,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
       };
     }, [onReachTop, loadingOlder, hasMore]);
 
-    // 프리펜드 전/후 스크롤 보존용 imperative API
+    // 프리펜드 전/후 스크롤 보존 + 제어용 imperative API
     useImperativeHandle(
       ref,
       (): MessageListHandle => ({
@@ -125,6 +129,12 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
         },
         suppressNextAutoScroll: () => {
           suppressNextAutoScrollRef.current = true;
+        },
+        isNearBottom: () => stickToBottomRef.current,
+        scrollToBottom: () => {
+          const el = scrollRef.current;
+          if (!el) return;
+          el.scrollTop = el.scrollHeight;
         },
       })
     );
