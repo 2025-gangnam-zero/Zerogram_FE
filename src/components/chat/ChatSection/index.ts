@@ -11,3 +11,4 @@ export * from "./DragAndDrop";
 export * from "./AttachmentFileList";
 export * from "./AttachmentGrid";
 export * from "./MessageAttachments";
+export * from "./NewMessageToast";

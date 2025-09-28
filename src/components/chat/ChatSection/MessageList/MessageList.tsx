@@ -1,20 +1,20 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import styles from "./MessageList.module.css";
 import { MessageItem, NoticeBanner } from "../../../../components/chat";
 import type { ChatMessage } from "../../../../types";
 
 export type MessageListHandle = {
-  /** 프리펜드 직전 스크롤 상태 스냅샷 */
   captureTopSnapshot: () => { scrollTop: number; scrollHeight: number } | null;
-  /** 프리펜드 직후 스크롤 위치 복원 */
   restoreAfterPrepend: (
     snap: { scrollTop: number; scrollHeight: number } | null
   ) => void;
-  /** 프리펜드로 messages.length 증가 시 다음 자동 바닥 스크롤 1회 무시 */
   suppressNextAutoScroll: () => void;
-  /** 현재 바닥 근처인지 여부 반환 */
   isNearBottom: () => boolean;
-  /** 강제로 하단으로 스크롤 */
   scrollToBottom: () => void;
 };
 
@@ -25,7 +25,12 @@ type Props = {
   onReachTop?: () => void;
   loadingOlder?: boolean;
   hasMore?: boolean;
+
+  /** 스크롤이 바닥 근처/이탈로 전환될 때 알림 */
+  onNearBottomChange?: (near: boolean) => void;
 };
+
+const NEAR_BOTTOM_PX = 32; // 여유값(히스테리시스)
 
 export const MessageList = forwardRef<MessageListHandle, Props>(
   (
@@ -36,6 +41,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
       onReachTop,
       loadingOlder = false,
       hasMore = true,
+      onNearBottomChange,
     }: Props,
     ref
   ) => {
@@ -43,42 +49,62 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
     const topSentinelRef = useRef<HTMLDivElement | null>(null);
     const isObservingRef = useRef(false);
 
-    // 자동 스크롤 제어
-    const stickToBottomRef = useRef(true); // 사용자가 바닥 근처를 보는 중인지
-    const suppressNextAutoScrollRef = useRef(false); // 프리펜드 직후 1회 자동 스크롤 무시
+    // 자동 스크롤/상태
+    const stickToBottomRef = useRef(true);
+    const lastNearBottomRef = useRef<boolean | null>(null);
+    const suppressNextAutoScrollRef = useRef(false);
 
-    // 사용자의 현재 위치가 바닥 근처인지 감지
+    const computeNearBottom = () => {
+      const el = scrollRef.current;
+      if (!el) return true;
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+      return distance <= NEAR_BOTTOM_PX;
+    };
+
+    const emitNearBottomIfChanged = (near: boolean) => {
+      if (lastNearBottomRef.current === near) return;
+      lastNearBottomRef.current = near;
+      onNearBottomChange?.(near);
+    };
+
+    // 스크롤 이벤트: 바닥 근처 여부 추적
     useEffect(() => {
       const el = scrollRef.current;
       if (!el) return;
       const onScroll = () => {
-        const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-        stickToBottomRef.current = distance < 16; // 16px 이내면 바닥 근처로 간주
+        const near = computeNearBottom();
+        stickToBottomRef.current = near;
+        emitNearBottomIfChanged(near);
       };
       el.addEventListener("scroll", onScroll, { passive: true });
-      return () => {
-        el.removeEventListener("scroll", onScroll);
-      };
+      // 초기 상태도 한 번 계산
+      requestAnimationFrame(() => {
+        const near = computeNearBottom();
+        stickToBottomRef.current = near;
+        emitNearBottomIfChanged(near);
+      });
+      return () => el.removeEventListener("scroll", onScroll);
     }, []);
 
-    // 새 메시지 도착/변동 시: 조건부 바닥 고정
+    // 새 메시지 변동 시: 조건부 바닥 고정 (프리펜드 1회 무시)
     useEffect(() => {
       const el = scrollRef.current;
       if (!el) return;
 
-      // 프리펜드로 길이가 늘어났을 때는 이번 한 번 자동 스크롤을 무시
       if (suppressNextAutoScrollRef.current) {
         suppressNextAutoScrollRef.current = false;
         return;
       }
-
-      // 사용자가 하단 근처를 보고 있을 때만 바닥으로 붙이기
-      if (stickToBottomRef.current) {
-        el.scrollTop = el.scrollHeight;
-      }
+      // DOM 업데이트 후 판정하여 오탐 방지
+      requestAnimationFrame(() => {
+        const near = computeNearBottom();
+        stickToBottomRef.current = near;
+        emitNearBottomIfChanged(near);
+        if (near) el.scrollTop = el.scrollHeight;
+      });
     }, [messages.length]);
 
-    // 상단 센티널 관찰(무한 스크롤 트리거)
+    // 상단 센티널(무한 스크롤)
     useEffect(() => {
       if (!onReachTop || !hasMore) return;
       const root = scrollRef.current;
@@ -88,9 +114,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
       const io = new IntersectionObserver(
         (entries) => {
           const top = entries[0];
-          if (top.isIntersecting && !loadingOlder && hasMore) {
-            onReachTop();
-          }
+          if (top.isIntersecting && !loadingOlder && hasMore) onReachTop();
         },
         { root, rootMargin: "80px 0px 0px 0px", threshold: 0 }
       );
@@ -107,7 +131,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
       };
     }, [onReachTop, loadingOlder, hasMore]);
 
-    // 프리펜드 전/후 스크롤 보존 + 제어용 imperative API
+    // Imperative API
     useImperativeHandle(
       ref,
       (): MessageListHandle => ({
@@ -120,21 +144,26 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
           if (!snap) return;
           const el = scrollRef.current;
           if (!el) return;
-          // DOM 반영 이후 보정
           requestAnimationFrame(() => {
-            const newHeight = el.scrollHeight;
-            const delta = newHeight - snap.scrollHeight;
+            const delta = el.scrollHeight - snap.scrollHeight;
             el.scrollTop = snap.scrollTop + delta;
+            // 복원 이후 바닥 판정 갱신
+            const near = computeNearBottom();
+            stickToBottomRef.current = near;
+            emitNearBottomIfChanged(near);
           });
         },
         suppressNextAutoScroll: () => {
           suppressNextAutoScrollRef.current = true;
         },
-        isNearBottom: () => stickToBottomRef.current,
+        isNearBottom: () => computeNearBottom(),
         scrollToBottom: () => {
           const el = scrollRef.current;
           if (!el) return;
           el.scrollTop = el.scrollHeight;
+          const near = computeNearBottom();
+          stickToBottomRef.current = near;
+          emitNearBottomIfChanged(near);
         },
       })
     );
@@ -145,7 +174,6 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
         className={styles.container}
         aria-label="메시지 목록"
       >
-        {/* 상단 로더/센티널 */}
         <div ref={topSentinelRef} className={styles.topSentinel} />
         {loadingOlder && (
           <div className={styles.loader} role="status" aria-live="polite">
