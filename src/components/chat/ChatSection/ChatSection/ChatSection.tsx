@@ -1,4 +1,3 @@
-// src/components/chat/ChatSection/ChatSection.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./ChatSection.module.css";
 import {
@@ -23,26 +22,35 @@ import {
   leaveRoomApi,
 } from "../../../../api/chat";
 
+const PAGE_SIZE = 30;
+
 export const ChatSection = () => {
   const navigate = useNavigate();
   const { roomid } = useParams();
 
+  // 미디어 프리뷰 관리
   const urlsRef = useRef<Set<string>>(new Set());
   const previewHostRef = useRef<HTMLDivElement | null>(null);
-  // ✅ 원본 파일 보관소: id -> File
   const filesRef = useRef<Map<string, File>>(new Map());
 
-  const [room, setRoom] = useState<any>(null); // room 안에 roomName/notice/myRole 포함
+  // 룸/메시지/보내기/공지
+  const [room, setRoom] = useState<any>(null); // roomName/notice/myRole 포함
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
-  const [noticeVisible, setNoticeVisible] = useState<boolean>(false); // 공지 로컬 표시
-  const [previews, setPreviews] = useState<PreviewItem[]>([]); // 미리보기(렌더 전용)
+  const [noticeVisible, setNoticeVisible] = useState<boolean>(false);
+  const [previews, setPreviews] = useState<PreviewItem[]>([]);
 
-  // === 읽음 커밋 관리용 참조 & 디바운스 ===
+  // 읽음 커밋 디바운스용
   const commitTimerRef = useRef<number | null>(null);
   const lastSeenSeqRef = useRef<number | null>(null);
   const lastSeenMsgIdRef = useRef<string | null>(null);
 
+  // ⬇️ 무한 스크롤(상단 프리펜드)용 상태
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [cursorSeq, setCursorSeq] = useState<number | null>(null); // 가장 오래된 메시지의 seq
+
+  // ===== 유틸 =====
   const scheduleCommitRead = (rid: string) => {
     if (commitTimerRef.current) window.clearTimeout(commitTimerRef.current);
     commitTimerRef.current = window.setTimeout(async () => {
@@ -53,7 +61,6 @@ export const ChatSection = () => {
           lastReadSeq: lastSeenSeqRef.current,
           lastReadMessageId: lastSeenMsgIdRef.current,
         });
-        // 전역 동기화: 사이드바/패널/FAB 등에서 해당 방 배지 0 유지
         eventBus.emit("rooms:clearUnread", rid);
       } catch (e) {
         console.warn("[ChatSection] commitRead (debounced) failed:", e);
@@ -61,7 +68,7 @@ export const ChatSection = () => {
     }, 200);
   };
 
-  // 방 정보 로드
+  // ===== 방 정보 로드 =====
   useEffect(() => {
     if (!roomid) {
       setRoom(null);
@@ -78,62 +85,79 @@ export const ChatSection = () => {
     })();
   }, [roomid]);
 
-  // room의 서버 공지 상태가 바뀌면 로컬 표시 초기화
+  // 서버 공지 상태 → 로컬 표시 초기화
   useEffect(() => {
     setNoticeVisible(!!room?.notice?.enabled);
   }, [room?.notice?.enabled]);
 
-  // 메시지 초기 로드
+  // ===== 초기 메시지 로드 =====
   useEffect(() => {
     if (!roomid) {
       setMessages([]);
+      setHasMore(true);
+      setCursorSeq(null);
       return;
     }
     (async () => {
       try {
-        const res = await getMessagesApi(roomid, { limit: 30 });
-        const items = res?.data?.items ?? [];
-        const ordered = [...items].reverse(); // 화면용 오래→새로
-        setMessages(ordered);
+        // 서버는 최신 DESC를 준다고 가정 → 화면용으로 reverse 하여 오래→새로
+        const res = await getMessagesApi(roomid, { limit: PAGE_SIZE });
+        const items: ChatMessage[] = res?.data?.items ?? [];
+        const orderedAsc = normalizeAscending(items); // 안전 정렬
+        setMessages(orderedAsc);
 
-        const last = items[0]; // 서버가 최신 DESC라고 가정
-        if (last) {
-          // ↳ 참조값 저장 후 커밋(서버 상태와 동기화)
-          lastSeenSeqRef.current = last.seq ?? null;
-          lastSeenMsgIdRef.current = last.id ?? null;
+        // hasMore: 최초 페이지가 꽉 차면 더 있음
+        setHasMore(items.length === PAGE_SIZE);
+
+        // 커서: 가장 오래된 메시지의 seq
+        setCursorSeq(
+          orderedAsc.length ? (orderedAsc[0] as any).seq ?? null : null
+        );
+
+        // 읽음 커밋: 최신 메시지로
+        const newest = orderedAsc[orderedAsc.length - 1];
+        if (newest) {
+          lastSeenSeqRef.current = (newest as any).seq ?? null;
+          lastSeenMsgIdRef.current = (newest as any).id ?? null;
           try {
             await commitReadApi(roomid, {
-              lastReadMessageId: last.id,
-              lastReadSeq: last.seq,
+              lastReadMessageId: (newest as any).id,
+              lastReadSeq: (newest as any).seq,
             });
             eventBus.emit("rooms:clearUnread", roomid);
           } catch (e) {
-            console.warn("[ChatSection] commitRead failed:", e);
+            console.warn("[ChatSection] commitRead (initial) failed:", e);
           }
         } else {
-          // 메시지가 없으면 참조 초기화
           lastSeenSeqRef.current = null;
           lastSeenMsgIdRef.current = null;
         }
       } catch (e) {
         console.error("[ChatSection] getMessagesApi failed:", e);
         setMessages([]);
+        setHasMore(false);
+        setCursorSeq(null);
       }
     })();
   }, [roomid]);
 
-  // 소켓: 방 입장/퇴장 + 수신
+  // ===== 소켓: 방 입장/퇴장 + 수신 =====
   useEffect(() => {
     if (!roomid) return;
 
     joinRoom(roomid);
     const off = onNewMessage((msg) => {
       if (msg.roomId !== roomid) return;
-      setMessages((prev) => [...prev, msg]);
 
-      // ✅ 현재 방에서 도착한 새 메시지는 즉시 "본 것"으로 간주 → 커밋 스케줄
-      lastSeenSeqRef.current = msg.seq ?? lastSeenSeqRef.current;
-      lastSeenMsgIdRef.current = msg.id ?? lastSeenMsgIdRef.current;
+      // 화면 하단에 append (오래→새로 순서 유지)
+      setMessages((prev) => {
+        // (선택) 중복 방지 로직이 필요하면 여기에서 serverId/id로 guard 가능
+        return [...prev, msg];
+      });
+
+      // 수신 메시지를 본 것으로 간주 → 디바운스 커밋
+      lastSeenSeqRef.current = (msg as any).seq ?? lastSeenSeqRef.current;
+      lastSeenMsgIdRef.current = (msg as any).id ?? lastSeenMsgIdRef.current;
       scheduleCommitRead(roomid);
     });
 
@@ -144,17 +168,15 @@ export const ChatSection = () => {
         window.clearTimeout(commitTimerRef.current);
         commitTimerRef.current = null;
       }
-      // 룸이 바뀔 때 참조 초기화(다음 방에서 새로 세팅)
       lastSeenSeqRef.current = null;
       lastSeenMsgIdRef.current = null;
     };
   }, [roomid]);
 
-  // 언마운트 cleanup 수정 (최신 URL 전부 정리)
+  // 언마운트: ObjectURL & 파일 정리
   useEffect(() => {
     const urls = urlsRef.current;
     const files = filesRef.current;
-
     return () => {
       urls.forEach((u) => URL.revokeObjectURL(u));
       urls.clear();
@@ -162,13 +184,13 @@ export const ChatSection = () => {
     };
   }, []);
 
-  // ✅ 이 방을 보는 순간, 사이드바에게 "이 방 읽음 처리" 신호 (UI 동기화)
+  // 이 방을 보는 순간: 배지 0 UI 동기화
   useEffect(() => {
     if (!roomid) return;
     eventBus.emit("rooms:clearUnread", roomid);
   }, [roomid]);
 
-  // ✅ 파일 → 프리뷰 삽입 + filesRef에 원본 File 저장
+  // ===== 파일 프리뷰 관리 =====
   const addFilesToPreview = (files: File[]) => {
     const kindOf = (f: File): PreviewItem["kind"] => {
       if (f.type.startsWith("image/")) return "image";
@@ -185,6 +207,7 @@ export const ChatSection = () => {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const url = URL.createObjectURL(f);
         urlsRef.current.add(url);
+        filesRef.current.set(id, f);
         return { id, url, name: f.name, kind: kindOf(f), file: f };
       });
 
@@ -192,7 +215,6 @@ export const ChatSection = () => {
     });
   };
 
-  // ✅ 프리뷰 제거 시: ObjectURL 해제 + filesRef에서 원본 제거
   const removePreview = (id: string) => {
     setPreviews((prev) => {
       const target = prev.find((p) => p.id === id);
@@ -205,20 +227,15 @@ export const ChatSection = () => {
     filesRef.current.delete(id);
   };
 
-  // 전송(여기서는 텍스트만 소켓, 파일은 서버 업로드 후 메타만 전송 권장)
+  // ===== 전송 =====
   const handleSend = async (text: string) => {
     if (!roomid) return;
     try {
       setSending(true);
-
-      const ack = await sendMessage(roomid, {
-        text,
-        previews,
-      });
+      const ack = await sendMessage(roomid, { text, previews });
       if (!ack.ok) {
         console.error("send failed:", ack.error);
       } else {
-        // ✅ 내가 보낸 메시지도 마지막으로 본 것으로 처리(ACK에 seq/id가 있다면)
         if (ack.seq && ack.id) {
           lastSeenSeqRef.current = ack.seq;
           lastSeenMsgIdRef.current = ack.id;
@@ -226,7 +243,6 @@ export const ChatSection = () => {
         }
       }
 
-      // 성공 시 정리
       previews.forEach((p) => {
         URL.revokeObjectURL(p.url);
         urlsRef.current.delete(p.url);
@@ -238,19 +254,15 @@ export const ChatSection = () => {
     }
   };
 
-  // ✅ 공지 버튼: 로컬 표시 토글만 (서버 저장 X)
-  const handleToggleNotice = () => {
-    setNoticeVisible((v) => !v);
-  };
+  // ===== 공지 UI 로컬 토글/동기화 =====
+  const handleToggleNotice = () => setNoticeVisible((v) => !v);
 
-  // ✅ 관리자 모달 저장/삭제 후 동기화 (서버 결과를 room + 로컬 표시로 반영)
   const handleNoticeUpdated = (
     next: { enabled?: boolean; text?: string } | null
   ) => {
     setRoom((prev: any) => {
       if (!prev) return prev;
       if (!next) {
-        // 삭제된 경우
         setNoticeVisible(false);
         return { ...prev, notice: { enabled: false, text: "" } };
       }
@@ -260,40 +272,67 @@ export const ChatSection = () => {
     });
   };
 
+  // ===== 방 나가기 =====
   const handleLeaveRoom = async () => {
     if (!roomid) return;
     if (!window.confirm("이 방을 나가시겠어요?")) return;
 
     try {
-      await leaveRoomApi(roomid); // ✅ 서버에 탈퇴 요청
-      leaveSocketRoom(roomid); // ✅ 소켓 룸 이탈
+      await leaveRoomApi(roomid);
+      leaveSocketRoom(roomid);
       eventBus.emit("rooms:refresh");
-      navigate("/chat"); // ✅ 목록 화면 등으로 이동
+      navigate("/chat");
     } catch (e) {
       console.error("[ChatSection] leaveRoomApi failed:", e);
       alert("나가기에 실패했습니다.");
     }
   };
 
+  // ===== 상단 도달 시 이전 페이지 로드(프리펜드) =====
+  const onReachTop = async () => {
+    if (!roomid || loadingOlder || !hasMore || cursorSeq == null) return;
+
+    setLoadingOlder(true);
+    try {
+      const res = await getMessagesApi(roomid, {
+        limit: PAGE_SIZE,
+        beforeSeq: cursorSeq, // ⬅️ 커서 기반 조회
+      });
+      const items: ChatMessage[] = res?.data?.items ?? [];
+      const olderAsc = normalizeAscending(items);
+
+      if (olderAsc.length > 0) {
+        setMessages((prev) => [...olderAsc, ...prev]); // 상단 프리펜드
+        setCursorSeq((olderAsc[0] as any).seq ?? cursorSeq); // 커서 갱신(가장 오래된)
+      }
+      if (olderAsc.length < PAGE_SIZE) {
+        setHasMore(false); // 더 없음
+      }
+    } catch (e) {
+      console.error("[ChatSection] getMessagesApi (older) failed:", e);
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
+
+  // 제목
   const title = useMemo(
     () => room?.roomName || `방 ${roomid ?? ""}`,
     [room?.roomName, roomid]
   );
 
-  // 언마운트 시 ObjectURL/파일 정리
+  // 언마운트 시 프리뷰 정리(보조)
   useEffect(() => {
-    const files = filesRef.current;
-
     return () => {
       previews.forEach((p) => URL.revokeObjectURL(p.url));
-      files.clear();
+      filesRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 렌더링에 사용할 값
-  const showNotice = noticeVisible; // ← 로컬 표시 상태
-  const noticeText = room?.notice?.text ?? ""; // ← 서버에 저장된 텍스트
+  // 렌더 값
+  const showNotice = noticeVisible;
+  const noticeText = room?.notice?.text ?? "";
   const canManageNotice = ["owner", "admin"].includes(room?.myRole);
 
   return (
@@ -302,14 +341,13 @@ export const ChatSection = () => {
       accept={["image/*", "video/mp4"]}
       showOverlay
       className={styles.dropHost}
-      // 필요 시 ignoreRef={previewHostRef} 등을 넘겨 내부 DnD 제외 가능
     >
       <section className={styles.section}>
         <ChatHeader
           roomId={roomid!}
           title={title}
           noticeEnabled={showNotice}
-          onToggleNotice={handleToggleNotice} // 로컬 토글만
+          onToggleNotice={handleToggleNotice}
           canManageNotice={canManageNotice}
           notice={room?.notice ?? null}
           onNoticeUpdated={handleNoticeUpdated}
@@ -320,6 +358,10 @@ export const ChatSection = () => {
           showNotice={showNotice}
           noticeText={noticeText}
           messages={messages}
+          // ⬇️ 무한 스크롤용 추가 prop
+          onReachTop={onReachTop}
+          loadingOlder={loadingOlder}
+          hasMore={hasMore}
         />
 
         <div ref={previewHostRef}>
@@ -335,3 +377,18 @@ export const ChatSection = () => {
     </DragAndDrop>
   );
 };
+
+/** 서버 응답 정렬(혼재 가능성)을 안전하게 오름차순으로 맞춥니다. */
+function normalizeAscending(items: ChatMessage[]): ChatMessage[] {
+  if (!items?.length) return [];
+  return [...items].sort((a, b) => {
+    const sa =
+      (a as any).seq ?? (a as any).createdAtIso ?? (a as any).createdAt ?? 0;
+    const sb =
+      (b as any).seq ?? (b as any).createdAtIso ?? (b as any).createdAt ?? 0;
+
+    const ta = typeof sa === "number" ? sa : new Date(sa).getTime();
+    const tb = typeof sb === "number" ? sb : new Date(sb).getTime();
+    return ta - tb; // 오래 → 새로
+  });
+}
