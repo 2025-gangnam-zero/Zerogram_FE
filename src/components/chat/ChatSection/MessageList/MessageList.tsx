@@ -3,6 +3,7 @@ import React, {
   useRef,
   useImperativeHandle,
   forwardRef,
+  useCallback,
 } from "react";
 import styles from "./MessageList.module.css";
 import { MessageItem, NoticeBanner } from "../../../../components/chat";
@@ -54,18 +55,22 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
     const lastNearBottomRef = useRef<boolean | null>(null);
     const suppressNextAutoScrollRef = useRef(false);
 
-    const computeNearBottom = () => {
+    // ⬇️ useCallback으로 메모이즈
+    const computeNearBottom = useCallback(() => {
       const el = scrollRef.current;
       if (!el) return true;
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
       return distance <= NEAR_BOTTOM_PX;
-    };
+    }, []);
 
-    const emitNearBottomIfChanged = (near: boolean) => {
-      if (lastNearBottomRef.current === near) return;
-      lastNearBottomRef.current = near;
-      onNearBottomChange?.(near);
-    };
+    const emitNearBottomIfChanged = useCallback(
+      (near: boolean) => {
+        if (lastNearBottomRef.current === near) return;
+        lastNearBottomRef.current = near;
+        onNearBottomChange?.(near);
+      },
+      [onNearBottomChange]
+    );
 
     // 스크롤 이벤트: 바닥 근처 여부 추적
     useEffect(() => {
@@ -84,7 +89,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
         emitNearBottomIfChanged(near);
       });
       return () => el.removeEventListener("scroll", onScroll);
-    }, []);
+    }, [computeNearBottom, emitNearBottomIfChanged]);
 
     // 새 메시지 변동 시: 조건부 바닥 고정 (프리펜드 1회 무시)
     useEffect(() => {
@@ -102,7 +107,7 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
         emitNearBottomIfChanged(near);
         if (near) el.scrollTop = el.scrollHeight;
       });
-    }, [messages.length]);
+    }, [messages.length, computeNearBottom, emitNearBottomIfChanged]);
 
     // 상단 센티널(무한 스크롤)
     useEffect(() => {
@@ -165,7 +170,8 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
           stickToBottomRef.current = near;
           emitNearBottomIfChanged(near);
         },
-      })
+      }),
+      [computeNearBottom, emitNearBottomIfChanged]
     );
 
     return (
