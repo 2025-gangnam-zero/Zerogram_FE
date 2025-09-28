@@ -4,6 +4,7 @@ export * from "./userStore";
 export * from "./workoutStore";
 export * from "./dietStore";
 export * from "./meetStore";
+export * from "./chatStore";
 
 // Store types for backward compatibility
 export type RootState = {
@@ -11,4 +12,5 @@ export type RootState = {
   user: ReturnType<typeof import("./userStore").useUserStore>;
   diet: ReturnType<typeof import("./dietStore").useDietStore>;
   meet: ReturnType<typeof import("./meetStore").useMeetStore>;
+  chat: ReturnType<typeof import("./chatStore").useChatStore>;
 };

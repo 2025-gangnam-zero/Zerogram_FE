@@ -17,6 +17,14 @@ export type MessageListHandle = {
   suppressNextAutoScroll: () => void;
   isNearBottom: () => boolean;
   scrollToBottom: () => void;
+
+  // ⬇️ 위치 저장/복원을 위한 앵커 API
+  getVisibleAnchor: () => {
+    id: string | null;
+    offset: number;
+    wasAtBottom: boolean;
+  };
+  restoreToAnchor: (id: string, offset: number) => void;
 };
 
 type Props = {
@@ -55,7 +63,6 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
     const lastNearBottomRef = useRef<boolean | null>(null);
     const suppressNextAutoScrollRef = useRef(false);
 
-    // ⬇️ useCallback으로 메모이즈
     const computeNearBottom = useCallback(() => {
       const el = scrollRef.current;
       if (!el) return true;
@@ -170,6 +177,49 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
           stickToBottomRef.current = near;
           emitNearBottomIfChanged(near);
         },
+
+        // 현재 보이는 앵커 추출
+        getVisibleAnchor: () => {
+          const root = scrollRef.current;
+          if (!root) return { id: null, offset: 0, wasAtBottom: true };
+          const wasAtBottom = computeNearBottom();
+
+          const children = Array.from(
+            root.querySelectorAll<HTMLDivElement>("[data-mid]")
+          );
+          const top = root.scrollTop;
+          let best: HTMLDivElement | null = null;
+          let bestDelta = Infinity;
+          for (const el of children) {
+            const y = el.offsetTop;
+            const delta = Math.abs(y - top);
+            if (delta < bestDelta) {
+              best = el;
+              bestDelta = delta;
+            }
+          }
+          if (!best) return { id: null, offset: 0, wasAtBottom };
+          const id = best.getAttribute("data-mid");
+          const offset = top - best.offsetTop; // 상대 오프셋
+          return { id, offset, wasAtBottom };
+        },
+
+        // 특정 앵커로 정밀 복원
+        restoreToAnchor: (id, offset) => {
+          const root = scrollRef.current;
+          if (!root || !id) return;
+
+          const safe = id.replace(/"/g, '\\"'); // 간단 이스케이프
+          const el = root.querySelector<HTMLDivElement>(`[data-mid="${safe}"]`);
+          if (!el) return; // 현재 버퍼에 앵커가 없으면 복원 불가
+
+          requestAnimationFrame(() => {
+            root.scrollTop = el.offsetTop + offset;
+            const near = computeNearBottom();
+            stickToBottomRef.current = near;
+            emitNearBottomIfChanged(near);
+          });
+        },
       }),
       [computeNearBottom, emitNearBottomIfChanged]
     );
@@ -194,19 +244,20 @@ export const MessageList = forwardRef<MessageListHandle, Props>(
 
         {showNotice && noticeText && <NoticeBanner text={noticeText} />}
 
-        {messages.map((m) => (
-          <MessageItem
-            key={
-              m.id ??
-              (typeof (m as any).seq === "number"
-                ? String((m as any).seq)
-                : undefined) ??
-              (m as any).createdAtIso ??
-              String((m as any).createdAt)
-            }
-            message={m}
-          />
-        ))}
+        {messages.map((m) => {
+          // data-mid는 안정적인 키(서버 id/seq)를 사용
+          const mid =
+            m.id ??
+            (typeof (m as any).seq === "number"
+              ? `seq:${String((m as any).seq)}`
+              : (m as any).createdAtIso ?? String((m as any).createdAt));
+
+          return (
+            <div key={mid} data-mid={mid}>
+              <MessageItem message={m} />
+            </div>
+          );
+        })}
       </div>
     );
   }
