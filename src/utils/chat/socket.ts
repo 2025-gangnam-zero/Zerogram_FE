@@ -1,5 +1,11 @@
 import { io, Socket } from "socket.io-client";
-import { ChatMessage, PreviewItem, SendAck, SendPayload } from "../../types";
+import {
+  ChatMessage,
+  NotifyUpdate,
+  PreviewItem,
+  SendAck,
+  SendPayload,
+} from "../../types";
 import { previewsToAttachments } from "./files";
 
 let socket: Socket | null = null;
@@ -192,3 +198,10 @@ export function hardLogoutCleanup() {
   socket.disconnect(); // 수동 종료 상태
   // joinedRef.clear() 등 클라이언트 상태 초기화는 각 스토어에서 별도 처리
 }
+
+// 알림 업데이트
+export const onNotifyUpdate = (handler: (n: NotifyUpdate) => void) => {
+  const s = getSocket();
+  s.on("notify:update", handler);
+  return () => s.off("notify:update", handler);
+};

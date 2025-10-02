@@ -1,0 +1,181 @@
+/* FAB */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  border: 0;
+  background: #111827;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.iconWrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+.fabIcon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* 아이콘+배지 */
+.badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px #111827; /* FAB 배경과 동일, 시인성 향상 */
+}
+
+/* 숫자 전용 칩 (큰 수 전용) */
+.countChip {
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 패널(하단 시트) */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: flex-end; /* 하단에서 올라오기 */
+}
+.sheetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.closeBtn {
+  border: 0;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.sheet > ul,
+.list {
+  width: 100%;
+  max-height: 60vh;
+  overflow: auto;
+  background: #fff;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.empty {
+  padding: 24px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.row {
+  border-bottom: 1px solid #f3f4f6;
+}
+.rowLink {
+  display: block;
+  padding: 12px 16px;
+  color: inherit;
+  text-decoration: none;
+}
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.roomName {
+  font-weight: 600;
+  color: #111827;
+}
+.rowBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rowMeta {
+  display: flex;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+}
+.snippet {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.at {
+  white-space: nowrap;
+}
+
+/* 하단 시트 모션 */
+.sheet {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.sheet[aria-modal="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.list {
+  transform: translateY(12%);
+  transition: transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.sheet[aria-modal="true"] .list {
+  transform: translateY(0);
+}
+
+/* 데스크톱에서는 오른쪽 아래 카드로 띄우고 싶다면 (선택) */
+@media (min-width: 800px) {
+  .sheet {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+  .list {
+    max-width: 360px;
+    max-height: 70vh;
+    border-radius: 12px;
+    margin: 0 16px 16px 0;
+  }
+}

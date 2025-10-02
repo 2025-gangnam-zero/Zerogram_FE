@@ -169,3 +169,28 @@ export const deleteMessageApi = async (
     throw new Error(getApiErrorMessage(error));
   }
 };
+
+// 알림 설정
+export const getNotificationsApi = async () => {
+  try {
+    const res = await authApi.get("/api/notifications");
+
+    return res.data;
+  } catch (error) {
+    logError("getNotificationsApi", error);
+    throw new Error(getApiErrorMessage(error));
+  }
+};
+
+export const markRoomReadApi = async (roomId: string) => {
+  // 최신 메시지 1건 가져오기 (서버가 최신 DESC라면 [0]이 최신)
+  const res = await getMessagesApi(roomId, { limit: 1 });
+  const latest = res?.data?.items?.[0];
+  if (!latest?.seq || !latest?.id) return { ok: true };
+
+  await commitReadApi(roomId, {
+    lastReadSeq: latest.seq,
+    lastReadMessageId: latest.id,
+  });
+  return { ok: true };
+};

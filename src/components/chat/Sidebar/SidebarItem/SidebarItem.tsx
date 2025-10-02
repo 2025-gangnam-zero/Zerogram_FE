@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import styles from "./SidebarItem.module.css";
 import { Users, Clock } from "lucide-react";
 import { formatTimeKo } from "../../../../utils";
@@ -29,11 +29,14 @@ export const SidebarItem = ({
     unreadCount,
   } = item;
 
+  const { roomid } = useParams(); // ← 라우트 파라미터 키가 실제로 'roomid'인지 확인!
+  const isSelected = selected || (roomid && String(roomid) === String(id));
+
   return (
     <li
       className={[
         styles.item,
-        selected ? styles.selected : "",
+        isSelected ? styles.selected : "",
         !!unreadCount && unreadCount > 0 && !selected ? styles.hasUnread : "",
       ].join(" ")}
     >

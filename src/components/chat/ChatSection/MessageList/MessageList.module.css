@@ -4,3 +4,22 @@
   overflow: auto; /* ⬅️ 여기만 스크롤 */
   padding: 12px 16px;
 }
+
+.topSentinel {
+  height: 1px;
+  margin-top: 1px;
+}
+
+.loader {
+  text-align: center;
+  font-size: 12px;
+  padding: 8px 0;
+  opacity: 0.8;
+}
+
+.endMarker {
+  text-align: center;
+  font-size: 12px;
+  padding: 6px 0 10px;
+  opacity: 0.6;
+}

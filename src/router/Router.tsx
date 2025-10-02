@@ -15,6 +15,8 @@ import MeetPage from "../pages/MeetPage";
 import { useAuthStore } from "../store/authStore";
 import { ChatIndex, ChatPage } from "../pages/chat";
 import { ChatSection } from "../components/chat/ChatSection";
+import { ChatNotifyProvider } from "../providers";
+import { ChatNotifyFab } from "../components/chat";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -39,29 +41,32 @@ export default function Router() {
   return (
     <>
       <GlobalStyle />
-      <AppContainer>
-        <Header />
-        <MainContent>
-          <Routes>
-            <Route
-              path="/"
-              element={isLoggedIn ? <HomePage /> : <LandingPage />}
-            />
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/mypage" element={<MyPage />} />
-            <Route path="/workout" element={<WorkoutLogPage />} />
-            <Route path="/diet-log" element={<DietLogPage />} />
-            <Route path="/meet" element={<MeetPage />} />
-            <Route path="/chat" element={<ChatPage />}>
-              <Route index element={<ChatIndex />} />
-              <Route path=":roomid" element={<ChatSection />} />
-            </Route>
-          </Routes>
-        </MainContent>
-        {!isChatRoute && <Footer />}
-      </AppContainer>
+      <ChatNotifyProvider>
+        <AppContainer>
+          <Header />
+          <MainContent>
+            <Routes>
+              <Route
+                path="/"
+                element={isLoggedIn ? <HomePage /> : <LandingPage />}
+              />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/workout" element={<WorkoutLogPage />} />
+              <Route path="/diet-log" element={<DietLogPage />} />
+              <Route path="/meet" element={<MeetPage />} />
+              <Route path="/chat" element={<ChatPage />}>
+                <Route index element={<ChatIndex />} />
+                <Route path=":roomid" element={<ChatSection />} />
+              </Route>
+            </Routes>
+          </MainContent>
+          {!isChatRoute && <Footer />}
+          <ChatNotifyFab />
+        </AppContainer>
+      </ChatNotifyProvider>
     </>
   );
 }

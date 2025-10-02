@@ -1,28 +1,45 @@
+:root {
+  --drawer-duration: 280ms;
+  --drawer-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --drawer-z: 1000; /* 헤더/톱바보다 크게 */
+}
+
+/* 컨테이너: 기본 숨김, 열릴 때만 보이기 */
 .drawer {
   position: fixed;
-
   inset: 0;
-  pointer-events: none; /* 열리지 않았을 때 이벤트 차단 */
-  z-index: 70; /* Lightbox 등과 충돌 시 숫자 조정 */
+  top: 118px;
+  z-index: var(--drawer-z);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--drawer-duration) var(--drawer-ease),
+    visibility var(--drawer-duration) var(--drawer-ease);
 }
 
-.open {
+.drawer[data-open="true"] {
   pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
 }
 
+/* 배경 페이드 */
 .backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   border: 0;
-  padding: 0;
-  margin: 0;
-  top: 118px;
+  opacity: 0;
+  transition: opacity var(--drawer-duration) var(--drawer-ease);
+}
+.drawer[data-open="true"] .backdrop {
+  opacity: 1;
 }
 
+/* 패널 슬라이드 */
 .panel {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0) + 118px);
+  top: env(safe-area-inset-top, 0);
   bottom: 0;
   left: 0;
   width: min(92vw, 360px);
@@ -30,16 +47,25 @@
   background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   outline: none;
-  transform: translateX(-100%);
-  transition: transform 240ms ease;
+
+  transform: translateX(-12%); /* 시작 위치 (약간 안쪽에서) */
+  transition: transform var(--drawer-duration) var(--drawer-ease);
+  will-change: transform;
+
   display: flex;
   flex-direction: column;
 }
 
-.open .panel {
+/* 열릴 때 제자리 */
+.drawer[data-open="true"] .panel {
   transform: translateX(0);
 }
 
-.fromLeft {
-  /* 방향 변형 시 클래스 확장 자리 */
+/* 모션 최소화 사용자 배려 */
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .backdrop,
+  .panel {
+    transition: none !important;
+  }
 }

@@ -1,0 +1,137 @@
+/* 백드롭 */
+.popoverBackdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent; /* 외부 클릭만 차단 */
+  z-index: 11000;
+}
+
+/* 패널 */
+.popoverPanel {
+  position: fixed;
+  z-index: 11001;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+/* 헤더 */
+.popoverHeader {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.headerTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+.closeBtn {
+  border: 0;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+}
+
+/* 리스트 */
+.popoverList {
+  overflow: auto;
+  padding: 6px 0;
+}
+.empty {
+  padding: 20px 14px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 행 */
+.row {
+  border-bottom: 1px solid #f3f4f6;
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.rowLink {
+  display: block;
+  padding: 10px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 상단: 제목 · 시간 · 배지 */
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.roomName {
+  font-weight: 600;
+  color: #111827;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.time {
+  color: #6b7280;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* 하단: 메시지 스니펫 */
+.rowBottom {
+  display: flex;
+}
+.snippet {
+  flex: 1;
+  min-width: 0;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 말풍선 꼬리 */
+.arrow {
+  position: absolute;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}

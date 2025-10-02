@@ -1,0 +1,76 @@
+// ChatNotifyFab.tsx
+import styles from "./ChatNotifyFab.module.css";
+import { Bell } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useRef, useState, useLayoutEffect, useEffect } from "react";
+import { ChatNotifyPanel } from "../ChatNotifyPanel";
+import { useChatNotify } from "../../../../providers";
+
+export const ChatNotifyFab = () => {
+  const { unreadTotal } = useChatNotify();
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  // 알림이 0이 되면 패널 자동 닫기
+  useEffect(() => {
+    if (open && unreadTotal === 0) setOpen(false);
+  }, [unreadTotal, open]);
+
+  // 열릴 때/윈도우 리사이즈/스크롤 시 앵커 좌표 업데이트
+  useLayoutEffect(() => {
+    const update = () => {
+      if (!btnRef.current) return;
+      setAnchorRect(btnRef.current.getBoundingClientRect());
+    };
+    update();
+    if (!open) return;
+    window.addEventListener("resize", update, { passive: true });
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, [open]);
+
+  console.log("총 unread", unreadTotal);
+
+  // 채팅 페이지이거나 알림이 없으면 표시하지 않음
+  if (pathname.startsWith("/chat") || unreadTotal === 0) return null;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        className={styles.fab}
+        aria-label={`채팅 알림 ${unreadTotal}개`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {unreadTotal >= 100 ? (
+          // 숫자 전용 칩 모드
+          <span className={styles.countChip}>
+            {unreadTotal > 99 ? "99+" : unreadTotal}
+          </span>
+        ) : (
+          // 아이콘 + 배지 모드
+          <span className={styles.iconWrap}>
+            <Bell className={styles.fabIcon} aria-hidden />
+            {unreadTotal > 0 && (
+              <span className={styles.badge}>
+                {unreadTotal > 99 ? "99+" : unreadTotal}
+              </span>
+            )}
+          </span>
+        )}
+      </button>
+
+      <ChatNotifyPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        anchorRect={anchorRect}
+      />
+    </>
+  );
+};
